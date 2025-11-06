@@ -1,0 +1,199 @@
+/* 基本リセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: white;
+}
+
+/* 全体コンテナ: Flexboxでサイドバーとメインコンテンツを横並びにする */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- サイドバー (左側の緑色の部分) --- */
+.sidebar {
+  width: 250px; /* 固定幅 */
+  background-color: #388e3c; /* 濃いめの緑 */
+  color: white;
+  padding-top: 20px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+/* サイドバーヘッダー (ハンバーガーメニューなど) */
+.sidebar-header {
+  padding: 0 15px 20px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-header i {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* メニューセクション (ユーザーアイコンなど) */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.menu-item {
+  padding: 15px 0;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+}
+.menu-item i {
+  font-size: 24px;
+}
+.menu-item.active {
+  background-color: rgba(0, 0, 0, 0.1); /* アクティブなメニュー項目の背景色 */
+}
+
+/* チャット/グループリストセクション */
+.sidebar-chats {
+  padding: 15px 15px 15px 0;
+  color: #c8e6c9; /* 薄い文字色 */
+}
+
+.chat-section-title {
+  font-size: 12px;
+  margin: 10px 0 5px 15px;
+  font-weight: bold;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chat-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* アバターの共通スタイル */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+}
+
+/* サイドバーのアバターの背景色 */
+.bg-a {
+  background-color: #9c27b0;
+}
+.bg-p {
+  background-color: #e91e63;
+}
+.bg-c {
+  background-color: #673ab7;
+}
+.bg-d {
+  background-color: #00bcd4;
+}
+.bg-e {
+  background-color: #ff9800;
+}
+.bg-f {
+  background-color: #4caf50;
+}
+.bg-g {
+  background-color: #ff5722;
+}
+.bg-h {
+  background-color: #607d8b;
+}
+.bg-x {
+  background-color: #2196f3;
+}
+.bg-y {
+  background-color: #8bc34a;
+}
+
+/* --- メインコンテンツ (右側の白い部分) --- */
+.main-content {
+  flex-grow: 1;
+  background-color: white;
+  padding: 30px;
+}
+
+/* 検索バー */
+.search-bar {
+  width: 100%;
+  padding: 0 0 30px 0;
+  border-bottom: 1px solid #ddd; /* 検索バーの下に薄い線を入れる */
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f0f0f0; /* 薄いグレーの背景 */
+  color: #666;
+  font-size: 14px;
+  border: none;
+}
+.search-bar input::placeholder {
+  color: #999;
+}
+
+/* 中央のメニュー部分 */
+.menu-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 80px); /* 画面全体から検索バーと上下のパディングを引いた高さ */
+  text-align: center;
+}
+
+/* 管理者メニュー タイトル */
+.menu-content h1 {
+  color: #4caf50; /* 緑色 */
+  font-size: 32px;
+  font-weight: 500;
+  margin-bottom: 40px;
+}
+
+/* メニューボタン */
+.menu-buttons {
+  margin-top: 20px;
+}
+
+.menu-btn {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 軽い影 */
+  transition: background-color 0.2s;
+}
+
+.menu-btn:hover {
+  background-color: #f9f9f9;
+}

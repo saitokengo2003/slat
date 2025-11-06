@@ -1,0 +1,246 @@
+/* 基本リセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f4; /* 全体の背景色 */
+}
+
+/* 全体コンテナ: Flexboxでサイドバーとメインコンテンツを横並びにする */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- サイドバー (左側の緑色の部分) --- */
+.sidebar {
+  width: 250px; /* 固定幅 */
+  background-color: #388e3c; /* 濃いめの緑 */
+  color: white;
+  padding-top: 20px;
+  flex-shrink: 0; /* 縮小させない */
+  overflow-y: auto; /* コンテンツが多い場合はスクロール可能に */
+}
+
+/* サイドバーヘッダー (ハンバーガーメニューなど) */
+.sidebar-header {
+  padding: 0 15px 20px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-header i {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* メニューセクション (ユーザーアイコンなど) */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.menu-item {
+  padding: 15px 0;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+}
+.menu-item i {
+  font-size: 24px;
+}
+.menu-item.active {
+  background-color: rgba(0, 0, 0, 0.1); /* アクティブなメニュー項目の背景色 */
+}
+
+/* チャット/グループリストセクション */
+.sidebar-chats {
+  padding: 15px 15px 15px 0;
+  color: #c8e6c9; /* 薄い文字色 */
+}
+
+.chat-section-title {
+  font-size: 12px;
+  margin: 10px 0 5px 15px; /* 左側にスペースを空ける */
+  font-weight: bold;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chat-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* アバターの共通スタイル */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+}
+
+/* サイドバーのアバターの背景色 (画像に合わせる) */
+.bg-a {
+  background-color: #9c27b0;
+}
+.bg-p {
+  background-color: #e91e63;
+}
+.bg-c {
+  background-color: #673ab7;
+}
+.bg-d {
+  background-color: #00bcd4;
+}
+.bg-e {
+  background-color: #ff9800;
+}
+.bg-f {
+  background-color: #4caf50;
+}
+.bg-g {
+  background-color: #ff5722;
+}
+.bg-h {
+  background-color: #607d8b;
+}
+.bg-x {
+  background-color: #2196f3;
+}
+.bg-y {
+  background-color: #8bc34a;
+}
+
+/* --- メインコンテンツ (右側の白い部分) --- */
+.main-content {
+  flex-grow: 1; /* 残りのスペースを全て占有 */
+  background-color: white;
+  padding: 30px;
+}
+
+/* メインヘッダー (アカウント管理タイトルとボタン) */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.main-header h1 {
+  color: #4caf50; /* タイトルを緑色に */
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.header-controls button {
+  padding: 8px 15px;
+  margin-left: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+.header-controls .filter-btn {
+  border: none;
+  padding: 5px 10px;
+}
+.header-controls .add-user-btn {
+  padding: 8px 10px;
+}
+
+/* --- アカウントリスト (テーブル風レイアウト) --- */
+.account-list {
+  list-style: none;
+  padding: 0;
+}
+
+.account-item {
+  display: grid;
+  /* 各列の幅を設定: アバター、名前、役割、学年、クラス、番号、操作アイコン */
+  grid-template-columns: 40px 1fr 1fr 1fr 1fr 1fr 60px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee; /* 区切り線 */
+  font-size: 14px;
+}
+
+/* ヘッダー行のスタイル */
+.header-row {
+  font-weight: bold;
+  color: #888;
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 15px;
+  margin-bottom: 5px;
+}
+
+.col-avatar {
+  grid-column: 1 / 2;
+}
+.col-name {
+  grid-column: 2 / 3;
+}
+.col-role {
+  grid-column: 3 / 4;
+}
+.col-grade {
+  grid-column: 4 / 5;
+}
+.col-class {
+  grid-column: 5 / 6;
+}
+.col-number {
+  grid-column: 6 / 7;
+}
+.col-actions {
+  grid-column: 7 / 8;
+  display: flex;
+  gap: 15px; /* アイコン間のスペース */
+  justify-content: flex-end; /* 右寄せ */
+}
+
+/* アカウントリスト内の小さなアバター */
+.avatar-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  /* 背景色はHTMLの.bg-aクラスで指定 */
+}
+
+/* 編集・削除アイコン */
+.edit-icon,
+.delete-icon {
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+}
+.delete-icon {
+  color: #e57373; /* 削除アイコンを赤っぽく */
+}
