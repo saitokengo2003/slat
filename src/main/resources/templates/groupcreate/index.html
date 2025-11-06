@@ -3,7 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>グループ作成</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body></body>
+
+  <body>
+    <div class="group-create-container">
+      <h1>グループ作成</h1>
+
+      <div class="form-section">
+        <label for="group-name">グループ名</label>
+        <input type="text" id="group-name" name="group-name" placeholder="グループ名を入力" />
+      </div>
+
+      <div class="form-section">
+        <label>参加者を追加</label>
+
+        <div class="member">
+          <div class="icon"></div>
+          <span>〇〇〇</span>
+        </div>
+        <hr />
+        <div class="member">
+          <div class="icon"></div>
+          <span>〇〇〇</span>
+        </div>
+      </div>
+
+      <button class="create-btn">作成する</button>
+    </div>
+  </body>
 </html>

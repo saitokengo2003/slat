@@ -1,32 +1,83 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>トップページ</title>
+    <link rel="icon" href="../static/images/favicon.ico" th:href="@{/images/favicon.ico}" />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
 
-  <title>サンプルページ</title>
+    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}" />
+  </head>
 
-  <link rel="icon" href="../static/images/favicon.ico" th:href="@{/images/favicon.ico}" />
+  <body>
+    <div class="container-fluid p-0 d-flex">
+      <!-- サイドバー -->
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="logo">
+            <img src="../static/images/logo.png" th:src="@{/images/logo.png}" alt="Logo" />
+          </div>
+          <button class="menu-btn">☰</button>
+        </div>
 
-  <!-- CDN : Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+        <div class="menu-section">
+          <p class="menu-title">▼ ダイレクトメッセージ</p>
+          <ul class="menu-list">
+            <li><span class="icon">A</span> ○○○</li>
+            <li><span class="icon">B</span> ○○○</li>
+            <li><span class="icon">C</span> ○○○</li>
+            <li><span class="icon">D</span> ○○○</li>
+            <li><span class="icon">E</span> ○○○</li>
+            <li><span class="icon">T</span> ○○○</li>
+            <li><span class="icon">A</span> ○○○</li>
+          </ul>
 
-  <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}" />
-</head>
+          <p class="menu-title">▼ グループ</p>
+          <ul class="menu-list">
+            <li><span class="group-icon">J</span> ○○○</li>
+            <li><span class="group-icon">O</span> ○○○</li>
+            <li><span class="group-icon">X</span> ○○○</li>
+          </ul>
+        </div>
+      </aside>
 
-<body>
-  サンプル
+      <!-- メインコンテンツ -->
+      <main class="main-content">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+          <input type="text" class="search-bar" placeholder="検索" />
+          <button class="logout-btn">ログアウト</button>
+        </div>
 
-  <img id="img" src="../static/images/profile.png" th:src="@{/images/profile.png}"
-    style="width: 100px; height: 100px" />
-  <!-- CDN : Bootstrap Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-    crossorigin="anonymous"></script>
+        <h2 class="page-title">ホーム</h2>
 
-  <script src="../static/js/main.js" th:src="@{/js/main.js}"></script>
-</body>
+        <ul class="chat-list">
+          <li><span class="chat-icon">T</span> ・・・</li>
+          <li><span class="chat-icon">ℓ</span> ・・・</li>
+          <li><span class="chat-icon">U</span> ・・・</li>
+          <li><span class="chat-icon">Ŧ</span> ・・・</li>
+          <li><span class="chat-icon">ʁ</span> ・・・</li>
+          <li><span class="chat-icon">Q</span> ・・・</li>
+          <li><span class="chat-icon">ʟ</span> ・・・</li>
+          <li><span class="chat-icon">ʅ</span> ・・・</li>
+        </ul>
+      </main>
+    </div>
 
+    <!-- Bootstrap Bundle -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="../static/js/main.js" th:src="@{/js/main.js}"></script>
+  </body>
 </html>
