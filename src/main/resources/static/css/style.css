@@ -1,0 +1,19 @@
+﻿@charset "UTF-8";
+
+/* 全体のスタイル設定 */
+
+/* すべての要素に適用されるベーススタイル */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* コンテンツボックスのサイズ計算方法を指定 */
+}
+
+/* bodyとhtmlタグに適用されるスタイル */
+body,
+html {
+  width: 100vw; /* ビューポートの100%の幅 */
+  height: 100vh; /* ビューポートの100%の高さ */
+  font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, Osaka,
+    "ＭＳ Ｐゴシック", "MS PGothic", sans-serif; /* フォントファミリーの指定 */
+}

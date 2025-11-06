@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>サンプルページ</title>
+
+  <link rel="icon" href="../static/images/favicon.ico" th:href="@{/images/favicon.ico}" />
+
+  <!-- CDN : Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+
+  <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+  サンプル
+
+  <img id="img" src="../static/images/profile.png" th:src="@{/images/profile.png}"
+    style="width: 100px; height: 100px" />
+  <!-- CDN : Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+  <script src="../static/js/main.js" th:src="@{/js/main.js}"></script>
+</body>
+
+</html>

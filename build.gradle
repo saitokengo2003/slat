@@ -1,0 +1,53 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.5'
+	id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.sysdev.hcs'
+version = '0.0.1-SNAPSHOT'
+description = 'project-sysdev'
+
+java {
+	sourceCompatibility = '21'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Base
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+
+	// Database
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'com.h2database:h2'
+
+	// Security
+	compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+	implementation 'org.springframework.security:spring-security-core:6.1.4'
+
+	// Log
+	implementation 'org.slf4j:slf4j-api'
+
+	// File Upload
+	implementation 'commons-fileupload:commons-fileupload:1.5'
+
+	// AWS
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.649'
+
+	// Development
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
