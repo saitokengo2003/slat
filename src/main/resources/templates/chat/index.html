@@ -3,7 +3,83 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>チャット画面</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
   </head>
-  <body></body>
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <i class="fas fa-paw"></i> <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="sidebar-menu"></div>
+
+        <div class="sidebar-chats">
+          <p class="chat-section-title">▶︎ ダイレクトメッセージ</p>
+          <ul class="chat-list dm-list">
+            <li class="chat-item"><span class="avatar bg-a">A</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-b">B</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-c">C</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-d">D</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-e">€</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-f">F</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-a">A</span> OOO</li>
+          </ul>
+
+          <p class="chat-section-title">▼ グループ</p>
+          <ul class="chat-list group-list">
+            <li class="chat-item"><span class="avatar bg-f">F</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-o">O</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-x">X</span> OOO</li>
+            <li class="chat-item"><span class="avatar bg-y">Y</span> OOO</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div class="search-bar">
+          <input type="text" placeholder="検索" />
+        </div>
+
+        <div class="message-area">
+          <div class="message received">
+            <div class="message-bubble">
+              <span class="bubble-avatar bg-t">T</span>
+              <div class="bubble-content">
+                ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ
+              </div>
+            </div>
+            <div class="message-reaction">
+              <span class="reaction-icon">😃</span>
+              <span class="reaction-count">21</span>
+            </div>
+          </div>
+
+          <div class="message sent">
+            <div class="message-bubble">
+              <div class="bubble-content">
+                ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ
+              </div>
+              <span class="bubble-avatar bg-r">R</span>
+            </div>
+            <div class="message-reaction">
+              <span class="reaction-icon">😁</span>
+              <span class="reaction-count">2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-footer">
+          <input type="text" placeholder="メッセージ入力" class="message-input" />
+          <button class="send-button">
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </main>
+    </div>
+  </body>
 </html>

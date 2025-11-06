@@ -3,7 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>アカウント作成</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body></body>
+  <body>
+    <div class="form-container">
+      <h1>アカウント作成</h1>
+
+      <form action="#" method="post" class="account-form">
+        <div class="form-group">
+          <label for="user-id">ユーザID</label>
+          <input type="text" id="user-id" name="user_id" placeholder="ユーザIDを入力" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">パスワード</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="パスワードを入力"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="role">権限</label>
+          <select id="role" name="role" required>
+            <option value="" disabled selected></option>
+            <option value="admin">管理者</option>
+            <option value="teacher">先生</option>
+            <option value="student">生徒</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="grade">学年</label>
+          <select id="grade" name="grade">
+            <option value="" disabled selected></option>
+            <option value="1">1年</option>
+            <option value="2">2年</option>
+            <option value="3">3年</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="class">クラス</label>
+          <select id="class" name="class">
+            <option value="" disabled selected></option>
+            <option value="A">A組</option>
+            <option value="B">B組</option>
+            <option value="C">C組</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="number">番号</label>
+          <input type="number" id="number" name="number" />
+        </div>
+
+        <button type="submit" class="create-button">作成する</button>
+      </form>
+    </div>
+  </body>
 </html>

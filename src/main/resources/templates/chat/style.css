@@ -1,0 +1,279 @@
+/* 基本リセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: white;
+}
+
+/* 全体コンテナ: Flexboxでサイドバーとメインコンテンツを横並びにする */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- サイドバー (左側の緑色の部分) --- */
+.sidebar {
+  width: 250px; /* 固定幅 */
+  background-color: #388e3c; /* 濃いめの緑 */
+  color: white;
+  padding-top: 20px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+/* サイドバーヘッダー */
+.sidebar-header {
+  padding: 0 15px 20px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex; /* アイコンを横並びにする */
+  gap: 10px;
+}
+.sidebar-header i {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* メニューセクション (画像に合わせるためメニュー項目は空だが構造は残す) */
+.sidebar-menu {
+  /* 画像の構造に合わせてここにスタイルを設定（今回は空） */
+}
+
+/* チャット/グループリストセクション */
+.sidebar-chats {
+  padding: 15px 15px 15px 0;
+  color: #c8e6c9;
+}
+
+.chat-section-title {
+  font-size: 12px;
+  margin: 10px 0 5px 15px;
+  font-weight: bold;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.chat-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* アバターの共通スタイル */
+.avatar,
+.bubble-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0; /* 縮まないように */
+}
+
+.chat-item .avatar {
+  margin-right: 10px;
+}
+
+/* サイドバーのアバターの背景色 (画像に合わせる) */
+.bg-a {
+  background-color: #9c27b0;
+}
+.bg-b {
+  background-color: #e91e63;
+}
+.bg-c {
+  background-color: #673ab7;
+}
+.bg-d {
+  background-color: #00bcd4;
+}
+.bg-e {
+  background-color: #ff9800;
+}
+.bg-f {
+  background-color: #4caf50;
+}
+.bg-o {
+  background-color: #00796b;
+}
+.bg-x {
+  background-color: #2196f3;
+}
+.bg-y {
+  background-color: #8bc34a;
+}
+
+/* メッセージ内のアバター (TとR) */
+.bg-t {
+  background-color: #808080;
+} /* 相手の仮の色 */
+.bg-r {
+  background-color: #808080;
+} /* 自分の仮の色 */
+
+/* --- メインコンテンツ (右側の白い部分) --- */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column; /* 縦に並べる */
+  height: 100vh;
+}
+
+/* 検索バー */
+.search-bar {
+  width: 100%;
+  padding: 15px 30px;
+  border-bottom: 1px solid #ddd;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  color: #666;
+  font-size: 14px;
+}
+.search-bar input::placeholder {
+  color: #999;
+}
+
+/* メッセージエリア */
+.message-area {
+  flex-grow: 1; /* 残りのスペースを全て占有 */
+  padding: 20px 30px;
+  overflow-y: auto; /* メッセージが多い場合はスクロール可能に */
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* 受信メッセージ (相手) */
+.message.received {
+  justify-content: flex-start;
+  flex-direction: column; /* 吹き出しとリアクションを縦に並べる */
+  align-items: flex-start;
+}
+
+/* 送信メッセージ (自分) */
+.message.sent {
+  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.message-bubble {
+  display: flex;
+  max-width: 70%; /* 吹き出しの最大幅 */
+  align-items: flex-start;
+}
+
+/* 相手のメッセージの配置 */
+.received .message-bubble {
+  gap: 10px;
+}
+/* 自分のメッセージの配置 */
+.sent .message-bubble {
+  gap: 10px;
+  flex-direction: row-reverse; /* 自分のアバターを右に */
+}
+
+.bubble-content {
+  padding: 10px 15px;
+  border-radius: 15px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word; /* 長い単語を折り返す */
+}
+
+/* 相手の吹き出しのスタイル */
+.received .bubble-content {
+  background-color: #f0f0f0;
+  color: #333;
+  border-bottom-left-radius: 2px; /* 角を少し削る */
+}
+
+/* 自分の吹き出しのスタイル */
+.sent .bubble-content {
+  background-color: #e6ffed; /* 薄い緑色 */
+  color: #333;
+  border-bottom-right-radius: 2px; /* 角を少し削る */
+}
+
+/* リアクション表示 */
+.message-reaction {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  padding-left: 40px; /* 相手のメッセージのリアクション位置調整 */
+}
+.sent .message-reaction {
+  padding-left: 0;
+  padding-right: 40px; /* 自分のメッセージのリアクション位置調整 */
+  text-align: right;
+}
+
+/* --- 入力フッター --- */
+.input-footer {
+  display: flex;
+  padding: 10px 30px;
+  border-top: 1px solid #ddd;
+  align-items: center;
+  background-color: white;
+  flex-shrink: 0; /* 縮まないように */
+}
+
+.message-input {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4caf50; /* 緑色 */
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+.send-button:hover {
+  background-color: #388e3c;
+}
+
+/* 送信アイコンの傾き */
+.send-button i {
+  transform: rotate(90deg); /* 傾きを調整 */
+}

@@ -1,0 +1,88 @@
+/* 基本リセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: white; /* 背景は白 */
+  display: flex;
+  justify-content: center; /* フォームを水平中央寄せ */
+  padding-top: 50px; /* 上部に余白 */
+  min-height: 100vh;
+}
+
+/* フォーム全体を囲むコンテナ */
+.form-container {
+  width: 100%;
+  max-width: 400px; /* フォームの最大幅を設定 */
+  text-align: center; /* タイトルとボタンを中央寄せ */
+}
+
+/* 画面タイトル */
+.form-container h1 {
+  color: #4caf50; /* 緑色 */
+  font-size: 32px;
+  font-weight: 500;
+  margin-bottom: 40px;
+}
+
+/* フォームの各グループ (ラベルと入力欄) */
+.form-group {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* ラベル (項目名) */
+.form-group label {
+  display: block; /* 常に1行占有 */
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+  /* ラベルを中央に寄せるための調整 */
+  text-align: center;
+  width: 100%;
+}
+
+/* 入力フィールドとセレクトボックス */
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group select {
+  width: 100%;
+  max-width: 250px; /* 入力欄の幅を画像に合わせて調整 */
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+  color: #333;
+  /* 中央に寄せるためのブロックレベル設定 */
+  display: block;
+  margin: 0 auto;
+  text-align: left; /* 入力文字は左寄せ */
+}
+
+/* プレースホルダーのスタイル (薄いグレー) */
+.form-group input::placeholder {
+  color: #ccc;
+  opacity: 1; /* プレースホルダーの文字が薄くなりすぎないように調整 */
+}
+
+/* 作成ボタン */
+.create-button {
+  margin-top: 30px;
+  padding: 8px 30px;
+  border: 1px solid #388e3c; /* 枠線は濃いめの緑 */
+  border-radius: 3px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-button:hover {
+  background-color: #f0f0f0;
+}
