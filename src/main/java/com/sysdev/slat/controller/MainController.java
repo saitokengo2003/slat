@@ -1,9 +1,9 @@
-package com.sysdev.hcs.controller;
+package com.sysdev.slat.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.sysdev.hcs.util.Loggable;
+import com.sysdev.slat.util.Loggable;
 
 /**
  * メインコントローラ.

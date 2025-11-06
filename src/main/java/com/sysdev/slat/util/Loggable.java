@@ -1,4 +1,4 @@
-package com.sysdev.hcs.util;
+package com.sysdev.slat.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

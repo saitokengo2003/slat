@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slat ログイン</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="card" role="main" aria-labelledby="login-title">
+        <img class="logo" src="logo.png" alt="Slat ロゴ" />
+        <div id="login-title" class="title">ログイン</div>
+
+        <form action="#" method="post" novalidate>
+          <label for="email" class="sr-only">メールアドレス</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            class="input"
+            placeholder="xxxxx@xxx.xx"
+            autocomplete="email"
+            required
+          />
+
+          <label for="password" class="sr-only">パスワード</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            class="input"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+          />
+
+          <button type="submit" class="btn">ログインする</button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
