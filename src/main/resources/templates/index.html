@@ -3,53 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>トップページ</title>
-    <link rel="icon" href="../static/images/favicon.ico" th:href="@{/images/favicon.ico}" />
+    <title>ホーム</title>
+
+    <link rel="icon" th:href="@{/images/favicon.ico}" />
 
     <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous"
     />
 
-    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}" />
+    <!-- ✅ カスタムCSS -->
+    <link rel="stylesheet" th:href="@{/top.css}" />
   </head>
 
   <body>
     <div class="container-fluid p-0 d-flex">
-      <!-- サイドバー -->
-      <aside class="sidebar">
-        <div class="sidebar-top">
-          <div class="logo">
-            <img src="../static/images/logo.png" th:src="@{/images/logo.png}" alt="Logo" />
-          </div>
-          <button class="menu-btn">☰</button>
+      <!-- ✅ サイドバー -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top px-3 mb-3">
+          <button class="menu-btn" id="menu-toggle">☰</button>
         </div>
 
-        <div class="menu-section">
-          <p class="menu-title">▼ ダイレクトメッセージ</p>
-          <ul class="menu-list">
-            <li><span class="icon">A</span> ○○○</li>
-            <li><span class="icon">B</span> ○○○</li>
-            <li><span class="icon">C</span> ○○○</li>
-            <li><span class="icon">D</span> ○○○</li>
-            <li><span class="icon">E</span> ○○○</li>
-            <li><span class="icon">T</span> ○○○</li>
-            <li><span class="icon">A</span> ○○○</li>
-          </ul>
+        <!-- ✅ グループ作成アイコン -->
+        <a th:href="@{/templates/index.html}" class="create-group-icon">＋</a>
 
-          <p class="menu-title">▼ グループ</p>
-          <ul class="menu-list">
-            <li><span class="group-icon">J</span> ○○○</li>
-            <li><span class="group-icon">O</span> ○○○</li>
-            <li><span class="group-icon">X</span> ○○○</li>
-          </ul>
-        </div>
+        <p class="menu-title">▼ ダイレクトメッセージ</p>
+        <ul class="menu-list">
+          <li><span class="icon">A</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">B</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">C</span> <span class="menu-text">○○○</span></li>
+        </ul>
+
+        <p class="menu-title">▼ グループ</p>
+        <ul class="menu-list">
+          <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">X</span> <span class="menu-text">○○○</span></li>
+        </ul>
       </aside>
 
-      <!-- メインコンテンツ -->
+      <!-- ✅ メインコンテンツ -->
       <main class="main-content">
         <div class="top-bar d-flex justify-content-between align-items-center">
           <input type="text" class="search-bar" placeholder="検索" />
@@ -59,25 +53,45 @@
         <h2 class="page-title">ホーム</h2>
 
         <ul class="chat-list">
-          <li><span class="chat-icon">T</span> ・・・</li>
-          <li><span class="chat-icon">ℓ</span> ・・・</li>
-          <li><span class="chat-icon">U</span> ・・・</li>
-          <li><span class="chat-icon">Ŧ</span> ・・・</li>
-          <li><span class="chat-icon">ʁ</span> ・・・</li>
-          <li><span class="chat-icon">Q</span> ・・・</li>
-          <li><span class="chat-icon">ʟ</span> ・・・</li>
-          <li><span class="chat-icon">ʅ</span> ・・・</li>
+          <li>
+            <div class="chat-left">
+              <span class="chat-icon">T</span>
+              <span class="chat-text">チャット内容・・・</span>
+            </div>
+            <div class="dropdown">
+              <button class="dropdown-btn">⋯</button>
+              <div class="dropdown-menu">
+                <a href="#">編集</a>
+                <a href="#">削除</a>
+                <a href="#">詳細</a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <div class="chat-left">
+              <span class="chat-icon">ℓ</span>
+              <span class="chat-text">チャット内容・・・</span>
+            </div>
+            <div class="dropdown">
+              <button class="dropdown-btn">⋯</button>
+              <div class="dropdown-menu">
+                <a href="#">編集</a>
+                <a href="#">削除</a>
+                <a href="#">詳細</a>
+              </div>
+            </div>
+          </li>
         </ul>
+        <a href="accountadmin">アカウント管理画面へ</a><br />
+        <a href="accountcreate">アカウント作成画面へ</a><br />
+        <a href="admin">管理者メニューへ</a><br />
+        <a href="groupcreate">グループ作成画面へ</a><br />
+        <a href="groupinfo">グループ詳細画面へ</a>
       </main>
     </div>
 
-    <!-- Bootstrap Bundle -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-      crossorigin="anonymous"
-    ></script>
-
-    <script src="../static/js/main.js" th:src="@{/js/main.js}"></script>
+    <!-- ✅ JS -->
+    <script th:src="@{/js/main.js}"></script>
   </body>
 </html>
