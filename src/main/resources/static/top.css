@@ -1,0 +1,245 @@
+﻿/* ===============================
+   基本設定
+================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  background-color: #f8f9fa;
+  font-family: "Noto Sans JP", sans-serif;
+}
+.container-fluid {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===============================
+   ✅ サイドバー（Google Chat風）
+================================ */
+.sidebar {
+  width: 250px;
+  background: #2e7d32;
+  color: white;
+  padding-top: 15px;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+/* ✅ 折りたたみ */
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar-top {
+  margin-left: 10px;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* ===============================
+   ✅ グループ作成アイコン
+================================ */
+.create-group-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 55px;
+  height: 55px;
+  background: white;
+  color: #2e7d32;
+  border-radius: 50%;
+  font-size: 30px;
+  font-weight: bold;
+  margin: 10px auto;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: 0.2s ease;
+}
+.create-group-icon:hover {
+  background: #f1f1f1;
+  transform: scale(1.05);
+}
+.sidebar.collapsed .create-group-icon {
+  margin: 10px auto;
+}
+
+/* ===============================
+   ✅ メニュータイトル
+================================ */
+.menu-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 15px;
+  margin-top: 15px;
+  margin-bottom: 6px;
+}
+.sidebar.collapsed .menu-title {
+  display: none;
+}
+
+/* ===============================
+   ✅ メニューリスト
+================================ */
+.menu-list {
+  list-style: none;
+  padding: 0;
+}
+.menu-list li {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.menu-list li:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+}
+
+/* ✅ アイコン（丸） */
+.icon,
+.group-icon {
+  width: 35px;
+  height: 35px;
+  background: #e0e0e0;
+  color: #2e7d32;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.menu-text {
+  margin-left: 10px;
+}
+
+/* ✅ 折りたたみ時は文字消す */
+.sidebar.collapsed .menu-text {
+  display: none;
+}
+.sidebar.collapsed .icon,
+.sidebar.collapsed .group-icon {
+  margin: 0 auto;
+}
+.sidebar.collapsed .menu-list li {
+  justify-content: center;
+}
+
+/* ===============================
+   ✅ メインエリア
+================================ */
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  background: white;
+}
+
+.search-bar {
+  width: 350px;
+  padding: 10px 15px;
+  border-radius: 25px;
+  border: 1px solid #ddd;
+  background: #efefef;
+}
+
+.logout-btn {
+  border: 1px solid #2e7d32;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.page-title {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  color: #2e7d32;
+  font-size: 24px;
+}
+
+/* ===============================
+   ✅ チャット一覧
+================================ */
+.chat-list {
+  list-style: none;
+}
+
+.chat-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 5px;
+  border-bottom: 1px solid #ddd;
+}
+
+.chat-left {
+  display: flex;
+  align-items: center;
+}
+
+.chat-icon {
+  width: 40px;
+  height: 40px;
+  background: #ccc;
+  border-radius: 50%;
+  margin-right: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+/* ===============================
+   ✅ 右の「…」メニュー
+================================ */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-btn {
+  border: none;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.dropdown-btn:hover {
+  background: #eee;
+  border-radius: 5px;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 30px;
+  right: 0;
+  width: 140px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 5px 0;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: #333;
+}
+
+.dropdown-menu a:hover {
+  background: #f0f0f0;
+}
+
+.dropdown.show .dropdown-menu {
+  display: block;
+}
