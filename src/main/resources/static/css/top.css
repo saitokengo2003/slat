@@ -26,8 +26,6 @@ body {
   transition: width 0.25s ease;
   overflow: hidden;
 }
-
-/* ✅ 折りたたみ */
 .sidebar.collapsed {
   width: 72px;
 }
@@ -45,7 +43,7 @@ body {
 }
 
 /* ===============================
-   ✅ グループ作成アイコン
+   ✅ グループボタン（画像版）
 ================================ */
 .create-group-icon {
   display: flex;
@@ -54,13 +52,9 @@ body {
   width: 55px;
   height: 55px;
   background: white;
-  color: #2e7d32;
   border-radius: 50%;
-  font-size: 30px;
-  font-weight: bold;
   margin: 10px auto;
   cursor: pointer;
-  text-decoration: none;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   transition: 0.2s ease;
 }
@@ -68,6 +62,13 @@ body {
   background: #f1f1f1;
   transform: scale(1.05);
 }
+
+.group-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .sidebar.collapsed .create-group-icon {
   margin: 10px auto;
 }
@@ -80,7 +81,6 @@ body {
   font-weight: bold;
   margin-left: 15px;
   margin-top: 15px;
-  margin-bottom: 6px;
 }
 .sidebar.collapsed .menu-title {
   display: none;
@@ -93,18 +93,18 @@ body {
   list-style: none;
   padding: 0;
 }
+
 .menu-list li {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  cursor: pointer;
 }
+
 .menu-list li:hover {
   background-color: rgba(255, 255, 255, 0.15);
   border-radius: 20px;
 }
 
-/* ✅ アイコン（丸） */
 .icon,
 .group-icon {
   width: 35px;
@@ -122,7 +122,6 @@ body {
   margin-left: 10px;
 }
 
-/* ✅ 折りたたみ時は文字消す */
 .sidebar.collapsed .menu-text {
   display: none;
 }
@@ -140,29 +139,55 @@ body {
 .main-content {
   flex-grow: 1;
   padding: 30px;
-  background: white;
 }
 
+/* ===============================
+   ✅ トップバー（検索＋ログアウト）
+================================ */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
+}
+
+/* 検索バー */
 .search-bar {
-  width: 350px;
-  padding: 10px 15px;
-  border-radius: 25px;
-  border: 1px solid #ddd;
-  background: #efefef;
+  flex: 1;
+  padding: 10px;
+  margin-right: 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  color: #666;
+  font-size: 14px;
+  outline: none;
+  box-shadow: none;
 }
 
+.search-bar::placeholder {
+  color: #999;
+}
+
+/* ログアウトボタン */
 .logout-btn {
-  border: 1px solid #2e7d32;
-  background: white;
-  padding: 6px 12px;
-  border-radius: 20px;
+  position: static;
+  padding: 8px 16px;
+  border: 1px solid #388e3c;
+  border-radius: 5px;
+  background-color: white;
+  color: #388e3c;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.page-title {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  color: #2e7d32;
-  font-size: 24px;
+.logout-btn:hover {
+  background-color: #388e3c;
+  color: white;
 }
 
 /* ===============================
@@ -194,7 +219,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: bold;
 }
 
 /* ===============================
@@ -212,11 +236,6 @@ body {
   padding: 5px;
 }
 
-.dropdown-btn:hover {
-  background: #eee;
-  border-radius: 5px;
-}
-
 .dropdown-menu {
   display: none;
   position: absolute;
@@ -226,7 +245,6 @@ body {
   background: white;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 5px 0;
 }
 
 .dropdown-menu a {
@@ -235,7 +253,6 @@ body {
   text-decoration: none;
   color: #333;
 }
-
 .dropdown-menu a:hover {
   background: #f0f0f0;
 }

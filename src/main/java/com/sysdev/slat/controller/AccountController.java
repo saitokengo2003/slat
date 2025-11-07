@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AccountController {
   @GetMapping("/accountadmin")
   public String getAccountadmin() {
+
     return "accountadmin/index";
   }
 
