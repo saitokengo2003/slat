@@ -143,3 +143,15 @@ form {
     height: 56px;
   }
 }
+.login-error-message {
+  color: #d32f2f; /* 赤色で強調 */
+  font-size: 14px;
+  text-align: center; /* 中央寄せ */
+  margin-bottom: 10px; /* 下に少しスペース */
+  padding: 8px 12px; /* 内側の余白 */
+  background-color: #ffebee; /* 背景を薄い赤に */
+  border-radius: 8px; /* 角を少し丸める */
+  border: 1px solid #ef9a9a; /* 薄い赤の枠線 */
+  width: 100%; /* 親要素の幅いっぱいに */
+  box-sizing: border-box; /* パディングを含めて幅を計算 */
+}
