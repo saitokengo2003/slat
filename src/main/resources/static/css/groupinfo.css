@@ -1,110 +1,220 @@
-body {
+/* ===============================
+  ✅ 全体
+================================ */
+* {
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  display: flex;
-  height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* 左サイドバー */
+body {
+  background-color: #f8f9fa;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+.container-fluid {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===============================
+  ✅ サイドバー（折りたたみ動作あり）
+================================ */
 .sidebar {
-  width: 180px;
-  background-color: #1b8b3a;
+  width: 250px;
+  background: #2e7d32;
   color: white;
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
+  padding-top: 15px;
+  transition: all 0.25s ease;
+  overflow: hidden;
 }
 
-.sidebar h4 {
-  margin-top: 20px;
-  margin-bottom: 5px;
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 4px;
+.sidebar.collapsed {
+  width: 72px;
 }
 
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 6px 0;
+/* 折りたたみ時にテキストを隠す */
+.sidebar.collapsed .menu-text,
+.sidebar.collapsed .menu-title {
+  display: none;
+}
+
+/* アイコン中央寄せ */
+.sidebar.collapsed .menu-list li {
+  justify-content: center;
+}
+
+/* 上部 */
+.sidebar-top {
+  margin-left: 10px;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
   cursor: pointer;
 }
 
-.menu-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 4px;
-  background-color: #ccc;
+.create-group-icon {
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: black;
-  font-weight: bold;
-}
-
-.dots {
-  margin-left: auto;
-  font-size: 14px;
-}
-
-/* メイン部分 */
-.main {
-  flex: 1;
-  background-color: white;
-  padding: 20px 40px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  width: 55px;
+  height: 55px;
+  background: white;
+  border-radius: 50%;
+  margin: 10px auto;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: 0.2s ease;
 }
 
-.header h1 {
-  color: #1b8b3a;
-  font-size: 28px;
+.create-group-icon:hover {
+  background: #f1f1f1;
+  transform: scale(1.05);
+}
+
+.group-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.menu-title {
+  font-size: 14px;
   font-weight: bold;
+  margin-left: 15px;
+  margin-top: 15px;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-list li {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  transition: background-color 0.2s;
+}
+
+.menu-list li:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+}
+
+.icon,
+.group-icon {
+  width: 35px;
+  height: 35px;
+  background: #e0e0e0;
+  color: #2e7d32;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.menu-text {
+  margin-left: 10px;
+}
+
+/* ===============================
+  ✅ メインエリア（右側）
+================================ */
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  background-color: white;
+  transition: margin-left 0.25s ease;
+}
+
+/* ===============================
+  ✅ グループ詳細ヘッダー
+================================ */
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.group-header h1 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #2e7d32;
 }
 
 .filter-btn {
-  border: 1px solid gray;
-  background: white;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-table {
+.filter-btn:hover {
+  background-color: #f1f1f1;
+}
+
+/* ===============================
+  ✅ グループ一覧テーブル
+================================ */
+.group-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  background-color: #fff;
 }
 
-th,
-td {
-  text-align: left;
-  padding: 10px;
+.group-table thead tr {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.group-table th,
+.group-table td {
+  padding: 10px 15px;
   border-bottom: 1px solid #ddd;
 }
 
-th {
-  color: #1b8b3a;
-  font-size: 18px;
+.menu-icon {
+  display: inline-block;
+  background-color: #f1f1f1;
+  color: #2e7d32;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: bold;
+  text-align: center;
 }
 
+/* ===============================
+  ✅ アクションボタン
+================================ */
 .action-btn {
-  background: none;
   border: none;
+  background: none;
   cursor: pointer;
   font-size: 18px;
+  margin-left: 6px;
+  transition: transform 0.2s;
 }
 
-.edit {
-  color: black;
+.action-btn:hover {
+  transform: scale(1.2);
 }
 
-.delete {
-  color: red;
-  margin-left: 10px;
+.action-btn.edit {
+  color: #ff7043;
+}
+
+.action-btn.delete {
+  color: #9e9e9e;
 }
