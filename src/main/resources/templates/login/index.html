@@ -4,23 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Slat ログイン</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/css/login.css" />
   </head>
   <body>
     <div class="page">
       <div class="card" role="main" aria-labelledby="login-title">
-        <img class="logo" src="logo.png" alt="Slat ロゴ" />
+        <img class="logo" src="/images/logo.png" alt="Slat ロゴ" />
         <div id="login-title" class="title">ログイン</div>
 
-        <form action="#" method="post" novalidate>
-          <label for="email" class="sr-only">メールアドレス</label>
+        <form action="/login" method="post" novalidate>
+          <div th:if="${loginError}" class="login-error-message">
+            <p th:text="${loginError}"></p>
+          </div>
+          <label for="id" class="sr-only">ID</label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="id"
+            name="id"
+            type="id"
             class="input"
-            placeholder="xxxxx@xxx.xx"
-            autocomplete="email"
+            placeholder="xxxxxxxxxx"
+            autocomplete="id"
             required
           />
 
