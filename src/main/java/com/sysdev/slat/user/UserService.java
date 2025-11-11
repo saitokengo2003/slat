@@ -25,7 +25,7 @@ public class UserService {
 
     User user = userOpt.get();
 
-    // 2. パスワードをチェックする
+    // 2. パスワードをチェック
     if (!user.getPasswordHash().equals(password)) {
       // パスワードが一致しない
       return null;

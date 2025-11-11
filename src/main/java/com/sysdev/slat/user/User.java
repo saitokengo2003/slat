@@ -14,7 +14,7 @@ public class User {
   @Id // 主キー (users_s.id)
   private UUID id;
   private String username; // ログインに使うID
-  private String passwordHash; // ハッシュ化されたパスワード
+  private String passwordHash;
   private String status;
   private OffsetDateTime createdAt;
   private OffsetDateTime updatedAt;
@@ -25,7 +25,6 @@ public class User {
   private String className;
   private Integer number;
 
-  // --- コンストラクタ ---
   public User() {
   }
 

@@ -12,7 +12,6 @@ public class UserData {
   private String className;// クラス名
   private Integer number;// 出席番号
 
-  // --- コンストラクタ ---
   public UserData() {
   }
 
