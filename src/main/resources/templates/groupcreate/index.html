@@ -11,26 +11,27 @@
     <div class="group-create-container">
       <h1>グループ作成</h1>
 
-      <div class="form-section">
-        <label for="group-name">グループ名</label>
-        <input type="text" id="group-name" name="group-name" placeholder="グループ名を入力" />
-      </div>
-
-      <div class="form-section">
-        <label>参加者を追加</label>
-
-        <div class="member">
-          <div class="icon"></div>
-          <span>〇〇〇</span>
+      <form th:action="@{/groupcreate}" method="post">
+        <div class="form-section">
+          <label>グループ名</label>
+          <input type="text" id="group-name" name="name" placeholder="グループ名を入力" />
         </div>
-        <hr />
-        <div class="member">
-          <div class="icon"></div>
-          <span>〇〇〇</span>
-        </div>
-      </div>
 
-      <button class="create-btn">作成する</button>
+        <label>作成者(任意)</label>
+        <input type="text" name="owner" placeholder="owner" />
+
+        <div class="form-section">
+          <label>参加者を追加</label>
+          <div class="member">
+            <input type="text" name="member" placeholder="member" />
+          </div>
+        </div>
+
+        <button class="create-btn" type="submit">作成する</button>
+
+        <p th:if="${message}" th:text="${message}" class="ok"></p>
+        <p th:if="${errorMessage}" th:text="${errorMessage}" class="ng"></p>
+      </form>
     </div>
   </body>
 </html>
