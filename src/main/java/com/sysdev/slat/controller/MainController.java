@@ -5,15 +5,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import com.sysdev.slat.util.Loggable;
 
-/**
- * メインコントローラ.
- */
 @Controller
 public class MainController implements Loggable {
 
-  @GetMapping("/")
+  // 💡 修正: @GetMapping("/") を一時的に無効化します。
+  // これにより、AccountadminController へのルーティングが妨げられるのを防ぎます。
+  // @GetMapping("/")
   public String index() {
-    log().info("[index]");
+    // ログも無効化または修正
+    // log().info("[index]");
     return "index";
   }
 
