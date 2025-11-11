@@ -56,7 +56,7 @@ CREATE TABLE
     ), -- dm/group/class など用途別
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 作成日
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新日
-    created_by VARCHAR(100) NOT NULL, -- FK users_s.id: 作成者
+    created_by VARCHAR(100) NOT NULL, -- FK username: 作成者
     CONSTRAINT fk_group_creator FOREIGN KEY (created_by) REFERENCES users_s (username)
   );
 
@@ -71,7 +71,7 @@ CREATE TABLE
   group_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid (), -- 主キー
     group_id UUID NOT NULL, -- FK groups.id
-    user_id VARCHAR(100) NOT NULL, -- FK users_s.id
+    user_id VARCHAR(100) NOT NULL, -- FK username
     role_in_group VARCHAR(20) NOT NULL DEFAULT 'member' CHECK (role_in_group IN ('owner', 'moderator', 'member')), -- owner/moderator/member
     joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 参加日時
     left_at TIMESTAMP WITH TIME ZONE, -- 脱退日時
