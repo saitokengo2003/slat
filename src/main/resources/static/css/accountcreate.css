@@ -23,7 +23,7 @@ body {
 
 /* 画面タイトル */
 .form-container h1 {
-  color: #4caf50; /* 緑色 */
+  color: #2e7d32;
   font-size: 32px;
   font-weight: 500;
   margin-bottom: 40px;
@@ -39,7 +39,7 @@ body {
 .form-group label {
   display: block; /* 常に1行占有 */
   font-size: 14px;
-  color: #333;
+  color: #2e7d32;
   margin-bottom: 5px;
   /* ラベルを中央に寄せるための調整 */
   text-align: center;
@@ -74,10 +74,10 @@ body {
 .create-button {
   margin-top: 30px;
   padding: 8px 30px;
-  border: 1px solid #388e3c; /* 枠線は濃いめの緑 */
+  border: 1px solid black; /* 枠線は濃いめの緑 */
   border-radius: 3px;
   background-color: white;
-  color: #333;
+  color: #2e7d32;
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s;
