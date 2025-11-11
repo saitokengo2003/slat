@@ -1,96 +1,112 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>グループ詳細</title>
-    <link rel="stylesheet" th:href="@{/groupinfo.css}" />
+    <title>ホーム</title>
+
+    <link rel="icon" th:href="@{/images/logo.png}" />
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- ✅ カスタムCSS -->
+    <link rel="stylesheet" href="/css/groupinfo.css" />
   </head>
+
   <body>
-    <div class="sidebar">
-      <h4>◆ ダイレクトメッセージ</h4>
-      <div class="menu-item">
-        <div class="menu-icon">A</div>
-        <div class="dots">●●●</div>
-      </div>
-      <div class="menu-item">
-        <div class="menu-icon">P</div>
-        <div class="dots">●●●</div>
-      </div>
-      <div class="menu-item">
-        <div class="menu-icon">E</div>
-        <div class="dots">●●●</div>
-      </div>
+    <div class="container-fluid p-0 d-flex">
+      <!-- ✅ サイドバー（変更なし） -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top px-3 mb-3">
+          <button class="menu-btn" id="menu-toggle">☰</button>
+        </div>
 
-      <h4>◆ グループ</h4>
-      <div class="menu-item">
-        <div class="menu-icon">S</div>
-        <div class="dots">●●●</div>
-      </div>
-      <div class="menu-item">
-        <div class="menu-icon">X</div>
-        <div class="dots">●●●</div>
-      </div>
+        <a th:href="@{/groupcreate}" class="create-group-icon">
+          <img th:src="@{/images/group_icon.png}" alt="group" class="group-icon-img" />
+        </a>
+
+        <p class="menu-title">▼ ダイレクトメッセージ</p>
+        <ul class="menu-list">
+          <li><span class="icon">A</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">B</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">C</span> <span class="menu-text">○○○</span></li>
+        </ul>
+
+        <p class="menu-title">▼ グループ</p>
+        <ul class="menu-list">
+          <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">X</span> <span class="menu-text">○○○</span></li>
+        </ul>
+      </aside>
+
+      <!-- ✅ メインコンテンツ -->
+      <main class="main-content">
+        <div class="group-header">
+          <h1>グループ詳細</h1>
+          <button class="filter-btn">⚙ フィルター</button>
+        </div>
+
+        <table class="group-table">
+          <thead>
+            <tr>
+              <th>グループ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="menu-icon">ナ</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="menu-icon">セ</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="menu-icon">U</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="menu-icon">テ</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="menu-icon">?</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="menu-icon">Q</div></td>
+              <td>
+                <button class="action-btn edit">✏️</button>
+                <button class="action-btn delete">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </main>
     </div>
 
-    <div class="main">
-      <div class="header">
-        <h1>グループ詳細</h1>
-        <button class="filter-btn">⚙ フィルター</button>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>グループ</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><div class="menu-icon">ナ</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td><div class="menu-icon">セ</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td><div class="menu-icon">U</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td><div class="menu-icon">テ</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td><div class="menu-icon">?</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-          <tr>
-            <td><div class="menu-icon">Q</div></td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- ✅ JS -->
+    <script th:src="@{/js/main.js}"></script>
   </body>
 </html>
