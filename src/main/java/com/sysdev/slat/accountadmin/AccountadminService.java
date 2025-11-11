@@ -49,4 +49,16 @@ public class AccountadminService {
     accountadminRepository.delete(accountId);
     logger.info("アカウント (ID: {}) の削除に成功しました。", accountId);
   }
+
+  /**
+   * 新しいアカウントを登録します。
+   */
+  public void insertAccount(AccountadminData accountData) throws SQLException {
+    // 💡 登録処理の前に、バリデーションやビジネスロジックを追加
+
+    // パスワードがハッシュ化されていることを確認（ここでは仮定）
+
+    accountadminRepository.insert(accountData);
+    logger.info("アカウント (Username: {}) の登録に成功しました。", accountData.getUsername());
+  }
 }
