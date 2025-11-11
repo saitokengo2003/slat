@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 
-import com.sysdev.slat.service.UserData; // UserDataをインポート
+import com.sysdev.slat.user.UserData; // UserDataをインポート
 
 @Controller
 public class MainController {

@@ -1,16 +1,16 @@
-package com.sysdev.slat.service;
+package com.sysdev.slat.user;
 
 /**
  * ログインユーザーの情報を保持するデータクラスです。
  */
 public class UserData {
 
-  private String userId; // users_s.usernameに対応
-  private String displayName; // users_s.display_nameに対応
-  private String roleCode; // users_s.role_codeに対応
-  private Integer grade;
-  private String className;
-  private Integer number;
+  private String userId; // usernameに対応
+  private String displayName; // display_nameに対応
+  private String roleCode; // role_codeに対応
+  private Integer grade;// 学年
+  private String className;// クラス名
+  private Integer number;// 出席番号
 
   // --- コンストラクタ ---
   public UserData() {

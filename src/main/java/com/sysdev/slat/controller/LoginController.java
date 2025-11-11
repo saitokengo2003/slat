@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.sysdev.slat.service.UserService;
-import com.sysdev.slat.service.UserData; // UserDataをインポート
+import com.sysdev.slat.user.UserService;
+import com.sysdev.slat.user.UserData; // UserDataをインポート
 
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
@@ -24,7 +24,7 @@ public class LoginController {
   // ログイン画面を表示する GET リクエスト
   @GetMapping("/login")
   public String getlogin() {
-    return "login/index"; // テンプレート名（例: login/index.html）
+    return "login/index";
   }
 
   // ログインフォームの送信を受け付ける POST リクエスト
