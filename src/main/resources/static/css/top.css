@@ -142,6 +142,10 @@ body {
   padding: 30px;
 }
 
+.page-title {
+  color: #2e7d32;
+}
+
 /* ===============================
   ✅ トップバー（検索＋ログアウト）
 ================================ */
@@ -176,10 +180,10 @@ body {
 .logout-btn {
   position: static;
   padding: 8px 16px;
-  border: 1px solid #388e3c;
+  border: 1px solid black;
   border-radius: 5px;
   background-color: white;
-  color: #388e3c;
+  color: #2e7d32;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

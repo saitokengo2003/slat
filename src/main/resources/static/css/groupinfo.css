@@ -134,22 +134,29 @@ body {
 }
 
 /* ===============================
-  ✅ グループ詳細ヘッダー
+  ✅ グループ詳細ヘッダー（タイトル中央寄せ＋ボタン右寄せ）
 ================================ */
 .group-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  margin-bottom: 20px;
+  justify-content: space-between; /* 両端配置 */
+  position: relative;
+  margin-bottom: 25px;
+  padding-bottom: 10px;
 }
 
+/* タイトル中央寄せ */
 .group-header h1 {
-  font-size: 22px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 26px;
   font-weight: bold;
   color: #2e7d32;
+  margin: 0;
 }
 
+/* フィルターボタン右寄せ */
 .filter-btn {
   border: 1px solid #ccc;
   background-color: #fff;
@@ -159,6 +166,7 @@ body {
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-left: auto;
 }
 
 .filter-btn:hover {
@@ -185,6 +193,11 @@ body {
   border-bottom: 1px solid #ddd;
 }
 
+/* ペンとごみ箱右寄せ */
+.group-table td:last-child {
+  text-align: right;
+}
+
 .menu-icon {
   display: inline-block;
   background-color: #f1f1f1;
@@ -205,6 +218,7 @@ body {
   font-size: 18px;
   margin-left: 6px;
   transition: transform 0.2s;
+  vertical-align: middle;
 }
 
 .action-btn:hover {
@@ -217,4 +231,16 @@ body {
 
 .action-btn.delete {
   color: #9e9e9e;
+}
+
+.modal-title {
+  font-weight: bold;
+}
+
+.modal-body {
+  font-size: 15px;
+}
+
+.modal-footer .btn-danger {
+  background-color: #d32f2f;
 }
