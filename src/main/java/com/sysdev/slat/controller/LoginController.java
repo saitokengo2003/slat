@@ -1,19 +1,26 @@
 package com.sysdev.slat.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.sysdev.slat.service.UserService;
+
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class LoginController {
 
+  @Autowired
+  private UserService userService;
+
   // ログイン画面を表示する GET リクエスト
   @GetMapping("/login")
   public String getlogin() {
-    return "login/index"; // src/main/resources/templates/login/index.html を返す
+    return "login/index"; // テンプレート名（例: login/index.html）
   }
 
   // ログインフォームの送信を受け付ける POST リクエスト
@@ -24,28 +31,28 @@ public class LoginController {
       Model model,
       HttpSession session) {
 
-    boolean isAuthenticated = authenticate(id, password); // 既存の認証ロジック
+    // IDをusers_sテーブルのusernameとして認証を実行
+    // 【重要】認証ロジックはUserServiceの実装に依存します
+    boolean isAuthenticated = userService.authenticate(id, password);
 
     if (isAuthenticated) {
-      session.setAttribute("loginUser", id); // セッションにユーザー情報を保存
-      return "redirect:/"; // templates/index.html を表示するためにルートへリダイレクト
+      // 認証成功時: セッションにユーザー情報（ここではID/username）を保存
+      session.setAttribute("loginUser", id);
+      return "redirect:/"; // 認証後のトップページなどにリダイレクト
     } else {
+      // 認証失敗時: エラーメッセージをモデルに追加し、ログイン画面に戻る
       model.addAttribute("loginError", "IDまたはパスワードが間違っています。");
       return "login/index";
     }
   }
 
-  /**
-   * 簡易的な認証処理（実際は別サービスに切り出す）
-   */
-  private boolean authenticate(String id, String password) {
-    // ★ 実際の開発では、データベースからユーザー情報を取得し、
-    // パスワードのハッシュ値を検証する必要があります。
+  // ログアウト処理を行う POST リクエストを追加
+  @PostMapping("/logout")
+  public String postLogout(HttpSession session) {
+    // セッションを無効化し、セッションに保存されたすべての属性をクリアする
+    session.invalidate();
 
-    // 例: テスト用の資格情報
-    if ("test@slat.com".equals(id) && "password123".equals(password)) {
-      return true;
-    }
-    return false;
+    // ログアウト後、ログインページにリダイレクト
+    return "redirect:/login";
   }
 }
