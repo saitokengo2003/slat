@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>アカウント管理</title>
-    <link rel="stylesheet" href="/css/accountadmin.css" />
+    <link rel="stylesheet" href="/css/accountadmin.css" th:href="@{/css/accountadmin.css}" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -12,40 +12,7 @@
   </head>
   <body>
     <div class="container">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <i class="fas fa-bars"></i>
-        </div>
-        <div class="sidebar-menu">
-          <div class="menu-item active">
-            <i class="fas fa-user-circle"></i>
-          </div>
-          <div class="menu-item">
-            <i class="fas fa-chart-bar"></i>
-          </div>
-        </div>
-
-        <div class="sidebar-chats">
-          <p class="chat-section-title">▶︎ ダイレクトメッセージ</p>
-          <ul class="chat-list dm-list">
-            <li class="chat-item"><span class="avatar bg-a">A</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-p">P</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-c">C</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-d">D</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-e">€</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-f">F</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-a">A</span> OOO</li>
-          </ul>
-
-          <p class="chat-section-title">▼ グループ</p>
-          <ul class="chat-list group-list">
-            <li class="chat-item"><span class="avatar bg-g">G</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-h">H</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-x">X</span> OOO</li>
-            <li class="chat-item"><span class="avatar bg-y">Y</span> OOO</li>
-          </ul>
-        </div>
-      </aside>
+      <aside class="sidebar"></aside>
 
       <main class="main-content">
         <header class="main-header">
@@ -57,111 +24,60 @@
         </header>
 
         <div class="account-list-container">
+          <th:block th:if="${accountadminEntity != null}">
+            <p class="success-message" th:if="${message}" th:text="${message}"></p>
+
+            <p
+              class="error-message"
+              th:if="${accountadminEntity.errorMessage}"
+              th:text="${accountadminEntity.errorMessage}"
+            ></p>
+          </th:block>
+
           <ul class="account-list">
             <li class="account-item header-row">
               <span class="col-avatar"></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
+              <span class="col-name">名前</span>
+              <span class="col-role">役割</span>
               <span class="col-grade">学年</span>
               <span class="col-class">クラス</span>
               <span class="col-number">番号</span>
-              <span class="col-actions"></span>
+              <span class="col-actions">操作</span>
             </li>
 
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
+            <li class="account-item" th:each="users_s : ${accountadminEntity?.taskList}">
+              <span class="col-avatar">
+                <span
+                  class="avatar-sm bg-a"
+                  th:text="${#strings.substring(users_s.display_name, 0, 1)}"
+                ></span>
               </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
+
+              <span class="col-name" th:text="${users_s.display_name}">山田 太郎</span>
+              <span class="col-role" th:text="${users_s.role_code}">teacher</span>
+              <span class="col-grade" th:text="${users_s.grade} ?: '-'">3</span>
+              <span class="col-class" th:text="${users_s.class_name} ?: '-'">R科</span>
+              <span class="col-number" th:text="${users_s.number} ?: '-'">5</span>
+
               <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
-              </span>
-            </li>
-            <li class="account-item">
-              <span class="col-avatar"><span class="avatar-sm bg-a">A</span></span>
-              <span class="col-name">name</span>
-              <span class="col-role">role</span>
-              <span class="col-grade">学年</span>
-              <span class="col-class">クラス</span>
-              <span class="col-number">番号</span>
-              <span class="col-actions">
-                <i class="fas fa-pencil-alt edit-icon"></i>
-                <i class="fas fa-trash-alt delete-icon"></i>
+                <a th:href="@{'/accountadmin/edit?id=' + ${users_s.id}}">
+                  <i class="fas fa-pencil-alt edit-icon"></i>
+                </a>
+
+                <form
+                  th:action="@{/accountadmin/delete}"
+                  method="post"
+                  style="display: inline"
+                  onsubmit="return confirm('本当に削除しますか？');"
+                >
+                  <input type="hidden" name="id" th:value="${users_s.id}" />
+                  <button
+                    type="submit"
+                    style="background: none; border: none; padding: 0; cursor: pointer"
+                  >
+                    <i class="fas fa-trash-alt delete-icon"></i>
+                  </button>
+                </form>
               </span>
             </li>
           </ul>
