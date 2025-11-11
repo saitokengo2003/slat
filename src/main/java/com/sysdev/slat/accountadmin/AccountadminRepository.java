@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +89,34 @@ public class AccountadminRepository {
 
     if (updateRow != 1) {
       throw new SQLException("アカウント削除に失敗しました (ID: " + id + ")。更新件数が0件または複数件でした。");
+    }
+    return updateRow;
+  }
+
+  /** アカウント作成 */
+  private static final String SQL_INSERT_ONE = "INSERT INTO \"users_s\" (\"username\", \"password_hash\", \"display_name\", \"role_code\", \"grade\", \"class_name\", \"number\", \"status\") "
+      +
+      "VALUES (:username, :password_hash, :display_name, :role_code, :grade, :class_name, :number, 'active')";
+
+  // ... (既存のコンストラクタ、RowMapper、findAllActiveAccounts メソッドは維持) ...
+
+  public int insert(AccountadminData data) throws SQLException {
+    // 💡 HashMap のインポートが必要 (java.util.HashMap)
+    Map<String, Object> params = new HashMap<>();
+
+    params.put("username", data.getUsername());
+    // 🚨 DBは password_hash をNOT NULLで要求するため、ハッシュ化された文字列を渡す必要があります
+    params.put("password_hash", data.getPassword_hash());
+    params.put("display_name", data.getDisplay_name()); // ※ フォームに display_name がないため、別途設定が必要
+    params.put("role_code", data.getRole_code());
+    params.put("grade", data.getGrade());
+    params.put("class_name", data.getClass_name());
+    params.put("number", data.getNumber());
+
+    int updateRow = jdbc.update(SQL_INSERT_ONE, params);
+
+    if (updateRow != 1) {
+      throw new SQLException("アカウント登録に失敗しました。更新件数が異常です。");
     }
     return updateRow;
   }
