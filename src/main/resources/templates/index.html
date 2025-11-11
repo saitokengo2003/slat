@@ -7,21 +7,25 @@
 
     <link rel="icon" th:href="@{/images/logo.png}" />
 
+    <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
+    <!-- ✅ カスタムCSS -->
     <link rel="stylesheet" href="/css/top.css" />
   </head>
 
   <body>
     <div class="container-fluid p-0 d-flex">
+      <!-- ✅ サイドバー -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top px-3 mb-3">
           <button class="menu-btn" id="menu-toggle">☰</button>
         </div>
 
+        <!-- ✅ グループ作成アイコン（画像版） -->
         <a th:href="@{/groupcreate}" class="create-group-icon">
           <img th:src="@{/images/group_icon.png}" alt="group" class="group-icon-img" />
         </a>
@@ -41,17 +45,11 @@
         </ul>
       </aside>
 
+      <!-- ✅ メインコンテンツ -->
       <main class="main-content">
         <div class="top-bar d-flex justify-content-between align-items-center">
           <input type="text" class="search-bar" placeholder="検索" />
-
-          <form action="/logout" method="post">
-            <button type="submit" class="logout-btn">ログアウト</button>
-          </form>
-        </div>
-
-        <div class="alert alert-info py-2" th:if="${displayName}">
-          現在ログイン中のユーザー: <b th:text="${displayName}"></b>
+          <button class="logout-btn">ログアウト</button>
         </div>
 
         <h2 class="page-title">ホーム</h2>
@@ -88,7 +86,7 @@
           </li>
         </ul>
         <a href="login">ログイン画面へ</a><br />
-        <a href="accountadmin">アカウント管理画面へ</a><br />
+        <a href="accountadmin/list">アカウント管理画面へ</a><br />
         <a href="accountcreate">アカウント作成画面へ</a><br />
         <a href="admin">管理者メニューへ</a><br />
         <a href="groupcreate">グループ作成画面へ</a><br />
@@ -96,6 +94,7 @@
       </main>
     </div>
 
+    <!-- ✅ JS -->
     <script th:src="@{/js/main.js}"></script>
   </body>
 </html>
