@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.sysdev.slat.service.UserService;
+import com.sysdev.slat.user.UserService;
+import com.sysdev.slat.user.UserData; // UserDataをインポート
 
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
@@ -14,13 +15,16 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class LoginController {
 
+  // セッションに保存するUserDataのキー
+  private final String SESSION_USER_DATA_KEY = "userData";
+
   @Autowired
   private UserService userService;
 
   // ログイン画面を表示する GET リクエスト
   @GetMapping("/login")
   public String getlogin() {
-    return "login/index"; // テンプレート名（例: login/index.html）
+    return "login/index";
   }
 
   // ログインフォームの送信を受け付ける POST リクエスト
@@ -31,28 +35,25 @@ public class LoginController {
       Model model,
       HttpSession session) {
 
-    // IDをusers_sテーブルのusernameとして認証を実行
-    // 【重要】認証ロジックはUserServiceの実装に依存します
-    boolean isAuthenticated = userService.authenticate(id, password);
+    // UserServiceを呼び出して認証を実行し、UserDataを取得
+    UserData userData = userService.authenticate(id, password);
 
-    if (isAuthenticated) {
-      // 認証成功時: セッションにユーザー情報（ここではID/username）を保存
-      session.setAttribute("loginUser", id);
+    if (userData != null) {
+      // 認証成功時: セッションにUserDataオブジェクト全体を保存
+      session.setAttribute(SESSION_USER_DATA_KEY, userData);
       return "redirect:/"; // 認証後のトップページなどにリダイレクト
     } else {
-      // 認証失敗時: エラーメッセージをモデルに追加し、ログイン画面に戻る
+      // 認証失敗時
       model.addAttribute("loginError", "IDまたはパスワードが間違っています。");
       return "login/index";
     }
   }
 
-  // ログアウト処理を行う POST リクエストを追加
+  // ログアウト処理を行う POST リクエスト
   @PostMapping("/logout")
   public String postLogout(HttpSession session) {
     // セッションを無効化し、セッションに保存されたすべての属性をクリアする
     session.invalidate();
-
-    // ログアウト後、ログインページにリダイレクト
     return "redirect:/login";
   }
 }

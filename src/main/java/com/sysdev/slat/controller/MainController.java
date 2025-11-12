@@ -5,28 +5,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import com.sysdev.slat.service.UserService;
+import com.sysdev.slat.user.UserData; // UserDataをインポート
 
 @Controller
 public class MainController {
 
-  @Autowired
-  private UserService userService; // UserServiceを注入
+  private final String SESSION_USER_DATA_KEY = "userData"; // LoginControllerとキーを合わせる
 
   @GetMapping({ "/", "/home" })
   public String index(Model model, HttpSession session) {
-    // 1. セッションからログインID（username）を取得する
-    Object loginUserObj = session.getAttribute("loginUser");
+    // 1. セッションからUserDataオブジェクトを取得する
+    UserData userData = (UserData) session.getAttribute(SESSION_USER_DATA_KEY);
 
-    // ログインIDがセッションにあれば処理を行う
-    if (loginUserObj instanceof String loginUser) {
-      // 2. UserServiceを使ってIDから表示名を取得する
-      String displayName = userService.getDisplayNameByUsername(loginUser);
-
-      // 3. ModelにIDと表示名を両方追加する
-      model.addAttribute("loginUser", loginUser); // ID (username)
-      model.addAttribute("displayName", displayName); // 表示名 (display_name)
+    // ログインデータが存在すれば、表示名とIDをModelに追加する
+    if (userData != null) {
+      model.addAttribute("displayName", userData.getDisplayName());
+      // 必要であればIDやロールも渡せます
+      // model.addAttribute("loginUser", userData.getUserId());
+      // model.addAttribute("roleCode", userData.getRoleCode());
     }
 
     model.addAttribute("title", "トップページ");
