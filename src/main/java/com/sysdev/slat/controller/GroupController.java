@@ -1,16 +1,22 @@
 package com.sysdev.slat.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.sysdev.slat.GroupDetailDto;
 import com.sysdev.slat.accountadmin.AccountadminEntity;
-import com.sysdev.slat.accountadmin.AccountadminRepository;
 import com.sysdev.slat.accountadmin.AccountadminService;
 import com.sysdev.slat.service.GroupService;
 
@@ -65,7 +71,35 @@ public class GroupController {
   }
 
   @GetMapping("/groupinfo")
-  public String getGroupinfo() {
+  public String groupinfoList(Model model) {
+    model.addAttribute("groups", groupService.findAllGroupsWithCounts());
     return "groupinfo/index";
   }
+
+  @GetMapping("/groupinfo/{groupId}")
+  public String groupinfoDetail(@PathVariable("groupId") UUID groupId, Model model) {
+    GroupDetailDto detail = groupService.getGroupDetail(groupId);
+    if (detail == null) {
+      model.addAttribute("errorMessage", "指定されたグループが見つかりません。");
+      model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+      return "groupinfo/index";
+    }
+    model.addAttribute("group", detail.getGroup()); // Map<String,Object>
+    model.addAttribute("members", detail.getMembers()); // List<Map<String,Object>>
+    return "groupinfo/index";
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public String handleBadId(Model model) {
+    model.addAttribute("errorMessage", "グループIDの形式が不正です。");
+    model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+    return "groupinfo/index";
+  }
+
+  // @GetMapping("/grouplist")
+  // public String listGroups(Model model) {
+  // model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+  // return "groupinfo/index";
+  // }
 }
