@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.sysdev.slat.accountadmin.AccountadminEntity;
+import com.sysdev.slat.accountadmin.AccountadminRepository;
+import com.sysdev.slat.accountadmin.AccountadminService;
 import com.sysdev.slat.service.GroupService;
 
 @Controller
@@ -20,9 +23,13 @@ public class GroupController {
   @Autowired
   private LoginController loginController;
 
+  @Autowired
+  private AccountadminService accountadminService;
+
   @GetMapping("/groupcreate")
   public String getGroupcreate(Model model) {
-    // model.addAttribute("users", userRepository.findAllOrderByUsernameAsc());
+    // アクティブユーザー一覧
+    model.addAttribute("accounts", accountadminService.findAllActiveAccounts());
     return "groupcreate/index";
   }
 
@@ -30,10 +37,13 @@ public class GroupController {
   public String createGroup(
       @RequestParam(name = "name") String name,
       @RequestParam(name = "owner") String owner,
-      @RequestParam(name = "member") String member,
+      @RequestParam(name = "members") List<String> members,
       Model model) {
 
     System.out.println("[Log] /post groupcreate");
+
+    AccountadminEntity entity = accountadminService.getAccountListEntity();
+    model.addAttribute("accountadminEntity", entity);
 
     // 入力チェック
     boolean isValid = groupService.validateName(name);
@@ -43,7 +53,7 @@ public class GroupController {
     }
 
     // 登録
-    boolean ok = groupService.createGroup(owner, name, member);
+    boolean ok = groupService.createGroup(owner, name, members);
 
     if (ok) {
       model.addAttribute("message", "グループを作成しました");

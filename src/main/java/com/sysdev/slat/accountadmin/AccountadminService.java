@@ -19,28 +19,48 @@ public class AccountadminService {
     this.accountadminRepository = accountadminRepository;
   }
 
+  public List<AccountadminData> findAllActiveAccounts() {
+    return accountadminRepository.findAllActiveAccounts();
+  }
+
+  /** 既存: 画面用に Entity を返すメソッドがあるならそれも共存でOK */
+  public AccountadminEntity getAccountListEntity() {
+    AccountadminEntity entity = new AccountadminEntity();
+    try {
+      List<AccountadminData> accountList = accountadminRepository.findAllActiveAccounts();
+      entity.setTaskList(accountList);
+
+      logger.info("アカウント一覧データ取得成功。件数: {}", accountList.size());
+    } catch (Exception e) {
+      logger.error("アカウント情報の取得中に致命的なエラーが発生しました。", e);
+      entity.setErrorMessage("データ取得エラー: " + e.getLocalizedMessage());
+    }
+    return entity;
+  }
+
   /**
    * アカウント一覧画面表示用のエンティティを構築します。
    */
-  public AccountadminEntity getAccountListEntity() {
-    AccountadminEntity entity = new AccountadminEntity();
+  // public AccountadminEntity getAccountListEntity() {
+  // AccountadminEntity entity = new AccountadminEntity();
 
-    try {
-      List<AccountadminData> accountList = accountadminRepository.findAllActiveAccounts();
+  // try {
+  // List<AccountadminData> accountList =
+  // accountadminRepository.findAllActiveAccounts();
 
-      entity.setTaskList(accountList);
-      logger.info("アカウント一覧データ取得成功。件数: {}", accountList.size());
+  // entity.setTaskList(accountList);
+  // logger.info("アカウント一覧データ取得成功。件数: {}", accountList.size());
 
-    } catch (Exception e) {
-      // 🚨 修正箇所: 画面に具体的なエラーメッセージを表示させる
-      logger.error("アカウント情報の取得中に致命的なエラーが発生しました。", e);
+  // } catch (Exception e) {
+  // // 修正箇所: 画面に具体的なエラーメッセージを表示させる
+  // logger.error("アカウント情報の取得中に致命的なエラーが発生しました。", e);
 
-      // 画面に表示するエラーメッセージに、例外の原因を含める
-      entity.setErrorMessage("データ取得エラー: " + e.getLocalizedMessage());
-    }
+  // // 画面に表示するエラーメッセージに、例外の原因を含める
+  // entity.setErrorMessage("データ取得エラー: " + e.getLocalizedMessage());
+  // }
 
-    return entity;
-  }
+  // return entity;
+  // }
 
   /**
    * 指定されたIDのアカウントを削除します。
