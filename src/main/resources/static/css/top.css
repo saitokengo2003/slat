@@ -265,3 +265,36 @@ body {
 .dropdown.show .dropdown-menu {
   display: block;
 }
+/* ログインユーザー情報エリア */
+.logged-in-user {
+  padding: 10px 15px; /* 上下左右のパディング */
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #3d4554; /* 区切り線 */
+}
+
+/* ユーザーアイコンのスタイル */
+.user-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #007bff; /* アイコン背景色 */
+  color: white; /* アイコン文字色 */
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+/* ユーザー名のスタイル */
+.user-name {
+  font-weight: bold;
+  color: #f1f1f1; /* 文字色 */
+}
+.user-sidebar-name {
+  margin-left: 10px;
+  /* 必要に応じて、垂直方向のアライメントも調整 */
+  /* vertical-align: middle; */
+}
