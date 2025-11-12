@@ -21,9 +21,22 @@
         <input type="text" name="owner" placeholder="owner" />
 
         <div class="form-section">
-          <label>参加者を追加</label>
-          <div class="member">
-            <input type="text" name="member" placeholder="member" />
+          <label>参加者を追加（複数選択可）</label>
+
+          <div class="row header">
+            <input type="checkbox" id="checkAll" />
+            <div>表示名</div>
+            <div>ユーザー名</div>
+            <div>ロール</div>
+          </div>
+
+          <div class="account-list">
+            <div class="row" th:each="acc : ${accounts}">
+              <input type="checkbox" name="members" th:value="${acc.username}" class="memberBox" />
+              <div th:text="${acc.display_name}">OO OO</div>
+              <div th:text="${acc.username}">OOO</div>
+              <div th:text="${acc.role_code}">OOO</div>
+            </div>
           </div>
         </div>
 

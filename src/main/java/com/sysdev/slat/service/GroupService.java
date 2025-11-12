@@ -1,9 +1,15 @@
 package com.sysdev.slat.service;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +23,7 @@ public class GroupService {
     return name != null && !name.isBlank() && name.length() <= 255;
   }
 
-  public boolean createGroup(String ownerUsername, String groupName, String member) {
+  public boolean createGroup(String ownerUsername, String groupName, List<String> members) {
     try {
       UUID groupId = UUID.randomUUID();
 
@@ -30,11 +36,33 @@ public class GroupService {
           "INSERT INTO group_members (group_id, user_id, role_in_group) VALUES (?, ?, 'owner')",
           groupId, ownerUsername);
 
-      // member 入力があれば member ロールで追加（ownerと同じ/空はスキップ）
-      if (member != null && !member.isBlank() && !member.equals(ownerUsername)) {
-        jdbc.update(
-            "INSERT INTO group_members (group_id, user_id, role_in_group) VALUES (?, ?, 'member')",
-            groupId, member);
+      // メンバー（重複/owner 除外）
+      List<String> distinctMembers = Optional.ofNullable(members)
+          .orElseGet(List::of).stream()
+          .filter(u -> u != null && !u.isBlank())
+          .map(String::trim)
+          .filter(u -> !u.equals(ownerUsername))
+          .distinct()
+          .collect(Collectors.toList());
+
+      if (!distinctMembers.isEmpty()) {
+        // Postgres: 重複抑止（ユニーク制約がある前提、なければ付与推奨）
+        final String sql = "INSERT INTO group_members (group_id, user_id, role_in_group) " +
+            "VALUES (?, ?, 'member') " +
+            "ON CONFLICT (group_id, user_id) DO NOTHING";
+
+        jdbc.batchUpdate(sql, new BatchPreparedStatementSetter() {
+          @Override
+          public void setValues(PreparedStatement ps, int i) throws SQLException {
+            ps.setObject(1, groupId);
+            ps.setString(2, distinctMembers.get(i));
+          }
+
+          @Override
+          public int getBatchSize() {
+            return distinctMembers.size();
+          }
+        });
       }
 
       return true;
