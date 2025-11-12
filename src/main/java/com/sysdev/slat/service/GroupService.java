@@ -3,15 +3,19 @@ package com.sysdev.slat.service;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import com.sysdev.slat.GroupDetailDto;
 
 @Service
 public class GroupService {
@@ -76,5 +80,37 @@ public class GroupService {
       }
       return false;
     }
+  }
+
+  public GroupDetailDto getGroupDetail(UUID groupId) {
+    try {
+      // グループ本体
+      Map<String, Object> group = jdbc.queryForMap(
+          "SELECT id, name, type, created_by, created_at FROM group_s WHERE id = ?", groupId);
+
+      // メンバー一覧
+      List<Map<String, Object>> members = jdbc.queryForList(
+          "SELECT gm.user_id, gm.role_in_group, u.display_name, u.role_code " +
+              "FROM group_members gm " +
+              "JOIN users_s u ON gm.user_id = u.username " +
+              "WHERE gm.group_id = ? " +
+              "ORDER BY gm.role_in_group DESC, u.display_name ASC",
+          groupId);
+
+      return new GroupDetailDto(group, members);
+
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    }
+  }
+
+  public List<Map<String, Object>> findAllGroupsWithCounts() {
+    String sql = "SELECT g.id, g.name, g.created_by, g.created_at, " +
+        "       COUNT(m.user_id) AS member_count " +
+        "FROM group_s g " +
+        "LEFT JOIN group_members m ON m.group_id = g.id " +
+        "GROUP BY g.id, g.name, g.created_by, g.created_at " +
+        "ORDER BY g.created_at DESC";
+    return jdbc.queryForList(sql);
   }
 }

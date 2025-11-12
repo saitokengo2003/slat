@@ -19,108 +19,89 @@
 
   <body>
     <div class="container-fluid p-0 d-flex">
-      <!-- ✅ サイドバー（変更なし） -->
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-top px-3 mb-3">
-          <button class="menu-btn" id="menu-toggle">☰</button>
-        </div>
+      <!-- （サイドバーは必要なら戻す） -->
 
-        <a th:href="@{/groupcreate}" class="create-group-icon">
-          <img th:src="@{/images/group_icon.png}" alt="group" class="group-icon-img" />
-        </a>
+      <main class="main-content container py-4">
+        <p class="text-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
 
-        <p class="menu-title">▼ ダイレクトメッセージ</p>
-        <ul class="menu-list">
-          <li><span class="icon">A</span> <span class="menu-text">○○○</span></li>
-          <li><span class="icon">B</span> <span class="menu-text">○○○</span></li>
-          <li><span class="icon">C</span> <span class="menu-text">○○○</span></li>
-        </ul>
-
-        <p class="menu-title">▼ グループ</p>
-        <ul class="menu-list">
-          <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
-          <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
-          <li><span class="group-icon">X</span> <span class="menu-text">○○○</span></li>
-        </ul>
-      </aside>
-
-      <!-- ✅ メインコンテンツ -->
-      <main class="main-content">
-        <div class="group-header">
-          <h1>グループ詳細</h1>
-          <button class="filter-btn">⚙ フィルター</button>
-        </div>
-
-        <table class="group-table">
-          <thead>
-            <tr>
-              <th>グループ</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><div class="menu-icon">ナ</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-            <tr>
-              <td><div class="menu-icon">セ</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-            <tr>
-              <td><div class="menu-icon">U</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-            <tr>
-              <td><div class="menu-icon">テ</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-            <tr>
-              <td><div class="menu-icon">?</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-            <tr>
-              <td><div class="menu-icon">Q</div></td>
-              <td>
-                <button class="action-btn edit">✏️</button>
-                <button class="action-btn delete">🗑️</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <!-- ✅ 削除確認モーダル -->
-        <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title text-danger">削除の確認</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">本当にこのグループを削除しますか？</div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                  キャンセル
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">削除する</button>
-              </div>
-            </div>
+        <!-- ▼ 詳細モード：group がある時のみ -->
+        <section th:if="${group != null}">
+          <div class="group-header mb-3">
+            <h1 th:text="${group.name} + ' の詳細'">グループ詳細</h1>
+            <p>
+              作成者:
+              <span th:text="${group.created_by}">owner</span>
+              / 作成日:
+              <span
+                th:text="${group.created_at != null ? #dates.format(group.created_at, 'yyyy-MM-dd HH:mm') : '-'}"
+                >-</span
+              >
+            </p>
           </div>
-        </div>
+
+          <table class="group-table mb-4">
+            <thead>
+              <tr>
+                <th>ユーザー名</th>
+                <th>表示名</th>
+                <th>ロール</th>
+                <th>グループ内ロール</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="m : ${members}">
+                <td th:text="${m.user_id}">username</td>
+                <td th:text="${m.display_name}">表示名</td>
+                <td th:text="${m.role_code}">student</td>
+                <td th:text="${m.role_in_group}">member</td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(members)}">
+                <td colspan="4" class="dim">メンバーがいません</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <a class="btn btn-outline-secondary" th:href="@{/groupinfo}">一覧に戻る</a>
+        </section>
+
+        <!-- ▼ 一覧モード：group が無い時 -->
+        <section th:if="${group == null}">
+          <div class="group-header mb-3">
+            <h1>グループ一覧</h1>
+          </div>
+
+          <table class="group-table">
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>作成者</th>
+                <th>作成日</th>
+                <th>メンバー数</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="g : ${groups}">
+                <td th:text="${g.name}">グループ名</td>
+                <td th:text="${g.created_by}">owner</td>
+                <td
+                  th:text="${g.created_at != null ? #dates.format(g.created_at, 'yyyy-MM-dd HH:mm') : '-'}"
+                >
+                  -
+                </td>
+                <td th:text="${g.member_count}">0</td>
+                <td>
+                  <a class="btn btn-sm btn-primary" th:href="@{/groupinfo/{id}(id=${g.id})}"
+                    >詳細</a
+                  >
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(groups)}">
+                <td colspan="5" class="dim">グループがありません</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
       </main>
     </div>
 
