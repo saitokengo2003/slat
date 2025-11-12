@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,10 +10,24 @@
     <div class="form-container">
       <h1>アカウント作成</h1>
 
-      <form action="#" method="post" class="account-form">
+      <form
+        th:action="@{/accountcreate}"
+        method="post"
+        th:object="${accountForm}"
+        class="account-form"
+      >
+        <div th:if="${message}" class="success-message" th:text="${message}"></div>
+        <div th:if="${errorMessage}" class="error-message" th:text="${errorMessage}"></div>
+
         <div class="form-group">
           <label for="user-id">ユーザID</label>
-          <input type="text" id="user-id" name="user_id" placeholder="ユーザIDを入力" required />
+          <input
+            type="text"
+            id="user-id"
+            th:field="*{userId}"
+            placeholder="ユーザIDを入力"
+            required
+          />
         </div>
 
         <div class="form-group">
@@ -21,7 +35,7 @@
           <input
             type="password"
             id="password"
-            name="password"
+            th:field="*{password}"
             placeholder="パスワードを入力"
             required
           />
@@ -29,13 +43,13 @@
 
         <div class="form-group">
           <label for="name">名前</label>
-          <input type="text" placeholder="名前を入力" required />
+          <input type="text" id="name" th:field="*{name}" placeholder="名前を入力" required />
         </div>
 
         <div class="form-group">
           <label for="role">権限</label>
-          <select id="role" name="role" required>
-            <option value="" disabled selected></option>
+          <select id="role" th:field="*{role}" required>
+            <option value="" disabled selected>選択してください</option>
             <option value="admin">管理者</option>
             <option value="teacher">先生</option>
             <option value="student">生徒</option>
@@ -44,8 +58,8 @@
 
         <div class="form-group">
           <label for="grade">学年</label>
-          <select id="grade" name="grade">
-            <option value="" disabled selected></option>
+          <select id="grade" th:field="*{grade}">
+            <option value="" disabled selected>選択してください</option>
             <option value="1">1年</option>
             <option value="2">2年</option>
             <option value="3">3年</option>
@@ -54,8 +68,8 @@
 
         <div class="form-group">
           <label for="class">クラス</label>
-          <select id="class" name="class">
-            <option value="" disabled selected></option>
+          <select id="class" th:field="*{classId}">
+            <option value="" disabled selected>選択してください</option>
             <option value="A">A組</option>
             <option value="B">B組</option>
             <option value="C">C組</option>
@@ -64,7 +78,7 @@
 
         <div class="form-group">
           <label for="number">番号</label>
-          <input type="number" id="number" name="number" />
+          <input type="number" id="number" th:field="*{number}" />
         </div>
 
         <button type="submit" class="create-button">作成する</button>
