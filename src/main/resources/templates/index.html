@@ -23,6 +23,9 @@
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top px-3 mb-3">
           <button class="menu-btn" id="menu-toggle">☰</button>
+          <span th:if="${displayName}" class="user-sidebar-name ms-3">
+            <span th:text="${displayName}">ユーザー名</span>
+          </span>
         </div>
 
         <!-- ✅ グループ作成アイコン（画像版） -->
@@ -49,7 +52,10 @@
       <main class="main-content">
         <div class="top-bar d-flex justify-content-between align-items-center">
           <input type="text" class="search-bar" placeholder="検索" />
-          <button class="logout-btn">ログアウト</button>
+
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="logout-btn">ログアウト</button>
+          </form>
         </div>
 
         <h2 class="page-title">ホーム</h2>
