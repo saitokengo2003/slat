@@ -3,26 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<<<<<<< Updated upstream
     <title>チャット</title>
+=======
+    <title>Slat チャットホーム</title>
+>>>>>>> Stashed changes
 
     <link rel="icon" th:href="@{/images/logo.png}" />
 
-    <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
-    <!-- ✅ カスタムCSS -->
-    <link rel="stylesheet" href="/css/chat.css" />
+    <link rel="stylesheet" th:href="@{/css/chat.css}" />
   </head>
 
   <body>
     <div class="container-fluid p-0 d-flex">
-      <!-- ✅ サイドバー -->
+      <input type="hidden" id="logged-in-user-id" th:value="${loggedInUserId}" />
+
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top px-3 mb-3">
           <button class="menu-btn" id="menu-toggle">☰</button>
+
           <span th:if="${displayName}" class="user-sidebar-name ms-3">
             <span th:text="${displayName}">ユーザー名</span>
           </span>
@@ -34,32 +38,37 @@
 
         <p class="menu-title">▼ ダイレクトメッセージ</p>
         <ul class="menu-list">
-          <li><span class="icon">A</span> <span class="menu-text">○○○</span></li>
-          <li><span class="icon">B</span> <span class="menu-text">○○○</span></li>
-          <li><span class="icon">C</span> <span class="menu-text">○○○</span></li>
+          <li
+            th:each="user : ${otherUsers}"
+            class="user-list-item"
+            th:data-user-id="${user.userId}"
+            th:data-display-name="${user.displayName}"
+          >
+            <span class="icon" th:text="${#strings.substring(user.displayName, 0, 1)}">A</span>
+            <span class="menu-text" th:text="${user.displayName}">ユーザー名</span>
+          </li>
         </ul>
 
         <p class="menu-title">▼ グループ</p>
         <ul class="menu-list">
           <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
           <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
-          <li><span class="group-icon">X</span> <span class="menu-text">○○○</span></li>
         </ul>
       </aside>
 
-      <!-- ✅ メインコンテンツ -->
       <main class="main-content">
         <div class="top-bar d-flex justify-content-between align-items-center">
+          <h5 id="chat-partner-name">チャット相手を選択してください</h5>
           <input type="text" class="search-bar" placeholder="検索" />
         </div>
 
-        <!-- ✅ チャットエリア -->
-        <div class="chat-area"></div>
+        <div class="chat-area">
+          <p class="guide-text">サイドバーからチャット相手を選択すると、履歴が表示されます。</p>
+        </div>
 
-        <!-- ✅ メッセージ入力欄 -->
-        <div class="chat-input-area">
-          <input type="text" class="chat-input" placeholder="メッセージ入力" />
-          <button class="send-btn">➤</button>
+        <div class="chat-input-area d-flex align-items-center p-3">
+          <input type="text" class="form-control chat-input" placeholder="メッセージを入力..." />
+          <button class="btn btn-primary ms-2 send-btn">送信</button>
         </div>
       </main>
     </div>

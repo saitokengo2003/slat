@@ -114,3 +114,23 @@ CREATE TABLE
     CONSTRAINT fk_reaction_message FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE, -- メッセージ削除でリアクションも削除
     CONSTRAINT fk_reaction_user FOREIGN KEY (user_id) REFERENCES users_s (username)
   );
+
+-- -----------------------------------------------------
+-- Table dmmessage (DMメッセージ - group_sに依存しない設計)
+-- -----------------------------------------------------
+CREATE TABLE
+  dmmessage (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+    sender_id VARCHAR(100) NOT NULL,
+    recipient_id VARCHAR(100) NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reaction_deadline_at TIMESTAMP WITH TIME ZONE,
+    deadline_scope VARCHAR(50),
+    -- ⭐ CHECK制約を一行にまとめる
+    deadline_status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (
+      deadline_status IN ('open', 'closed', 'evaluated')
+    ),
+    CONSTRAINT fk_dm_sender FOREIGN KEY (sender_id) REFERENCES users_s (username),
+    CONSTRAINT fk_dm_recipient FOREIGN KEY (recipient_id) REFERENCES users_s (username)
+  );
