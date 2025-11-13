@@ -34,7 +34,6 @@ public class GroupController {
 
   @GetMapping("/groupcreate")
   public String getGroupcreate(Model model) {
-    // アクティブユーザー一覧
     model.addAttribute("accounts", accountadminService.findAllActiveAccounts());
     return "groupcreate/index";
   }
@@ -84,8 +83,9 @@ public class GroupController {
       model.addAttribute("groups", groupService.findAllGroupsWithCounts());
       return "groupinfo/index";
     }
-    model.addAttribute("group", detail.getGroup()); // Map<String,Object>
-    model.addAttribute("members", detail.getMembers()); // List<Map<String,Object>>
+    model.addAttribute("group", detail.getGroup());
+    model.addAttribute("members", detail.getMembers());
+    model.addAttribute("accounts", accountadminService.findAllActiveAccounts());
     return "groupinfo/index";
   }
 
@@ -103,11 +103,20 @@ public class GroupController {
 
     if (ok) {
       model.addAttribute("message", "グループを削除しました。");
+      model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+      return "groupinfo/index";
     } else {
       model.addAttribute("errorMessage", "グループ削除に失敗しました。");
+      GroupDetailDto detail = groupService.getGroupDetail(groupId);
+      if (detail != null) {
+        model.addAttribute("group", detail.getGroup());
+        model.addAttribute("members", detail.getMembers());
+        model.addAttribute("accounts", accountadminService.findAllActiveAccounts());
+      } else {
+        model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+      }
+      return "groupinfo/index";
     }
-    model.addAttribute("groups", groupService.findAllGroupsWithCounts());
-    return "groupinfo/index";
   }
 
   @PostMapping("/group/{groupId}/member/{userId}/delete")
@@ -124,10 +133,8 @@ public class GroupController {
       model.addAttribute("errorMessage", "メンバー削除に失敗しました。（オーナーは削除できません）");
     }
 
-    // 削除後も同じグループ詳細画面に戻る
     GroupDetailDto detail = groupService.getGroupDetail(groupId);
     if (detail == null) {
-      // グループ自体が消えていた場合など
       model.addAttribute("errorMessage", "指定されたグループが見つかりません。");
       model.addAttribute("groups", groupService.findAllGroupsWithCounts());
       return "groupinfo/index";
@@ -135,6 +142,33 @@ public class GroupController {
 
     model.addAttribute("group", detail.getGroup());
     model.addAttribute("members", detail.getMembers());
+    return "groupinfo/index";
+  }
+
+  @PostMapping("/group/{groupId}/member/add")
+  public String addGroupMember(
+      @PathVariable("groupId") UUID groupId,
+      @RequestParam("userId") String userId,
+      Model model) {
+
+    boolean ok = groupService.addGroupMember(groupId, userId);
+
+    if (ok) {
+      model.addAttribute("message", "メンバーを追加しました。");
+    } else {
+      model.addAttribute("errorMessage", "メンバー追加に失敗しました。（既に参加済みの可能性があります）");
+    }
+
+    GroupDetailDto detail = groupService.getGroupDetail(groupId);
+    if (detail == null) {
+      model.addAttribute("errorMessage", "指定されたグループが見つかりません。");
+      model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+      return "groupinfo/index";
+    }
+
+    model.addAttribute("group", detail.getGroup());
+    model.addAttribute("members", detail.getMembers());
+    model.addAttribute("accounts", accountadminService.findAllActiveAccounts());
     return "groupinfo/index";
   }
 

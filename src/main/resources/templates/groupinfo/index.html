@@ -87,6 +87,31 @@
             </tbody>
           </table>
 
+          <div class="mb-4">
+            <h2 class="h5">メンバー追加</h2>
+            <form
+              th:action="@{/group/{id}/member/add(id=${group.id})}"
+              method="post"
+              class="row g-2 align-items-center"
+            >
+              <div class="col-auto">
+                <select class="form-select" name="userId" required>
+                  <option value="" selected disabled>ユーザーを選択...</option>
+                  <option
+                    th:each="a : ${accounts}"
+                    th:value="${a.username}"
+                    th:text="${a.display_name + ' (' + a.username + ')'}"
+                  >
+                    user
+                  </option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary">追加</button>
+              </div>
+            </form>
+          </div>
+
           <div class="mb-3">
             <a class="btn btn-outline-secondary" th:href="@{/groupinfo}">一覧に戻る</a>
             <form
