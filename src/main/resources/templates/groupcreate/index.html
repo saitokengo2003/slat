@@ -17,27 +17,39 @@
           <input type="text" id="group-name" name="name" placeholder="グループ名を入力" />
         </div>
 
-        <label>作成者(任意)</label>
-        <input type="text" name="owner" placeholder="owner" />
+        <div class="form-section">
+          <label>作成者（任意）</label>
+          <input type="text" name="owner" placeholder="owner" />
+        </div>
 
         <div class="form-section">
           <label>参加者を追加（複数選択可）</label>
 
-          <div class="row header">
-            <input type="checkbox" id="checkAll" />
-            <div>表示名</div>
-            <div>ユーザー名</div>
-            <div>ロール</div>
-          </div>
-
-          <div class="account-list">
-            <div class="row" th:each="acc : ${accounts}">
-              <input type="checkbox" name="members" th:value="${acc.username}" class="memberBox" />
-              <div th:text="${acc.display_name}">OO OO</div>
-              <div th:text="${acc.username}">OOO</div>
-              <div th:text="${acc.role_code}">OOO</div>
-            </div>
-          </div>
+          <table class="account-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="checkAll" /></th>
+                <th>表示名</th>
+                <th>ユーザー名</th>
+                <th>ロール</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="acc : ${accounts}">
+                <td>
+                  <input
+                    type="checkbox"
+                    name="members"
+                    th:value="${acc.username}"
+                    class="memberBox"
+                  />
+                </td>
+                <td th:text="${acc.display_name}">OO OO</td>
+                <td th:text="${acc.username}">OOO</td>
+                <td th:text="${acc.role_code}">OOO</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <button class="create-btn" type="submit">作成する</button>
