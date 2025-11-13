@@ -13,14 +13,12 @@ body {
 /* コンテナ */
 .group-create-container {
   text-align: center;
-  border: 1px solid #ccc;
   padding: 40px 60px;
   border-radius: 8px;
   background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  width: 90%;
-  max-width: 400px; /* ✅ 画面サイズに合わせて調整 */
   box-sizing: border-box;
+  width: 80%;
+  height: 80%;
 }
 
 /* タイトル */
@@ -144,11 +142,6 @@ hr {
   transform: scale(1.2);
 }
 
-/* ✅ ヘッダーのチェックボックスだけ非表示 */
-.account-table thead input[type="checkbox"] {
-  display: none;
-}
-
 /* ✅ 作成者フォームをグループ名と同じ大きさに揃える */
 input[name="owner"] {
   width: 100%;
@@ -157,4 +150,18 @@ input[name="owner"] {
   border-radius: 4px;
   font-size: 14px;
   box-sizing: border-box;
+}
+
+/* ===== チェック済み行のスタイル ===== */
+.account-table tr.selected {
+  background-color: #d9f0e2 !important; /* 薄い緑で選択中を明示 */
+  transition: background-color 0.2s ease;
+}
+
+.account-table th label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
 }
