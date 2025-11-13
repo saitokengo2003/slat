@@ -36,7 +36,6 @@ public class GroupService {
           "INSERT INTO group_s (id, name, type, created_by) VALUES (?, ?, 'group', ?)",
           groupId, groupName, ownerUsername);
 
-      // 作成者を owner として group_members に INSERT
       jdbc.update(
           "INSERT INTO group_members (group_id, user_id, role_in_group) VALUES (?, ?, 'owner')",
           groupId, ownerUsername);
@@ -51,7 +50,6 @@ public class GroupService {
           .collect(Collectors.toList());
 
       if (!distinctMembers.isEmpty()) {
-        // Postgres: 重複抑止（ユニーク制約がある前提、なければ付与推奨）
         final String sql = "INSERT INTO group_members (group_id, user_id, role_in_group) " +
             "VALUES (?, ?, 'member') " +
             "ON CONFLICT (group_id, user_id) DO NOTHING";
@@ -85,11 +83,9 @@ public class GroupService {
 
   public GroupDetailDto getGroupDetail(UUID groupId) {
     try {
-      // グループ本体
       Map<String, Object> group = jdbc.queryForMap(
           "SELECT id, name, type, created_by, created_at FROM group_s WHERE id = ?", groupId);
 
-      // メンバー一覧
       List<Map<String, Object>> members = jdbc.queryForList(
           "SELECT gm.user_id, gm.role_in_group, u.display_name, u.role_code " +
               "FROM group_members gm " +
@@ -126,4 +122,41 @@ public class GroupService {
       return false;
     }
   }
+
+  @Transactional
+  public boolean deleteGroupMember(UUID groupId, String userId) {
+    try {
+      int deleted = jdbc.update(
+          "DELETE FROM group_members " +
+              "WHERE group_id = ? AND user_id = ? AND role_in_group <> 'owner'",
+          groupId, userId);
+
+      return deleted > 0;
+    } catch (DataAccessException e) {
+      System.err.println("[GroupService#deleteGroupMember] DB error: " + e.getMessage());
+      return false;
+    }
+  }
+
+  @Transactional
+  public boolean addGroupMember(UUID groupId, String userId) {
+    try {
+      int inserted = jdbc.update(
+          "INSERT INTO group_members (group_id, user_id, role_in_group) " +
+              "VALUES (?, ?, 'member') " +
+              "ON CONFLICT (group_id, user_id) DO NOTHING",
+          groupId, userId);
+
+      return inserted > 0;
+    } catch (DataAccessException e) {
+      System.err.println("[GroupService#addGroupMember] DB error: " + e.getMessage());
+      Throwable c = e.getCause();
+      while (c != null) {
+        System.err.println("  cause: " + c.getMessage());
+        c = c.getCause();
+      }
+      return false;
+    }
+  }
+
 }
