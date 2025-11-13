@@ -67,7 +67,7 @@ public class GroupController {
       model.addAttribute("errorMessage", "作成に失敗しました。もう一度お試しください");
     }
 
-    return "groupcreate/index";
+    return "groupinfo/index";
   }
 
   @GetMapping("/groupinfo")
@@ -93,6 +93,19 @@ public class GroupController {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public String handleBadId(Model model) {
     model.addAttribute("errorMessage", "グループIDの形式が不正です。");
+    model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+    return "groupinfo/index";
+  }
+
+  @PostMapping("/group/{groupId}/delete")
+  public String deleteGroup(@PathVariable("groupId") UUID groupId, Model model) {
+    boolean ok = groupService.deleteGroup(groupId);
+
+    if (ok) {
+      model.addAttribute("message", "グループを削除しました。");
+    } else {
+      model.addAttribute("errorMessage", "グループ削除に失敗しました。");
+    }
     model.addAttribute("groups", groupService.findAllGroupsWithCounts());
     return "groupinfo/index";
   }

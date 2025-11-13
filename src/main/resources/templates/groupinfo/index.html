@@ -1,41 +1,51 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ホーム</title>
+    <title>グループ</title>
 
     <link rel="icon" th:href="@{/images/logo.png}" />
-
-    <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-
-    <!-- ✅ カスタムCSS -->
     <link rel="stylesheet" href="/css/groupinfo.css" />
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      thead {
+        background: #f8f8f8;
+      }
+      .dim {
+        opacity: 0.7;
+      }
+    </style>
   </head>
-
   <body>
     <div class="container-fluid p-0 d-flex">
-      <!-- （サイドバーは必要なら戻す） -->
-
       <main class="main-content container py-4">
+        <!-- メッセージ -->
         <p class="text-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+        <p class="text-success" th:if="${message}" th:text="${message}"></p>
 
-        <!-- ▼ 詳細モード：group がある時のみ -->
+        <!-- ▼ 詳細モード：group がある時だけ描画 -->
         <section th:if="${group != null}">
           <div class="group-header mb-3">
-            <h1 th:text="${group.name} + ' の詳細'">グループ詳細</h1>
+            <h1 th:text="${group.name}">グループ詳細</h1>
             <p>
               作成者:
               <span th:text="${group.created_by}">owner</span>
               / 作成日:
-              <span
-                th:text="${group.created_at != null ? #dates.format(group.created_at, 'yyyy-MM-dd HH:mm') : '-'}"
-                >-</span
-              >
+              <!-- まずは生の値をそのまま表示（フォーマット無し） -->
+              <span th:text="${group.created_at}">-</span>
             </p>
           </div>
 
@@ -61,10 +71,22 @@
             </tbody>
           </table>
 
-          <a class="btn btn-outline-secondary" th:href="@{/groupinfo}">一覧に戻る</a>
+          <div class="mb-3">
+            <a class="btn btn-outline-secondary" th:href="@{/groupinfo}">一覧に戻る</a>
+
+            <!-- グループ削除ボタン（詳細画面） -->
+            <form
+              th:action="@{/group/{id}/delete(id=${group.id})}"
+              method="post"
+              class="d-inline"
+              onsubmit="return confirm('このグループを削除します。よろしいですか？');"
+            >
+              <button type="submit" class="btn btn-danger">削除</button>
+            </form>
+          </div>
         </section>
 
-        <!-- ▼ 一覧モード：group が無い時 -->
+        <!-- ▼ 一覧モード：group が無い時に描画 -->
         <section th:if="${group == null}">
           <div class="group-header mb-3">
             <h1>グループ一覧</h1>
@@ -84,16 +106,23 @@
               <tr th:each="g : ${groups}">
                 <td th:text="${g.name}">グループ名</td>
                 <td th:text="${g.created_by}">owner</td>
-                <td
-                  th:text="${g.created_at != null ? #dates.format(g.created_at, 'yyyy-MM-dd HH:mm') : '-'}"
-                >
-                  -
-                </td>
+                <!-- まずはフォーマットせず生の created_at を表示 -->
+                <td th:text="${g.created_at}">-</td>
                 <td th:text="${g.member_count}">0</td>
                 <td>
                   <a class="btn btn-sm btn-primary" th:href="@{/groupinfo/{id}(id=${g.id})}"
                     >詳細</a
                   >
+
+                  <!-- グループ削除ボタン（一覧画面） -->
+                  <form
+                    th:action="@{/group/{id}/delete(id=${g.id})}"
+                    method="post"
+                    class="d-inline"
+                    onsubmit="return confirm('本当に削除しますか？');"
+                  >
+                    <button type="submit" class="btn btn-sm btn-danger">削除</button>
+                  </form>
                 </td>
               </tr>
               <tr th:if="${#lists.isEmpty(groups)}">

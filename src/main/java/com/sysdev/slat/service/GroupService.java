@@ -14,6 +14,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sysdev.slat.GroupDetailDto;
 
@@ -112,5 +113,17 @@ public class GroupService {
         "GROUP BY g.id, g.name, g.created_by, g.created_at " +
         "ORDER BY g.created_at DESC";
     return jdbc.queryForList(sql);
+  }
+
+  @Transactional
+  public boolean deleteGroup(UUID groupId) {
+    try {
+      jdbc.update("DELETE FROM group_members WHERE group_id = ?", groupId);
+      int deleted = jdbc.update("DELETE FROM group_s WHERE id = ?", groupId);
+      return deleted == 1;
+    } catch (DataAccessException e) {
+      System.err.println("[GroupService#deleteGroup] DB error: " + e.getMessage());
+      return false;
+    }
   }
 }
