@@ -114,3 +114,47 @@ hr {
     font-size: 14px;
   }
 }
+
+/* テーブルの整形 */
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.account-table th,
+.account-table td {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.account-table th {
+  background-color: #f4f8f4;
+  color: #006400;
+  font-weight: bold;
+}
+
+.account-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.account-table input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+/* ✅ ヘッダーのチェックボックスだけ非表示 */
+.account-table thead input[type="checkbox"] {
+  display: none;
+}
+
+/* ✅ 作成者フォームをグループ名と同じ大きさに揃える */
+input[name="owner"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
