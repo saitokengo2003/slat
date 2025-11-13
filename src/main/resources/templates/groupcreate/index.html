@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>グループ作成</title>
     <link rel="stylesheet" href="/css/groupcreate.css" />
+    <style>
+      /* ⚠️ 追加：警告メッセージのスタイル */
+      .warning-message {
+        color: red;
+        font-size: 14px;
+        margin-top: 10px;
+        display: none;
+      }
+    </style>
   </head>
 
   <body>
     <div class="group-create-container">
       <h1>グループ作成</h1>
 
-      <form th:action="@{/groupcreate}" method="post">
+      <form id="groupForm" th:action="@{/groupcreate}" method="post">
         <div class="form-section">
           <label>グループ名</label>
           <input type="text" id="group-name" name="name" placeholder="グループ名を入力" />
@@ -28,7 +37,12 @@
           <table class="account-table">
             <thead>
               <tr>
-                <th><input type="checkbox" id="checkAll" /></th>
+                <th>
+                  <label for="checkAll">
+                    <input type="checkbox" id="checkAll" />
+                    全選択
+                  </label>
+                </th>
                 <th>表示名</th>
                 <th>ユーザー名</th>
                 <th>ロール</th>
@@ -54,9 +68,74 @@
 
         <button class="create-btn" type="submit">作成する</button>
 
+        <!-- ⚠️ 追加：警告メッセージ -->
+        <p id="warningMessage" class="warning-message">※ 参加者を1人以上選択してください。</p>
+
         <p th:if="${message}" th:text="${message}" class="ok"></p>
         <p th:if="${errorMessage}" th:text="${errorMessage}" class="ng"></p>
       </form>
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const checkAll = document.getElementById("checkAll");
+        const memberBoxes = document.querySelectorAll(".memberBox");
+        const form = document.getElementById("groupForm");
+        const warningMessage = document.getElementById("warningMessage");
+
+        // ✅ 各個別チェックボックスのクリック処理
+        memberBoxes.forEach((box) => {
+          box.addEventListener("change", () => {
+            const row = box.closest("tr");
+            if (box.checked) {
+              row.classList.add("selected");
+            } else {
+              row.classList.remove("selected");
+            }
+
+            // 全選択の状態更新
+            const allChecked = Array.from(memberBoxes).every((b) => b.checked);
+            checkAll.checked = allChecked;
+
+            // ✅ チェック変更時に警告を非表示に戻す
+            if (Array.from(memberBoxes).some((b) => b.checked)) {
+              warningMessage.style.display = "none";
+            }
+          });
+        });
+
+        // ✅ 全選択チェックボックスのクリック処理
+        if (checkAll) {
+          checkAll.addEventListener("change", () => {
+            const checked = checkAll.checked;
+            memberBoxes.forEach((box) => {
+              box.checked = checked;
+              const row = box.closest("tr");
+              if (checked) {
+                row.classList.add("selected");
+              } else {
+                row.classList.remove("selected");
+              }
+            });
+
+            // ✅ チェック変更時に警告を非表示に戻す
+            if (checked) {
+              warningMessage.style.display = "none";
+            }
+          });
+        }
+
+        // ✅ フォーム送信時の選択チェック
+        form.addEventListener("submit", (e) => {
+          const anyChecked = Array.from(memberBoxes).some((b) => b.checked);
+          if (!anyChecked) {
+            e.preventDefault(); // 送信中止
+            warningMessage.style.display = "block"; // 警告表示
+          } else {
+            warningMessage.style.display = "none"; // 非表示
+          }
+        });
+      });
+    </script>
   </body>
 </html>
