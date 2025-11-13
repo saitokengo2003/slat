@@ -110,9 +110,32 @@ public class GroupController {
     return "groupinfo/index";
   }
 
-  // @GetMapping("/grouplist")
-  // public String listGroups(Model model) {
-  // model.addAttribute("groups", groupService.findAllGroupsWithCounts());
-  // return "groupinfo/index";
-  // }
+  @PostMapping("/group/{groupId}/member/{userId}/delete")
+  public String deleteGroupMember(
+      @PathVariable("groupId") UUID groupId,
+      @PathVariable("userId") String userId,
+      Model model) {
+
+    boolean ok = groupService.deleteGroupMember(groupId, userId);
+
+    if (ok) {
+      model.addAttribute("message", "メンバーを削除しました。");
+    } else {
+      model.addAttribute("errorMessage", "メンバー削除に失敗しました。（オーナーは削除できません）");
+    }
+
+    // 削除後も同じグループ詳細画面に戻る
+    GroupDetailDto detail = groupService.getGroupDetail(groupId);
+    if (detail == null) {
+      // グループ自体が消えていた場合など
+      model.addAttribute("errorMessage", "指定されたグループが見つかりません。");
+      model.addAttribute("groups", groupService.findAllGroupsWithCounts());
+      return "groupinfo/index";
+    }
+
+    model.addAttribute("group", detail.getGroup());
+    model.addAttribute("members", detail.getMembers());
+    return "groupinfo/index";
+  }
+
 }

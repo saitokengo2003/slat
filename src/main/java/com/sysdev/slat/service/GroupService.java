@@ -126,4 +126,19 @@ public class GroupService {
       return false;
     }
   }
+
+  @Transactional
+  public boolean deleteGroupMember(UUID groupId, String userId) {
+    try {
+      int deleted = jdbc.update(
+          "DELETE FROM group_members " +
+              "WHERE group_id = ? AND user_id = ? AND role_in_group <> 'owner'",
+          groupId, userId);
+
+      return deleted > 0;
+    } catch (DataAccessException e) {
+      System.err.println("[GroupService#deleteGroupMember] DB error: " + e.getMessage());
+      return false;
+    }
+  }
 }
