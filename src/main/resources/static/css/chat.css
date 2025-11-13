@@ -1,4 +1,6 @@
-/* 基本リセット */
+/* ===============================
+  基本設定
+================================ */
 * {
   margin: 0;
   padding: 0;
@@ -6,269 +8,346 @@
 }
 
 body {
-  font-family: sans-serif;
-  background-color: white;
+  background-color: #f8f9fa;
+  font-family: "Noto Sans JP", sans-serif;
 }
 
-/* 全体コンテナ: Flexboxでサイドバーとメインコンテンツを横並びにする */
-.container {
+.container-fluid {
   display: flex;
   min-height: 100vh;
 }
 
-/* --- サイドバー (左側の緑色の部分) --- */
+/* ===============================
+  ✅ サイドバー（Google Chat風）
+================================ */
 .sidebar {
-  width: 250px; /* 固定幅 */
-  background-color: #388e3c; /* 濃いめの緑 */
+  width: 250px;
+  background: #2e7d32;
   color: white;
-  padding-top: 20px;
-  flex-shrink: 0;
-  overflow-y: auto;
+  padding-top: 15px;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+.sidebar.collapsed {
+  width: 72px;
 }
 
-/* サイドバーヘッダー */
-.sidebar-header {
-  padding: 0 15px 20px 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex; /* アイコンを横並びにする */
-  gap: 10px;
+.sidebar-top {
+  margin-left: 10px;
 }
-.sidebar-header i {
-  font-size: 24px;
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
   cursor: pointer;
 }
 
-/* チャット/グループリストセクション */
-.sidebar-chats {
-  padding: 15px 15px 15px 0;
-  color: #c8e6c9;
+/* ===============================
+  ✅ グループボタン（画像版）
+================================ */
+.create-group-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 55px;
+  height: 55px;
+  background: white;
+  border-radius: 50%;
+  margin: 10px auto;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: 0.2s ease;
+}
+.create-group-icon:hover {
+  background: #f1f1f1;
+  transform: scale(1.05);
 }
 
-.chat-section-title {
-  font-size: 12px;
-  margin: 10px 0 5px 15px;
+.group-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.sidebar.collapsed .create-group-icon {
+  margin: 10px auto;
+}
+
+/* ===============================
+  ✅ メニュータイトル
+================================ */
+.menu-title {
+  font-size: 14px;
   font-weight: bold;
+  margin-left: 15px;
+  margin-top: 15px;
+}
+.sidebar.collapsed .menu-title {
+  display: none;
 }
 
-.chat-list {
+/* ===============================
+  ✅ メニューリスト
+================================ */
+.menu-list {
   list-style: none;
   padding: 0;
 }
 
-.chat-item {
+.menu-list li {
   display: flex;
   align-items: center;
-  padding: 8px 15px;
-  font-size: 14px;
-  cursor: pointer;
-}
-.chat-item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  padding: 8px 12px;
 }
 
-/* アバターの共通スタイル */
-.avatar,
-.bubble-avatar {
-  width: 30px;
-  height: 30px;
+.menu-list li:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+}
+
+.icon,
+.group-icon {
+  width: 35px;
+  height: 35px;
+  background: #e0e0e0;
+  color: #2e7d32;
   border-radius: 50%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   font-weight: bold;
-  font-size: 14px;
-  color: white;
-  flex-shrink: 0; /* 縮まないように */
 }
 
-.chat-item .avatar {
-  margin-right: 10px;
+.menu-text {
+  margin-left: 10px;
 }
 
-/* サイドバーのアバターの背景色 (画像に合わせる) */
-.bg-a {
-  background-color: #9c27b0;
+.sidebar.collapsed .menu-text {
+  display: none;
 }
-.bg-b {
-  background-color: #e91e63;
+.sidebar.collapsed .icon,
+.sidebar.collapsed .group-icon {
+  margin: 0 auto;
 }
-.bg-c {
-  background-color: #673ab7;
-}
-.bg-d {
-  background-color: #00bcd4;
-}
-.bg-e {
-  background-color: #ff9800;
-}
-.bg-f {
-  background-color: #4caf50;
-}
-.bg-o {
-  background-color: #00796b;
-}
-.bg-x {
-  background-color: #2196f3;
-}
-.bg-y {
-  background-color: #8bc34a;
+.sidebar.collapsed .menu-list li {
+  justify-content: center;
 }
 
-/* メッセージ内のアバター (TとR) */
-.bg-t {
-  background-color: #808080;
-} /* 相手の仮の色 */
-.bg-r {
-  background-color: #808080;
-} /* 自分の仮の色 */
-
-/* --- メインコンテンツ (右側の白い部分) --- */
+/* ===============================
+  ✅ メインエリア
+================================ */
 .main-content {
   flex-grow: 1;
+  padding: 30px;
+}
+
+.page-title {
+  color: #2e7d32;
+}
+
+/* ===============================
+  ✅ トップバー（検索＋ログアウト）
+================================ */
+.top-bar {
   display: flex;
-  flex-direction: column; /* 縦に並べる */
-  height: 100vh;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
 }
 
 /* 検索バー */
 .search-bar {
-  width: 100%;
-  padding: 15px 30px;
-  border-bottom: 1px solid #ddd;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
+  flex: 1;
+  padding: 10px;
+  margin-right: 15px;
+  border: none;
   border-radius: 5px;
   background-color: #f0f0f0;
   color: #666;
   font-size: 14px;
+  outline: none;
+  box-shadow: none;
 }
-.search-bar input::placeholder {
+
+.search-bar::placeholder {
   color: #999;
 }
 
-/* メッセージエリア */
-.message-area {
-  flex-grow: 1; /* 残りのスペースを全て占有 */
-  padding: 20px 30px;
-  overflow-y: auto; /* メッセージが多い場合はスクロール可能に */
+/* ログインユーザー情報エリア */
+.logged-in-user {
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #3d4554;
+}
+
+/* ユーザーアイコン */
+.user-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+/* ユーザー名 */
+.user-name {
+  font-weight: bold;
+  color: #f1f1f1;
+}
+.user-sidebar-name {
+  margin-left: 10px;
+}
+
+/* ===============================
+  ✅ チャット画面（修正版）
+================================ */
+.chat-area {
   display: flex;
   flex-direction: column;
+  gap: 25px;
+  padding: 20px;
+  overflow-y: auto;
+  height: calc(100vh - 160px);
+  background: #f9f9f9;
 }
 
 .message {
   display: flex;
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-/* 受信メッセージ (相手) */
-.message.received {
-  justify-content: flex-start;
-  flex-direction: column; /* 吹き出しとリアクションを縦に並べる */
-  align-items: flex-start;
-}
-
-/* 送信メッセージ (自分) */
-.message.sent {
-  justify-content: flex-end;
   flex-direction: column;
-  align-items: flex-end;
+  max-width: fit-content;
+  position: relative;
 }
 
-.message-bubble {
-  display: flex;
-  max-width: 70%; /* 吹き出しの最大幅 */
+.message.left {
   align-items: flex-start;
 }
 
-/* 相手のメッセージの配置 */
-.received .message-bubble {
-  gap: 10px;
-}
-/* 自分のメッセージの配置 */
-.sent .message-bubble {
-  gap: 10px;
-  flex-direction: row-reverse; /* 自分のアバターを右に */
+.message.right {
+  align-items: flex-end;
+  margin-left: auto; /* ← これで右寄せを保証 */
 }
 
-.bubble-content {
-  padding: 10px 15px;
+/* 吹き出し */
+.bubble {
+  background: #9ee7a0;
+  padding: 15px 20px;
   border-radius: 15px;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-word; /* 長い単語を折り返す */
+  max-width: 400px;
+  word-wrap: break-word;
 }
 
-/* 相手の吹き出しのスタイル */
-.received .bubble-content {
-  background-color: #f0f0f0;
-  color: #333;
-  border-bottom-left-radius: 2px; /* 角を少し削る */
+/* 右側（自分の吹き出し）だけ色変更したい場合は以下を追加可 */
+.message.right .bubble {
+  background: #b2dfdb; /* ←少し落ち着いた右側カラー例 */
 }
 
-/* 自分の吹き出しのスタイル */
-.sent .bubble-content {
-  background-color: #e6ffed; /* 薄い緑色 */
-  color: #333;
-  border-bottom-right-radius: 2px; /* 角を少し削る */
-}
-
-/* リアクション表示 */
-.message-reaction {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-  padding-left: 40px; /* 相手のメッセージのリアクション位置調整 */
-}
-.sent .message-reaction {
-  padding-left: 0;
-  padding-right: 40px; /* 自分のメッセージのリアクション位置調整 */
-  text-align: right;
-}
-
-/* --- 入力フッター --- */
-.input-footer {
+/* ✅ リアクション位置：吹き出し下に整列 */
+.message .reaction {
   display: flex;
-  padding: 10px 30px;
-  border-top: 1px solid #ddd;
   align-items: center;
-  background-color: white;
-  flex-shrink: 0; /* 縮まないように */
+  font-size: 13px;
+  color: #333;
+  margin-top: 4px;
+  margin-left: 8px;
 }
 
-.message-input {
-  flex-grow: 1;
-  padding: 10px 15px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  font-size: 14px;
-  margin-right: 10px;
+.message.right .reaction {
+  justify-content: flex-end;
+  margin-right: 8px;
+  margin-left: 0;
 }
 
-.send-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #4caf50; /* 緑色 */
-  color: white;
+/* ===============================
+  ✅ 入力欄
+================================ */
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 20px;
+  background: #fff;
+}
+
+.chat-input {
+  flex: 1;
   border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  outline: none;
   font-size: 16px;
-  transition: background-color 0.2s;
+  padding: 10px;
 }
 
-.send-button:hover {
-  background-color: #388e3c;
+.send-btn {
+  width: 45px;
+  height: 45px;
+  border: 2px solid #333;
+  border-radius: 10px;
+  background: white;
+  font-size: 22px;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-/* 送信アイコンの傾き */
-.send-button i {
-  transform: rotate(90deg); /* 傾きを調整 */
+.send-btn:hover {
+  background: #2e7d32;
+  color: white;
+}
+
+/* ===============================
+   ✅ リアクション（押し状態が分かる）
+================================ */
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  cursor: pointer;
+  background-color: #f3f3f3;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.reaction .emoji {
+  font-size: 16px;
+  transition: transform 0.15s ease;
+}
+
+.reaction .count {
+  font-size: 14px;
+  color: #555;
+}
+
+/* ✅ 押した状態を明確に */
+.reaction.active {
+  background-color: rgba(255, 152, 0, 0.15); /* 柔らかいオレンジ背景 */
+  border: 1px solid rgba(255, 152, 0, 0.6);
+  color: #ff9800;
+  font-weight: bold;
+  box-shadow: 0 0 6px rgba(255, 152, 0, 0.25);
+  transform: scale(1.05);
+}
+
+/* ✅ 押した瞬間にポップする */
+.reaction.clicked {
+  transform: scale(1.15);
+}
+
+.reaction.clicked .emoji {
+  transform: scale(1.25);
 }
