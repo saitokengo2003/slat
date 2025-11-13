@@ -17,14 +17,45 @@ public class AccountadminRepository {
 
   private final NamedParameterJdbcTemplate jdbc;
 
-  // 💡 SQL SELECT: ダブルクォーテーションでカラム名を保護し、大文字小文字の問題を回避
+  // -----------------------------------------------------------------
+  // 💡 SQL 定数定義 (すべてのSQLをクラスの最上部に集約)
+  // -----------------------------------------------------------------
+
+  /** SQL 全件取得（アクティブなユーザー） */
   private static final String SQL_SELECT_ALL_ACTIVE = "SELECT \"id\", \"username\", \"password_hash\", \"status\", \"created_at\", \"updated_at\", \"last_login_at\", "
       +
       "\"display_name\", \"role_code\", \"grade\", \"class_name\", \"number\" " +
       "FROM \"users_s\" WHERE \"status\" = 'active' ORDER BY \"grade\", \"class_name\", \"number\"";
 
-  /** SQL DELETE: 🚨 修正箇所: :id パラメータを UUID 型にキャスト */
+  /** SQL ID検索 */
+  private static final String SQL_SELECT_BY_ID = "SELECT \"id\", \"username\", \"password_hash\", \"status\", \"created_at\", \"updated_at\", \"last_login_at\", "
+      +
+      "\"display_name\", \"role_code\", \"grade\", \"class_name\", \"number\" " +
+      "FROM \"users_s\" WHERE \"id\" = CAST(:id AS uuid)";
+
+  /** SQL 1件挿入 */
+  private static final String SQL_INSERT_ONE = "INSERT INTO \"users_s\" (\"username\", \"password_hash\", \"display_name\", \"role_code\", \"grade\", \"class_name\", \"number\", \"status\") "
+      +
+      "VALUES (:username, :password_hash, :display_name, :role_code, :grade, :class_name, :number, 'active')";
+
+  /** SQL 1件更新 (重複エラーを解消) */
+  private static final String SQL_UPDATE_ONE = "UPDATE \"users_s\" SET " +
+      " \"username\" = :username, " +
+      " \"password_hash\" = :password_hash, " +
+      " \"display_name\" = :display_name, " +
+      " \"role_code\" = :role_code, " +
+      " \"grade\" = :grade, " +
+      " \"class_name\" = :class_name, " +
+      " \"number\" = :number, " +
+      " \"updated_at\" = CURRENT_TIMESTAMP " +
+      "WHERE \"id\" = CAST(:id AS uuid)";
+
+  /** SQL 1件削除 */
   private static final String SQL_DELETE_ONE = "DELETE FROM \"users_s\" WHERE \"id\" = CAST(:id AS uuid)";
+
+  // -----------------------------------------------------------------
+  // コンストラクタ
+  // -----------------------------------------------------------------
 
   @Autowired
   public AccountadminRepository(NamedParameterJdbcTemplate jdbc) {
@@ -39,7 +70,7 @@ public class AccountadminRepository {
     public AccountadminData mapRow(ResultSet rs, int rowNum) throws SQLException {
       AccountadminData data = new AccountadminData();
 
-      // 基本フィールド (String型)
+      // 基本フィールド
       data.setId(rs.getString("id"));
       data.setUsername(rs.getString("username"));
       data.setPassword_hash(rs.getString("password_hash"));
@@ -48,12 +79,12 @@ public class AccountadminRepository {
       data.setRole_code(rs.getString("role_code"));
       data.setClass_name(rs.getString("class_name"));
 
-      // 日時型 (OffsetDateTime)
+      // 日時型
       data.setCreated_at(rs.getObject("created_at", OffsetDateTime.class));
       data.setUpdated_at(rs.getObject("updated_at", OffsetDateTime.class));
       data.setLast_login_at(rs.getObject("last_login_at", OffsetDateTime.class));
 
-      // NULL許容のInteger型を安全に取得 (rs.getInt + rs.wasNull)
+      // NULL許容のInteger型を安全に取得
       rs.getInt("grade");
       if (!rs.wasNull()) {
         data.setGrade(rs.getInt("grade"));
@@ -67,56 +98,70 @@ public class AccountadminRepository {
       } else {
         data.setNumber(null);
       }
-
       return data;
     }
   }
 
-  /**
-   * アクティブな全アカウントを取得します。（DBアクセス）
-   */
+  // -----------------------------------------------------------------
+  // CRUD メソッド
+  // -----------------------------------------------------------------
+
   public List<AccountadminData> findAllActiveAccounts() {
     return jdbc.query(SQL_SELECT_ALL_ACTIVE, Collections.emptyMap(), new AccountadminDataRowMapper());
   }
 
-  /**
-   * 指定されたIDのデータを削除します。
-   */
-  public int delete(String id) throws SQLException {
-    // 💡 SQL DELETE実行
+  public AccountadminData findById(String id) {
     Map<String, Object> params = Collections.singletonMap("id", id);
-    int updateRow = jdbc.update(SQL_DELETE_ONE, params);
+    try {
+      return jdbc.queryForObject(SQL_SELECT_BY_ID, params, new AccountadminDataRowMapper());
+    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+      return null;
+    }
+  }
 
+  public int insert(AccountadminData data) throws SQLException {
+    Map<String, Object> params = new HashMap<>();
+    params.put("username", data.getUsername());
+    params.put("password_hash", data.getPassword_hash());
+    params.put("display_name", data.getDisplayName());
+    params.put("role_code", data.getRoleCode());
+    params.put("grade", data.getGrade());
+    params.put("class_name", data.getClassName());
+    params.put("number", data.getNumber());
+
+    int updateRow = jdbc.update(SQL_INSERT_ONE, params);
     if (updateRow != 1) {
-      throw new SQLException("アカウント削除に失敗しました (ID: " + id + ")。更新件数が0件または複数件でした。");
+      throw new SQLException("アカウント登録に失敗しました。");
     }
     return updateRow;
   }
 
-  /** アカウント作成 */
-  private static final String SQL_INSERT_ONE = "INSERT INTO \"users_s\" (\"username\", \"password_hash\", \"display_name\", \"role_code\", \"grade\", \"class_name\", \"number\", \"status\") "
-      +
-      "VALUES (:username, :password_hash, :display_name, :role_code, :grade, :class_name, :number, 'active')";
-
-  // ... (既存のコンストラクタ、RowMapper、findAllActiveAccounts メソッドは維持) ...
-
-  public int insert(AccountadminData data) throws SQLException {
-    // 💡 HashMap のインポートが必要 (java.util.HashMap)
+  // 💡 update(AccountadminData) メソッドを一つに統合し、重複エラーを解消
+  public int update(AccountadminData data) throws SQLException {
     Map<String, Object> params = new HashMap<>();
 
+    params.put("id", data.getId());
     params.put("username", data.getUsername());
-    // 🚨 DBは password_hash をNOT NULLで要求するため、ハッシュ化された文字列を渡す必要があります
     params.put("password_hash", data.getPassword_hash());
-    params.put("display_name", data.getDisplay_name()); // ※ フォームに display_name がないため、別途設定が必要
-    params.put("role_code", data.getRole_code());
+    params.put("display_name", data.getDisplayName());
+    params.put("role_code", data.getRoleCode());
     params.put("grade", data.getGrade());
-    params.put("class_name", data.getClass_name());
+    params.put("class_name", data.getClassName());
     params.put("number", data.getNumber());
 
-    int updateRow = jdbc.update(SQL_INSERT_ONE, params);
+    int updateRow = jdbc.update(SQL_UPDATE_ONE, params);
+    if (updateRow != 1) {
+      throw new SQLException("アカウント更新に失敗しました。");
+    }
+    return updateRow;
+  }
+
+  public int delete(String id) throws SQLException {
+    Map<String, Object> params = Collections.singletonMap("id", id);
+    int updateRow = jdbc.update(SQL_DELETE_ONE, params);
 
     if (updateRow != 1) {
-      throw new SQLException("アカウント登録に失敗しました。更新件数が異常です。");
+      throw new SQLException("アカウント削除に失敗しました。更新件数が0件または複数件でした。");
     }
     return updateRow;
   }

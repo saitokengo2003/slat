@@ -1,15 +1,26 @@
 package com.sysdev.slat.accountadmin;
 
-// フォームが受け取るデータに対応するクラス
+// 💡 修正: setId(String) を追加
+
 public class AccountForm {
 
-  private String userId; // HTML: user-id / DB: username
-  private String password; // HTML: password / DB: password_hash
-  private String name; // HTML: name / DB: display_name
-  private String role; // HTML: role / DB: role_code
-  private String grade; // HTML: grade / ServiceでIntegerに変換
-  private String classId; // HTML: class / DB: class_name
-  private Integer number; // HTML: number / DB: number
+  private String id; // 編集/更新処理のために必要なIDフィールド
+  private String userId;
+  private String password;
+  private String name;
+  private String role;
+  private String grade;
+  private String classId;
+  private Integer number;
+
+  // --- Getter/Setter ---
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  } // ⬅️ エラー解消
 
   public String getUserId() {
     return userId;

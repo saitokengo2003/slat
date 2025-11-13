@@ -49,6 +49,10 @@ public class AccountadminData {
     this.password_hash = password_hash;
   }
 
+  public void setPasswordHash(String passwordHash) { // ⬅️ このメソッドを追加
+    this.password_hash = passwordHash;
+  }
+
   public String getStatus() {
     return status;
   }
@@ -121,5 +125,32 @@ public class AccountadminData {
 
   public void setNumber(Integer number) {
     this.number = number;
+  }
+
+  // 1. setDisplayName(String) が未定義エラー
+  public String getDisplayName() {
+    return display_name; // フィールド名に合わせて修正
+  }
+
+  public void setDisplayName(String display_name) {
+    this.display_name = display_name;
+  }
+
+  // 2. setRoleCode(String) が未定義エラー
+  public String getRoleCode() {
+    return role_code; // フィールド名に合わせて修正
+  }
+
+  public void setRoleCode(String role_code) {
+    this.role_code = role_code;
+  }
+
+  // 3. setClassName(String) が未定義エラー
+  public String getClassName() {
+    return class_name; // フィールド名に合わせて修正
+  }
+
+  public void setClassName(String class_name) {
+    this.class_name = class_name;
   }
 }
