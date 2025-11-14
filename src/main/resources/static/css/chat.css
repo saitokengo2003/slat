@@ -351,3 +351,35 @@ body {
 .reaction.clicked .emoji {
   transform: scale(1.25);
 }
+
+/* ===============================
+   ホームボタン
+================================ */
+.home-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  margin: 5px 10px 10px 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  transition: 0.2s ease;
+}
+
+.home-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.home-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.sidebar.collapsed .home-text {
+  display: none;
+}
+.sidebar.collapsed .home-btn {
+  justify-content: center;
+}
