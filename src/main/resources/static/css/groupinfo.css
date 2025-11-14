@@ -244,3 +244,24 @@ body {
 .modal-footer .btn-danger {
   background-color: #d32f2f;
 }
+
+/* 左上の戻るボタン */
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  text-decoration: none;
+  color: #138c3c;
+  font-size: 16px;
+  font-weight: bold;
+  border: 1px solid #138c3c;
+  padding: 6px 14px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  transition: 0.2s;
+}
+
+.back-button:hover {
+  background-color: #138c3c;
+  color: #fff;
+}
