@@ -101,4 +101,25 @@ public class AccountController {
     // 編集画面(accountedit/index.html)を表示
     return "accountedit/index";
   }
+
+  @PostMapping("/accountedit")
+  public String editAccount(
+      @ModelAttribute AccountForm accountForm,
+      RedirectAttributes redirectAttributes) {
+
+    System.out.println("edit呼び出し");
+    try {
+      String uuid = accountForm.getId();
+
+      // Serviceを呼び出し、DB更新ロジックを実行
+      accountadminService.updateAccount(uuid, accountForm);
+
+      redirectAttributes.addFlashAttribute("message", "アカウントを正常に更新しました。");
+    } catch (Exception e) {
+      redirectAttributes.addFlashAttribute("errorMessage",
+          "アカウント更新に失敗しました: " + e.getLocalizedMessage());
+    }
+
+    return "redirect:/accountadmin";
+  }
 }

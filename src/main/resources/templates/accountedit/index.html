@@ -11,7 +11,7 @@
       <h1>アカウント編集</h1>
 
       <form
-        th:action="@{/accountcreate}"
+        th:action="@{/accountedit}"
         method="post"
         th:object="${accountForm}"
         class="account-form"
@@ -81,7 +81,8 @@
           <input type="number" id="number" th:field="*{number}" />
         </div>
 
-        <button type="submit" class="create-button">作成する</button>
+        <input type="hidden" th:field="*{id}" />
+        <button type="submit" class="create-button">更新する</button>
       </form>
     </div>
   </body>
