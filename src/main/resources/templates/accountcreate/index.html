@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,85 +7,168 @@
 
     <link rel="icon" th:href="@{/images/logo.png}" />
 
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- サイドバーCSS -->
+    <link rel="stylesheet" href="/css/top.css" />
+
+    <!-- フォームCSS（調整済み） -->
     <link rel="stylesheet" href="/css/accountcreate.css" />
   </head>
+
   <body>
-    <div class="form-container">
-      <h1>アカウント作成</h1>
-
-      <form
-        th:action="@{/accountcreate}"
-        method="post"
-        th:object="${accountForm}"
-        class="account-form"
-      >
-        <div th:if="${message}" class="success-message" th:text="${message}"></div>
-        <div th:if="${errorMessage}" class="error-message" th:text="${errorMessage}"></div>
-
-        <div class="form-group">
-          <label for="user-id">ユーザID</label>
-          <input
-            type="text"
-            id="user-id"
-            th:field="*{userId}"
-            placeholder="ユーザIDを入力"
-            required
-          />
+    <div class="container-fluid p-0 d-flex">
+      <!-- ======================
+           サイドバー (変更禁止)
+      ======================= -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top px-3 mb-3">
+          <button class="menu-btn" id="menu-toggle">☰</button>
+          <span th:if="${displayName}" class="user-sidebar-name ms-3">
+            <span th:text="${displayName}">ユーザー名</span>
+          </span>
         </div>
 
-        <div class="form-group">
-          <label for="password">パスワード</label>
-          <input
-            type="password"
-            id="password"
-            th:field="*{password}"
-            placeholder="パスワードを入力"
-            required
-          />
-        </div>
+        <a th:href="@{/groupcreate}" class="create-group-icon">
+          <img th:src="@{/images/group_icon.png}" alt="group" class="group-icon-img" />
+        </a>
 
-        <div class="form-group">
-          <label for="name">名前</label>
-          <input type="text" id="name" th:field="*{name}" placeholder="名前を入力" required />
-        </div>
+        <a th:href="@{/home}" class="home-btn">
+          <span class="home-icon">🏠</span>
+          <span class="home-text">ホーム</span>
+        </a>
 
-        <div class="form-group">
-          <label for="role">権限</label>
-          <select id="role" th:field="*{role}" required>
-            <option value="" disabled selected>選択してください</option>
-            <option value="admin">管理者</option>
-            <option value="teacher">先生</option>
-            <option value="student">生徒</option>
-          </select>
-        </div>
+        <p class="menu-title">▼ ダイレクトメッセージ</p>
+        <ul class="menu-list">
+          <li><span class="icon">A</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">B</span> <span class="menu-text">○○○</span></li>
+          <li><span class="icon">C</span> <span class="menu-text">○○○</span></li>
+        </ul>
 
-        <div class="form-group">
-          <label for="grade">学年</label>
-          <select id="grade" th:field="*{grade}">
-            <option value="" disabled selected>選択してください</option>
-            <option value="1">1年</option>
-            <option value="2">2年</option>
-            <option value="3">3年</option>
-          </select>
-        </div>
+        <p class="menu-title">▼ グループ</p>
+        <ul class="menu-list">
+          <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
+          <li><span class="group-icon">X</span> <span class="menu-text">○○○</span></li>
+        </ul>
+      </aside>
 
-        <div class="form-group">
-          <label for="class">クラス</label>
-          <select id="class" th:field="*{classId}">
-            <option value="" disabled selected>選択してください</option>
-            <option value="A">A組</option>
-            <option value="B">B組</option>
-            <option value="C">C組</option>
-          </select>
-        </div>
+      <!-- ======================
+           右側コンテンツ
+      ======================= -->
+      <main class="main-content">
+        <!-- ★ フォーム中央寄せ用ラッパー -->
+        <div class="account-wrapper">
+          <div class="form-container">
+            <h1>アカウント作成</h1>
 
-        <div class="form-group">
-          <label for="number">番号</label>
-          <input type="number" id="number" th:field="*{number}" />
-        </div>
+            <form
+              th:action="@{/accountcreate}"
+              method="post"
+              th:object="${accountForm}"
+              class="account-form"
+            >
+              <div th:if="${message}" class="success-message" th:text="${message}"></div>
+              <div th:if="${errorMessage}" class="error-message" th:text="${errorMessage}"></div>
 
-        <button type="submit" class="create-button">作成する</button>
-      </form>
+              <div class="form-group">
+                <label for="user-id">ユーザID</label>
+                <input
+                  type="text"
+                  id="user-id"
+                  th:field="*{userId}"
+                  placeholder="ユーザIDを入力"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="password">パスワード</label>
+                <input
+                  type="password"
+                  id="password"
+                  th:field="*{password}"
+                  placeholder="パスワードを入力"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="name">名前</label>
+                <input type="text" id="name" th:field="*{name}" placeholder="名前を入力" required />
+              </div>
+
+              <div class="form-group">
+                <label for="role">権限</label>
+                <select id="role" th:field="*{role}" required>
+                  <option value="" disabled selected>選択してください</option>
+                  <option value="admin">管理者</option>
+                  <option value="teacher">先生</option>
+                  <option value="student">生徒</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="grade">学年</label>
+                <select id="grade" th:field="*{grade}">
+                  <option value="" disabled selected>選択してください</option>
+                  <option value="1">1年</option>
+                  <option value="2">2年</option>
+                  <option value="3">3年</option>
+                  <option value="3">4年</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="class">クラス</label>
+                <select id="class" th:field="*{classId}">
+                  <option value="" disabled selected>選択してください</option>
+                  <option value="A">R1A1</option>
+                  <option value="B">R1A2</option>
+                  <option value="C">R2A1</option>
+                  <option value="D">R2A2</option>
+                  <option value="E">R3A1</option>
+                  <option value="F">R3A2</option>
+                  <option value="G">R4A1</option>
+                  <option value="H">R4A2</option>
+                  <option value="I">S1A1</option>
+                  <option value="J">S1A2</option>
+                  <option value="K">S2A1</option>
+                  <option value="L">S2A2</option>
+                  <option value="M">S3A1</option>
+                  <option value="N">S3A2</option>
+                  <option value="O">J1A1</option>
+                  <option value="P">J1A2</option>
+                  <option value="Q">J2A1</option>
+                  <option value="R">J2A2</option>
+                  <option value="S">G1A1</option>
+                  <option value="T">G1A2</option>
+                  <option value="U">G2A1</option>
+                  <option value="V">G2A2</option>
+                  <option value="W">G3A1</option>
+                  <option value="X">G3A2</option>
+                  <option value="Y">M1A1</option>
+                  <option value="Z">M2A1</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="number">番号</label>
+                <input type="number" id="number" th:field="*{number}" min="1" max="50" />
+              </div>
+
+              <button type="submit" class="create-button">作成する</button>
+            </form>
+          </div>
+        </div>
+      </main>
     </div>
+
+    <!-- JS -->
+    <script th:src="@{/js/main.js}"></script>
   </body>
 </html>

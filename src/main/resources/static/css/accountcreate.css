@@ -7,21 +7,20 @@
 
 body {
   font-family: sans-serif;
-  background-color: white; /* 背景は白 */
+  background-color: white;
   display: flex;
-  justify-content: center; /* フォームを水平中央寄せ */
-  padding-top: 50px; /* 上部に余白 */
+  justify-content: center;
+  align-items: flex-start;
   min-height: 100vh;
 }
 
-/* フォーム全体を囲むコンテナ */
+/* フォーム全体 */
 .form-container {
   width: 100%;
-  max-width: 400px; /* フォームの最大幅を設定 */
-  text-align: center; /* タイトルとボタンを中央寄せ */
+  text-align: center;
 }
 
-/* 画面タイトル */
+/* タイトル */
 .form-container h1 {
   color: #2e7d32;
   font-size: 32px;
@@ -29,52 +28,49 @@ body {
   margin-bottom: 40px;
 }
 
-/* フォームの各グループ (ラベルと入力欄) */
-.form-group {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-/* ラベル (項目名) */
-.form-group label {
-  display: block; /* 常に1行占有 */
-  font-size: 14px;
-  color: #2e7d32;
-  margin-bottom: 5px;
-  /* ラベルを中央に寄せるための調整 */
-  text-align: center;
+/* フォーム内部 */
+.account-form {
   width: 100%;
 }
 
-/* 入力フィールドとセレクトボックス */
+/* 各項目 */
+.form-group {
+  margin-bottom: 22px;
+}
+
+/* ラベル */
+.form-group label {
+  display: block;
+  font-size: 14px;
+  color: #2e7d32;
+  margin-bottom: 6px;
+}
+
+/* 入力欄とセレクトボックス */
 .form-group input[type="text"],
 .form-group input[type="password"],
 .form-group input[type="number"],
 .form-group select {
-  width: 100%;
-  max-width: 250px; /* 入力欄の幅を画像に合わせて調整 */
+  width: 250px; /* ★中央の入力欄と同じ幅 */
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 3px;
   font-size: 14px;
   color: #333;
-  /* 中央に寄せるためのブロックレベル設定 */
   display: block;
-  margin: 0 auto;
-  text-align: left; /* 入力文字は左寄せ */
+  margin: 0 auto; /* ★中央揃え */
 }
 
-/* プレースホルダーのスタイル (薄いグレー) */
+/* プレースホルダー */
 .form-group input::placeholder {
   color: #ccc;
-  opacity: 1; /* プレースホルダーの文字が薄くなりすぎないように調整 */
 }
 
-/* 作成ボタン */
+/* ボタン */
 .create-button {
   margin-top: 30px;
   padding: 8px 30px;
-  border: 1px solid black; /* 枠線は濃いめの緑 */
+  border: 1px solid black;
   border-radius: 3px;
   background-color: white;
   color: #2e7d32;
