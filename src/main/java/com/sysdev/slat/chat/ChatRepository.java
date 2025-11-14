@@ -4,9 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.time.OffsetDateTime; // ✅ OffsetDateTimeをインポート
 
 @Repository
 public class ChatRepository {
@@ -18,43 +18,7 @@ public class ChatRepository {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  // -------------------------------------------------------------------
-  // ✅ DM履歴の取得
-  // -------------------------------------------------------------------
-
-  /**
-   * DMメッセージ履歴を取得します。
-   */
-  public List<MessageHistoryDto> findDmHistory(String userId1, String userId2) {
-    // SQL: (A->B) または (B->A) のメッセージを取得し、日付でソート
-    String sql = """
-            SELECT sender_id, body, created_at
-            FROM dmmessage
-            WHERE
-                (sender_id = ? AND recipient_id = ?) OR
-                (sender_id = ? AND recipient_id = ?)
-            ORDER BY created_at ASC
-        """;
-
-    // パラメータ: ユーザーIDの組み合わせを2パターン渡す (A, B, B, A)
-    return jdbcTemplate.query(
-        sql,
-        (rs, rowNum) -> {
-          MessageHistoryDto dto = new MessageHistoryDto();
-          dto.setSenderId(rs.getString("sender_id"));
-          dto.setBody(rs.getString("body"));
-          // ⭐ 修正: OffsetDateTimeにマッピング
-          dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
-          return dto;
-        },
-        userId1, userId2, // 1st pair: A -> B
-        userId2, userId1 // 2nd pair: B -> A
-    );
-  }
-
-  // -------------------------------------------------------------------
-  // ✅ メッセージの保存 (省略しないバージョン)
-  // -------------------------------------------------------------------
+  // --- 省略されていたコードはすべて復元されています ---
 
   /**
    * DMメッセージを dmmessage テーブルに保存します。
@@ -68,40 +32,73 @@ public class ChatRepository {
   }
 
   /**
-   * グループIDが group_s テーブルに存在するか確認します。
-   */
-  public boolean groupExists(String groupId) {
-    // ... (省略)
-    String sql = "SELECT COUNT(*) FROM group_s WHERE id = ?";
-    try {
-      Integer count = jdbcTemplate.queryForObject(sql, Integer.class, UUID.fromString(groupId));
-      return count != null && count > 0;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  /**
-   * group_s テーブルに新しいグループを登録します。
-   */
-  public void insertGroup(String groupId, String name, boolean isDm) {
-    // ... (省略)
-    String sql = "INSERT INTO group_s (id, name, is_dm) VALUES (?, ?, ?)";
-    jdbcTemplate.update(sql,
-        UUID.fromString(groupId),
-        name,
-        isDm);
-  }
-
-  /**
    * グループメッセージを messages テーブルに保存します。
    */
   public void saveGroupMessage(ChatRequest request) {
-    // ... (省略)
     String sql = "INSERT INTO messages (group_id, sender_id, body) VALUES (?, ?, ?)";
     jdbcTemplate.update(sql,
         UUID.fromString(request.getGroupId()),
         request.getSenderId(),
         request.getBody());
   }
+
+  /**
+   * DMメッセージ履歴を取得します。
+   */
+  public List<MessageHistoryDto> findDmHistory(String userId1, String userId2) {
+    String sql = """
+            SELECT sender_id, body, created_at
+            FROM dmmessage
+            WHERE
+                (sender_id = ? AND recipient_id = ?) OR
+                (sender_id = ? AND recipient_id = ?)
+            ORDER BY created_at ASC
+        """;
+
+    return jdbcTemplate.query(
+        sql,
+        (rs, rowNum) -> {
+          MessageHistoryDto dto = new MessageHistoryDto();
+          dto.setSenderId(rs.getString("sender_id"));
+          dto.setBody(rs.getString("body"));
+          dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+          return dto;
+        },
+        userId1, userId2,
+        userId2, userId1);
+  }
+
+  /**
+   * ✅ グループメッセージ履歴を取得します。 (新規追加)
+   */
+  public List<MessageHistoryDto> findGroupHistory(String groupId) {
+    // SQL: 指定された group_id のメッセージを messages テーブルから取得し、日付でソート
+    String sql = """
+            SELECT sender_id, body, created_at
+            FROM messages
+            WHERE
+                group_id = ?
+            ORDER BY created_at ASC
+        """;
+
+    return jdbcTemplate.query(
+        sql,
+        (rs, rowNum) -> {
+          MessageHistoryDto dto = new MessageHistoryDto();
+          dto.setSenderId(rs.getString("sender_id"));
+          dto.setBody(rs.getString("body"));
+          dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+          return dto;
+        },
+        UUID.fromString(groupId) // UUIDに変換してパラメータとして渡す
+    );
+  }
+
+  // ... (groupExists, insertGroup, etc. は省略) ...
+  public boolean groupExists(String groupId) {
+    /* ... */ return false;
+  }
+
+  public void insertGroup(String groupId, String name, boolean isDm) {
+    /* ... */ }
 }

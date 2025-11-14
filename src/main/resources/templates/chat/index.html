@@ -3,12 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <<<<<<< Updated upstream
-    <title>チャット</title>
-    =======
     <title>Slat チャットホーム</title>
-    >>>>>>> Stashed changes
-
     <link rel="icon" th:href="@{/images/logo.png}" />
 
     <link
@@ -36,7 +31,6 @@
           <img th:src="@{/images/group_icon.png}" alt="group" class="group-icon-img" />
         </a>
 
-        <!-- ✅ ホームボタン -->
         <a th:href="@{/home}" class="home-btn">
           <span class="home-icon">🏠</span>
           <span class="home-text">ホーム</span>
@@ -57,8 +51,15 @@
 
         <p class="menu-title">▼ グループ</p>
         <ul class="menu-list">
-          <li><span class="group-icon">J</span> <span class="menu-text">○○○</span></li>
-          <li><span class="group-icon">O</span> <span class="menu-text">○○○</span></li>
+          <li
+            th:each="group : ${generalGroups}"
+            class="group-list-item"
+            th:data-group-id="${group.id}"
+            th:data-display-name="${group.name}"
+          >
+            <span class="group-icon" th:text="${#strings.substring(group.name, 0, 1)}">G</span>
+            <span class="menu-text" th:text="${group.name}">グループ名</span>
+          </li>
         </ul>
       </aside>
 
@@ -73,12 +74,13 @@
         </div>
 
         <div class="chat-input-area d-flex align-items-center p-3">
-          <input type="text" class="form-control chat-input" placeholder="メッセージを入力..." />
-          <button class="btn btn-primary ms-2 send-btn">送信</button>
+          <input type="text" class="chat-input" placeholder="メッセージを入力してください" />
+          <button class="send-btn" type="button">➤</button>
         </div>
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
   </body>
 </html>

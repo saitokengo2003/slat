@@ -289,25 +289,33 @@ body {
   font-size: 16px;
   padding: 10px;
 }
-
+/* ===============================
+  ⭐ ✅ 送信ボタン（ダイナミック）
+================================ */
 .send-btn {
   width: 45px;
   height: 45px;
-  border: 2px solid #333;
-  border-radius: 10px;
-  background: white;
+  border: none; /* ボーダーを削除 */
+  border-radius: 50%; /* 正円にする */
+  background: #e0e0e0; /* 初期状態: 灰色 (非活性) */
+  color: #a0a0a0;
   font-size: 22px;
-  cursor: pointer;
-  transition: 0.2s;
+  cursor: default;
+  transition: background 0.2s, color 0.2s;
 }
-
-.send-btn:hover {
+/* ⭐ JSで .active が付与されたとき */
+.send-btn.active {
   background: #2e7d32;
   color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+.send-btn.active:hover {
+  background: #1b5e20; /* ホバーで濃くする */
 }
 
 /* ===============================
-   ✅ リアクション（押し状態が分かる）
+  ✅ リアクション（押し状態が分かる）
 ================================ */
 .reaction {
   display: inline-flex;
