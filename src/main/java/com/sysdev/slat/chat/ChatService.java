@@ -15,13 +15,16 @@ public class ChatService {
 
   /**
    * ✅ DMメッセージ履歴を取得します。
-   *
-   * @param userId1 ログインユーザーID
-   * @param userId2 チャット相手ID
    */
   public List<MessageHistoryDto> getDmHistory(String userId1, String userId2) {
-    // Repositoryを呼び出し、履歴を取得する
     return chatRepository.findDmHistory(userId1, userId2);
+  }
+
+  /**
+   * ✅ グループメッセージ履歴を取得します。 (新規追加)
+   */
+  public List<MessageHistoryDto> getGroupHistory(String groupId) {
+    return chatRepository.findGroupHistory(groupId);
   }
 
   /**
@@ -30,25 +33,20 @@ public class ChatService {
   @Transactional
   public void saveChatMessage(ChatRequest request) {
 
-    // 必須チェック: senderId, body
     if (request.getSenderId() == null || request.getBody() == null || request.getBody().trim().isEmpty()) {
       throw new IllegalArgumentException("Sender ID and message body are required.");
     }
 
-    if (request.getRecipientId() != null && !request.getRecipientId().isEmpty()) {
-      // 1. 個人チャット（DM）の場合: dmmessage テーブルに保存
-      if (request.getRecipientId() == null || request.getRecipientId().isEmpty()) {
-        throw new IllegalArgumentException("Recipient ID is required for DM.");
-      }
-      chatRepository.saveDmMessage(request);
-
-    } else if (request.getGroupId() != null && !request.getGroupId().isEmpty()) {
-      // 2. グループチャットの場合: messages テーブルに保存 (将来の実装)
+    if (request.getGroupId() != null && !request.getGroupId().isEmpty()) {
+      // 2. グループチャットの場合: messages テーブルに保存
       chatRepository.saveGroupMessage(request);
 
+    } else if (request.getRecipientId() != null && !request.getRecipientId().isEmpty()) {
+      // 1. 個人チャット（DM）の場合: dmmessage テーブルに保存
+      chatRepository.saveDmMessage(request);
+
     } else {
-      // 保存先が不明
-      throw new IllegalArgumentException("Chat must specify either a recipientId (DM) or a groupId (Group Chat).");
+      throw new IllegalArgumentException("Recipient ID or Group ID is required.");
     }
   }
 }

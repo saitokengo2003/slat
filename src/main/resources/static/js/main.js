@@ -1,7 +1,6 @@
 "use strict";
 
 // ログインユーザーIDをDOMから取得 (index.htmlのhidden inputを参照)
-// ChatControllerでModelに追加された ${loggedInUserId} の値がHTMLに埋め込まれている前提
 const loggedInUserId = document.getElementById("logged-in-user-id")
   ? document.getElementById("logged-in-user-id").value
   : null; // 取得できない場合のフォールバック
@@ -21,8 +20,9 @@ const sendBtn = document.querySelector(".send-btn");
 const chatInput = document.querySelector(".chat-input");
 const chatArea = document.querySelector(".chat-area");
 
-// ⭐ 選択された相手のIDを保持するグローバル変数
+// ⭐ 選択された相手/グループのIDを保持するグローバル変数
 let currentRecipientId = null;
+let currentGroupId = null; // ✅ グループIDを保持する変数を追加
 
 // 自動スクロール関数
 const scrollToBottom = () => {
@@ -35,13 +35,13 @@ const scrollToBottom = () => {
  */
 function loadDmHistory(recipientId) {
   const chatArea = document.querySelector(".chat-area");
-  chatArea.innerHTML = ""; // 既存のチャットエリアをクリア // ログインIDが取得できていない場合は処理を中断
+  chatArea.innerHTML = ""; // 既存のチャットエリアをクリア
 
   if (!loggedInUserId) {
     console.error("エラー: ログインユーザーIDが取得できませんでした。");
     chatArea.innerHTML = '<p class="error-message">ログイン状態を確認できません。</p>';
     return;
-  } // APIを呼び出し
+  }
 
   fetch(`/api/dm/history?recipientId=${recipientId}`)
     .then((response) => {
@@ -53,11 +53,10 @@ function loadDmHistory(recipientId) {
     .then((messages) => {
       if (messages.length === 0) {
         chatArea.innerHTML = '<p class="no-message-guide">まだメッセージはありません。</p>';
-      } // メッセージリストを画面に表示
+      }
 
       messages.forEach((msg) => {
-        // 送信者IDに基づいて、メッセージの表示スタイルを決定
-        const isSentByMe = msg.senderId === loggedInUserId; // メッセージHTMLを生成
+        const isSentByMe = msg.senderId === loggedInUserId;
 
         const messageHtml = `
                     <div class="message-container ${
@@ -75,7 +74,7 @@ function loadDmHistory(recipientId) {
                     </div>
                 `;
         chatArea.innerHTML += messageHtml;
-      }); // チャットエリアを最下部までスクロール
+      });
 
       chatArea.scrollTop = chatArea.scrollHeight;
     })
@@ -85,24 +84,80 @@ function loadDmHistory(recipientId) {
     });
 }
 
+// ⭐ ✅ 変更箇所: loadGroupHistoryをAPI呼び出し実装に置き換え
+function loadGroupHistory(groupId, groupName) {
+  const chatArea = document.querySelector(".chat-area");
+  const chatPartnerHeader = document.getElementById("chat-partner-name");
+
+  currentGroupId = groupId; // グループIDを設定
+  currentRecipientId = null; // DM相手IDをクリア
+
+  chatPartnerHeader.textContent = groupName;
+  chatArea.innerHTML = '<p class="guide-text">グループ履歴を読み込み中...</p>'; // ローディング表示
+
+  fetch(`/api/group/history?groupId=${groupId}`)
+    .then((response) => {
+      if (!response.ok) throw new Error("グループ履歴の取得に失敗しました");
+
+      return response.json();
+    })
+    .then((history) => {
+      chatArea.innerHTML = ""; // クリア
+
+      if (history.length === 0) {
+        chatArea.innerHTML = '<p class="no-message-guide">まだメッセージはありません。</p>';
+        return;
+      }
+
+      history.forEach((msg) => {
+        const isSentByMe = msg.senderId === loggedInUserId;
+        const messageHtml = `
+                    <div class="message-container ${
+                      isSentByMe ? "my-message-container" : "other-message-container"
+                    }">
+                        <div class="message ${isSentByMe ? "my-message" : "other-message"}">
+                            <div class="message-content">
+                                <span class="sender-name">${msg.senderId}</span>
+                                <p class="body">${msg.body}</p>
+                                <span class="timestamp">${new Date(
+                                  msg.createdAt
+                                ).toLocaleTimeString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        chatArea.innerHTML += messageHtml;
+      });
+
+      chatArea.scrollTop = chatArea.scrollHeight;
+    })
+    .catch((error) => {
+      console.error("グループ履歴エラー:", error);
+      chatArea.innerHTML = '<p class="guide-text error">グループ履歴の読み込みに失敗しました。</p>';
+    });
+}
+
 // ✅ メッセージ送信とDB保存を処理するメイン関数
 async function sendMessageHandler(messageBody) {
-  if (!messageBody.trim()) return; // ⭐ ログインIDチェック (main.jsの最初で処理済みだが、念のため)
+  if (!messageBody.trim()) return;
 
   if (!loggedInUserId) {
     alert("ログイン状態が不正です。再ログインしてください。");
     return;
-  } // ⭐ チャット相手が選択されているかチェック
+  } // ⭐ 送信先 (DMかグループ) が選択されているかチェック
 
-  if (currentRecipientId === null) {
-    alert("チャット相手を選択してください。");
+  if (currentRecipientId === null && currentGroupId === null) {
+    alert("チャット相手またはグループを選択してください。");
     return;
   }
 
-  const messageData = {
-    recipientId: currentRecipientId, // 選択された相手のIDを送信
-    body: messageBody,
-  };
+  let requestBody = { body: messageBody }; // ⭐ 送信先 ID の振り分けロジック: Group IDを優先
+
+  if (currentGroupId) {
+    requestBody.groupId = currentGroupId;
+  } else if (currentRecipientId) {
+    requestBody.recipientId = currentRecipientId;
+  } // ChatControllerがsenderIdをセッションから設定するため、ここでは bodyとIDのみ送信 // (ログインIDはChatControllerでセットされるため、requestBody.senderIdは不要)
 
   try {
     const response = await fetch("/api/message/send", {
@@ -110,16 +165,18 @@ async function sendMessageHandler(messageBody) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(messageData),
+      body: JSON.stringify(requestBody),
     });
 
     if (response.ok && response.status === 200) {
-      console.log(`Message successfully sent to ${currentRecipientId}.`);
-      // 送信成功後、画面にメッセージを一時的に追加
-      addMessage(messageBody, true);
+      console.log(`Message successfully sent to ${currentRecipientId || currentGroupId}.`);
+      addMessage(messageBody, true); // 画面に追加 // 送信後、履歴を再読み込み
 
-      // 💡 必要に応じて、送信後に履歴を再読み込みすることで、DBのデータを元に画面を更新する
-      // loadDmHistory(currentRecipientId);
+      if (currentGroupId) {
+        loadGroupHistory(currentGroupId, "現在のグループ"); // ✅ loadGroupHistoryが正しく動作する
+      } else if (currentRecipientId) {
+        loadDmHistory(currentRecipientId);
+      }
     } else {
       const errorText = await response.text();
       console.error("Failed to send message. Server responded:", errorText);
@@ -180,37 +237,79 @@ function addMessage(text, isRight = true) {
   scrollToBottom();
 }
 
+// ----------------------------------------------------------------------
+// ⭐ 【追加】入力フィールドの状態を監視し、ボタンを活性化する関数
+// ----------------------------------------------------------------------
+function toggleSendButtonState() {
+  const hasText = chatInput.value.trim().length > 0;
+
+  if (hasText) {
+    sendBtn.classList.add("active");
+    sendBtn.removeAttribute("disabled");
+  } else {
+    sendBtn.classList.remove("active");
+    sendBtn.setAttribute("disabled", "true"); // テキストがない場合は無効化
+  }
+}
+
 // ✅ ドキュメントロード後の初期設定とイベントリスナー設定
 document.addEventListener("DOMContentLoaded", () => {
   const userListItems = document.querySelectorAll(".user-list-item");
-  const chatPartnerHeader = document.getElementById("chat-partner-name"); // ⭐ ユーザーリストアイテムのクリックイベントを設定
+  const groupListItems = document.querySelectorAll(".group-list-item"); // ✅ グループリストを取得
+  const chatPartnerHeader = document.getElementById("chat-partner-name"); // ⭐ ページロード時の初期状態を設定し、inputイベントを監視
+
+  toggleSendButtonState();
+  if (chatInput) {
+    chatInput.addEventListener("input", toggleSendButtonState);
+  } // ⭐ 1. DMユーザーリストアイテムのクリックイベントを設定
 
   userListItems.forEach((item) => {
     item.addEventListener("click", () => {
-      // 1. 相手のIDと名前を取得
       const userId = item.getAttribute("data-user-id");
-      const displayName = item.getAttribute("data-display-name"); // 2. グローバル変数に格納 (チャット相手を識別)
+      const displayName = item.getAttribute("data-display-name"); // 状態更新: DM相手を設定し、グループをクリア
 
-      currentRecipientId = userId; // 3. UIの更新: 選択状態のハイライト
+      currentRecipientId = userId;
+      currentGroupId = null; // UIの更新
 
-      userListItems.forEach((i) => i.classList.remove("selected"));
-      item.classList.add("selected"); // 4. UIの更新: チャット相手名をヘッダーに表示
-
+      document.querySelectorAll(".menu-list li").forEach((i) => i.classList.remove("selected"));
+      item.classList.add("selected");
       if (chatPartnerHeader) {
         chatPartnerHeader.textContent = displayName;
-      } // 5. 履歴読み込み関数を呼び出す
+      } // 履歴読み込み関数を呼び出す
 
       loadDmHistory(currentRecipientId);
+      chatInput.value = "";
+      toggleSendButtonState();
 
-      console.log(`Chat partner selected: ${displayName} (ID: ${userId})`);
+      console.log(`DM partner selected: ${displayName} (ID: ${userId})`);
+    });
+  }); // ⭐ 2. グループリストアイテムのクリックイベントを設定
+
+  groupListItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const groupId = item.getAttribute("data-group-id");
+      const groupName = item.getAttribute("data-display-name"); // 状態更新: グループを設定し、DM相手をクリア
+
+      currentGroupId = groupId;
+      currentRecipientId = null; // UIの更新
+
+      document.querySelectorAll(".menu-list li").forEach((i) => i.classList.remove("selected"));
+      item.classList.add("selected");
+      if (chatPartnerHeader) {
+        chatPartnerHeader.textContent = groupName;
+      } // 履歴読み込み関数を呼び出す
+
+      loadGroupHistory(currentGroupId, groupName); // ✅ 修正された関数を呼び出し
+      chatInput.value = "";
+      toggleSendButtonState();
+
+      console.log(`Group selected: ${groupName} (ID: ${groupId})`);
     });
   }); // ✅ 送信ボタン
 
-  const sendBtn = document.querySelector(".send-btn");
-  const chatInput = document.querySelector(".chat-input");
-
   if (sendBtn) {
     sendBtn.addEventListener("click", () => {
+      if (chatInput.value.trim().length === 0) return;
       sendMessageHandler(chatInput.value);
     });
   } // ✅ Enterキー送信
@@ -218,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (chatInput) {
     chatInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
+        if (chatInput.value.trim().length === 0) return;
         e.preventDefault();
         sendMessageHandler(chatInput.value);
       }

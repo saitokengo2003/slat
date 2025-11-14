@@ -12,16 +12,15 @@ public class LoginEntity implements WebMvcConfigurer { // クラス名を変更
    */
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    /*
-     * 開発が終わるまで一時的にコメントアウト
-     * registry.addInterceptor(new LoginInterceptor())
-     * .addPathPatterns("/**")
-     * .excludePathPatterns(
-     * "/login",
-     * "/css/**",
-     * "/js/**",
-     * "/images/**",
-     * "/favicon.ico");
-     */
+
+    registry.addInterceptor(new LoginInterceptor())
+        .addPathPatterns("/**")
+        .excludePathPatterns(
+            "/login",
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/favicon.ico");
+
   }
 }
