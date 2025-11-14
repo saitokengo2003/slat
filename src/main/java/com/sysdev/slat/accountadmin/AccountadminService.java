@@ -126,6 +126,9 @@ public class AccountadminService {
     }
 
     AccountForm form = new AccountForm();
+    form.setId(id);
+
+    form.setUserId(user.getUsername());
     form.setUserId(user.getUsername());
     form.setName(user.getDisplayName());
     form.setPassword(""); // ← 安全のためハッシュは表示しない
@@ -135,5 +138,46 @@ public class AccountadminService {
     form.setNumber(user.getNumber());
 
     return form;
+  }
+
+  @Transactional
+  public void updateAccount(String id, AccountForm form) {
+    UUID userId = UUID.fromString(id);
+    User existingUser = userRepository.findById(userId)
+        .orElseThrow(() -> new RuntimeException("更新対象のユーザーIDが見つかりません: " + id));
+    try {
+
+      existingUser.setUsername(form.getUserId());
+      existingUser.setPasswordHash(form.getPassword());
+      existingUser.setDisplayName(form.getName());
+      existingUser.setRoleCode(form.getRole());
+
+      OffsetDateTime now = OffsetDateTime.now();
+      existingUser.setCreatedAt(now);
+      existingUser.setUpdatedAt(now);
+
+      if (form.getGrade() != null && !form.getGrade().isEmpty()) {
+        try {
+          existingUser.setGrade(Integer.parseInt(form.getGrade()));
+        } catch (NumberFormatException e) {
+          logger.warn("学年 (grade) の値 '{}' が数値ではありません。", form.getGrade());
+        }
+      }
+
+      existingUser.setClassName(form.getClassId());
+      existingUser.setNumber(form.getNumber());
+      existingUser.setStatus("active");
+
+      userRepository.save(existingUser);
+
+      logger.info("アカウント (Username: {}) の更新に成功しました。", existingUser.getUsername());
+
+    } catch (DataAccessException e) {
+      logger.error("データベースへのアカウント登録中に例外が発生しました。", e);
+      throw new RuntimeException("アカウント登録エラー: " + e.getLocalizedMessage(), e);
+    } catch (Exception e) {
+      logger.error("アカウント登録中に予期せぬ例外が発生しました。", e);
+      throw new RuntimeException("アカウント登録中に予期せぬエラーが発生しました: " + e.getLocalizedMessage(), e);
+    }
   }
 }
