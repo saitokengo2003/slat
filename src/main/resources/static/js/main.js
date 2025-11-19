@@ -28,7 +28,7 @@ const scrollToBottom = () => {
 };
 
 /* --------------------------------------------------------
-   DM履歴の読み込み（addMessage を利用する形に変更）
+  DM履歴の読み込み（addMessage を利用する形に変更）
 -------------------------------------------------------- */
 function loadDmHistory(recipientId) {
   chatArea.innerHTML = "";
@@ -68,7 +68,7 @@ function loadDmHistory(recipientId) {
 }
 
 /* --------------------------------------------------------
-   メッセージ送信（DB保存）
+  メッセージ送信（DB保存）
 -------------------------------------------------------- */
 async function sendMessageHandler(messageBody) {
   if (!messageBody.trim()) return;
@@ -96,6 +96,8 @@ async function sendMessageHandler(messageBody) {
 
     if (response.ok) {
       addMessage(messageBody, true, loggedInUserId);
+      // メッセージ送信後：ボタン色を元に戻す
+      sendBtn.classList.remove("active");
     } else {
       alert("送信失敗: " + (await response.text()));
     }
@@ -106,7 +108,7 @@ async function sendMessageHandler(messageBody) {
 }
 
 /* --------------------------------------------------------
-   ★ 右側（自分）・左側（相手）表示対応 addMessage()
+  ★ 右側（自分）・左側（相手）表示対応 addMessage()
 -------------------------------------------------------- */
 function addMessage(text, isRight = true, displayName = "") {
   const message = document.createElement("div");
@@ -163,7 +165,7 @@ function addMessage(text, isRight = true, displayName = "") {
 }
 
 /* --------------------------------------------------------
-   初期化処理
+  初期化処理
 -------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const userListItems = document.querySelectorAll(".user-list-item");
@@ -201,4 +203,91 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // =============================
+  // ★ グループクリック処理追加
+  // =============================
+  const groupListItems = document.querySelectorAll(".group-list-item");
+
+  groupListItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const groupId = item.getAttribute("data-group-id");
+      const groupName = item.getAttribute("data-display-name");
+
+      currentRecipientId = "group-" + groupId; // ← ※DMと区別するため prefix
+
+      // 選択状態を切り替え
+      document
+        .querySelectorAll(".user-list-item, .group-list-item")
+        .forEach((i) => i.classList.remove("selected"));
+      item.classList.add("selected");
+
+      // 上部タイトル変更
+      const chatPartnerHeader = document.getElementById("chat-partner-name");
+      chatPartnerHeader.textContent = groupName;
+
+      // グループ履歴表示
+      loadGroupHistory(groupId);
+    });
+  });
+
+  // ======================================
+  // ▼ メニュータイトル（開閉ボタン）の開閉処理
+  // ======================================
+  const menuTitles = document.querySelectorAll(".menu-title");
+
+  menuTitles.forEach((title) => {
+    title.addEventListener("click", () => {
+      const nextList = title.nextElementSibling;
+
+      if (!nextList || !nextList.classList.contains("menu-list")) return;
+
+      // 開閉切り替え
+      nextList.classList.toggle("collapsed");
+      title.classList.toggle("collapsed");
+
+      // ▼ の向きを切り替え
+      if (title.textContent.trim().startsWith("▼")) {
+        title.textContent = title.textContent.replace("▼", "▶");
+      } else {
+        title.textContent = title.textContent.replace("▶", "▼");
+      }
+    });
+  });
+
+  // ------------------------------
+  // ★ 送信ボタンの活性化（色変更）
+  // ------------------------------
+  if (chatInput && sendBtn) {
+    chatInput.addEventListener("input", () => {
+      if (chatInput.value.trim() !== "") {
+        sendBtn.classList.add("active");
+      } else {
+        sendBtn.classList.remove("active");
+      }
+    });
+  }
 });
+
+function loadGroupHistory(groupId) {
+  chatArea.innerHTML = "";
+
+  fetch(`/api/group/history?groupId=${groupId}`)
+    .then((res) => res.json())
+    .then((messages) => {
+      if (messages.length === 0) {
+        chatArea.innerHTML = '<p class="no-message-guide">まだメッセージはありません。</p>';
+        return;
+      }
+
+      messages.forEach((msg) => {
+        const isSentByMe = msg.senderId === loggedInUserId;
+        const displayName = msg.senderName || msg.senderId;
+
+        addMessage(msg.body, isSentByMe, displayName);
+      });
+    })
+    .catch((err) => {
+      chatArea.innerHTML = `<p class="error-message">読み込みエラー: ${err}</p>`;
+    });
+}
