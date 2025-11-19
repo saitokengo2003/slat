@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/accountcreate.css" />
   </head>
   <body>
+    <a href="/home" class="back-button">← 戻る</a>
     <div class="form-container">
       <h1>アカウント編集</h1>
 
@@ -51,7 +52,7 @@
           <select id="role" th:field="*{role}" required>
             <option value="" disabled selected>選択してください</option>
             <option value="admin">管理者</option>
-            <option value="teacher">先生</option>
+            <option value="teacher">講師</option>
             <option value="student">生徒</option>
           </select>
         </div>

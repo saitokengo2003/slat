@@ -24,7 +24,7 @@ body {
   background: #2e7d32;
   color: white;
   padding-top: 15px;
-  transition: width 0.25s ease;
+  transition: width 0.25s ease, padding 0.25s ease;
   overflow: hidden;
 }
 .sidebar.collapsed {
@@ -41,6 +41,46 @@ body {
   color: white;
   font-size: 22px;
   cursor: pointer;
+}
+
+.menu-title {
+  cursor: pointer;
+  user-select: none;
+}
+
+.menu-title.collapsed {
+  opacity: 0.6;
+}
+
+.menu-list.collapsed {
+  display: none;
+}
+
+/* ⭐ 折りたたみ時のホームボタンを上下左右で中央配置 */
+.sidebar.collapsed .home-btn {
+  justify-content: center;
+  align-items: center; /* ← 縦方向も中央にする */
+  padding: 12px 0; /* ← 高さを整える（好みで調整可） */
+}
+
+.sidebar.collapsed .home-icon {
+  margin-right: 0;
+  transition: margin 0.25s ease;
+}
+
+/* 折りたたんだ時は名前をフェードアウト＆幅を保持 */
+.sidebar.collapsed .user-sidebar-name {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* 通常時（展開時）は普通に表示される */
+.user-sidebar-name {
+  display: inline-block;
+  white-space: nowrap;
+  transition: all 0.25s ease;
 }
 
 /* ===============================
