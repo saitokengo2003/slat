@@ -57,12 +57,55 @@
       <!-- ✅ メインコンテンツ -->
       <main class="main-content">
         <div class="top-bar d-flex justify-content-between align-items-center">
-          <input type="text" class="search-bar" placeholder="検索" />
+          <form th:action="@{/search}" method="post">
+            <input
+              type="text"
+              class="search-bar"
+              name="keyword"
+              placeholder="検索"
+              th:value="${keyword}"
+            />
+            <button type="submit" class="search-btn">検索</button>
+          </form>
 
           <form th:action="@{/logout}" method="post">
             <button type="submit" class="logout-btn">ログアウト</button>
           </form>
         </div>
+
+        <div class="mt-3">
+          <p th:if="${keyword != null}">
+            "<span th:text="${keyword}"></span>" の検索結果 (<span
+              th:text="${#lists.size(results)}"
+            ></span
+            >件)
+          </p>
+        </div>
+
+        <table class="table table-striped" th:if="${results != null}">
+          <thead>
+            <tr>
+              <th>日時</th>
+              <th>グループ</th>
+              <th>ユーザー</th>
+              <th>メッセージ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="r : ${results}">
+              <td th:text="${r.createdAt}">2025-11-13 10:00</td>
+              <td th:text="${r.groupName}">General</td>
+              <td>
+                <span th:text="${r.senderDisplayName}">山田太郎</span>
+                (<span th:text="${r.senderUsername}">taro</span>)
+              </td>
+              <td th:text="${r.body}">メッセージ本文</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(results)}">
+              <td colspan="4">該当するメッセージはありませんでした。</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2 class="page-title">ホーム</h2>
 
