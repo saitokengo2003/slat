@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.sysdev.slat.GroupDetailDto;
 import com.sysdev.slat.accountadmin.AccountadminEntity;
@@ -43,7 +44,8 @@ public class GroupController {
       @RequestParam(name = "name") String name,
       @RequestParam(name = "owner") String owner,
       @RequestParam(name = "members") List<String> members,
-      Model model) {
+      Model model,
+      RedirectAttributes redirectAttributes) {
 
     System.out.println("[Log] /post groupcreate");
 
@@ -66,7 +68,7 @@ public class GroupController {
       model.addAttribute("errorMessage", "作成に失敗しました。もう一度お試しください");
     }
 
-    return "groupinfo/index";
+    return "redirect:/groupinfo";
   }
 
   @GetMapping("/groupinfo")
