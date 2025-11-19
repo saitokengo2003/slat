@@ -19,6 +19,12 @@ import com.sysdev.slat.chat.GroupRepository;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import com.sysdev.slat.reactions.ReactionService; // ⭐ 追加
+import com.sysdev.slat.reactions.ReactionRequest; // ⭐ 追加
+
+import jakarta.servlet.http.HttpSession;
+import java.util.List;
+import java.util.UUID; // 追加
 
 @Controller
 public class ChatController {
@@ -31,6 +37,8 @@ public class ChatController {
 
   @Autowired
   private GroupRepository groupRepository;
+  @Autowired
+  private ReactionService reactionService;
 
   private final String SESSION_USER_DATA_KEY = "userData";
 
@@ -137,4 +145,35 @@ public class ChatController {
       return List.of();
     }
   }
+
+  /**
+   * ✅ 5. リアクションを登録・削除する POST APIエンドポイント (新規追加)
+   */
+  @PostMapping("/api/reaction/toggle")
+  @ResponseBody
+  public String toggleReaction(
+      @RequestBody ReactionRequest reactionRequest,
+      @SessionAttribute(name = SESSION_USER_DATA_KEY, required = false) UserData userData) {
+
+    if (userData == null) {
+      return "ERROR: User not authenticated.";
+    }
+
+    UUID messageId = reactionRequest.getMessageId();
+    String emoji = reactionRequest.getEmoji();
+    String userId = userData.getUserId();
+
+    if (messageId == null || emoji == null || emoji.isEmpty()) {
+      return "ERROR: Message ID or emoji is missing.";
+    }
+
+    try {
+      boolean added = reactionService.toggleReaction(messageId, userId, emoji);
+      return added ? "ADDED" : "REMOVED";
+    } catch (Exception e) {
+      System.err.println("Reaction Toggle Error: " + e.getMessage());
+      return "ERROR: Failed to toggle reaction.";
+    }
+  }
+
 }
