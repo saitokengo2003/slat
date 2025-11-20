@@ -1,13 +1,16 @@
 package com.sysdev.slat.chat;
 
+import java.time.OffsetDateTime; // ⭐ NEW: OffsetDateTime をインポート
+
 /**
  * チャットメッセージの送信リクエストを保持する DTO
  */
 public class ChatRequest {
   private String groupId;
   private String senderId;
-  private String recipientId; // ⭐ フィールドを追加
+  private String recipientId;
   private String body;
+  private OffsetDateTime expirationTime; // ✅ NEW: 期限情報フィールドを追加
 
   public ChatRequest() {
   }
@@ -40,11 +43,20 @@ public class ChatRequest {
 
   // --- 新規追加する Getter/Setter ---
 
-  public String getRecipientId() { // ⭐ ゲッター
+  public String getRecipientId() {
     return recipientId;
   }
 
-  public void setRecipientId(String recipientId) { // ⭐ セッター
+  public void setRecipientId(String recipientId) {
     this.recipientId = recipientId;
+  }
+
+  // ✅ NEW: 期限情報のための Getter/Setter
+  public OffsetDateTime getExpirationTime() {
+    return expirationTime;
+  }
+
+  public void setExpirationTime(OffsetDateTime expirationTime) {
+    this.expirationTime = expirationTime;
   }
 }

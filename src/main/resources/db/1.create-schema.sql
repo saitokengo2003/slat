@@ -100,6 +100,10 @@ CREATE TABLE
     CONSTRAINT fk_message_sender FOREIGN KEY (sender_id) REFERENCES users_s (username)
   );
 
+-- 期限格納場所の追加
+ALTER TABLE messages
+ADD COLUMN expiration_time TIMESTAMP WITH TIME ZONE NULL;
+
 -- -----------------------------------------------------
 -- Table reactions (リアクション)
 -- -----------------------------------------------------
@@ -133,4 +137,22 @@ CREATE TABLE
     ),
     CONSTRAINT fk_dm_sender FOREIGN KEY (sender_id) REFERENCES users_s (username),
     CONSTRAINT fk_dm_recipient FOREIGN KEY (recipient_id) REFERENCES users_s (username)
+  );
+
+-- 期限格納場所の追加
+ALTER TABLE dmmessage
+ADD COLUMN expiration_time TIMESTAMP WITH TIME ZONE NULL;
+
+-- DMメッセージにリアクションをつけるためのテーブル
+CREATE TABLE
+  dm_reactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (), -- 主キー
+    dm_message_id UUID NOT NULL, -- FK dmmessage.id
+    user_id VARCHAR(100) NOT NULL, -- FK users_s.id
+    emoji VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 作成日
+    CONSTRAINT unique_dm_reaction UNIQUE (dm_message_id, user_id, emoji),
+    -- DMメッセージ削除でリアクションも削除
+    CONSTRAINT fk_dm_reaction_message FOREIGN KEY (dm_message_id) REFERENCES dmmessage (id) ON DELETE CASCADE,
+    CONSTRAINT fk_dm_reaction_user FOREIGN KEY (user_id) REFERENCES users_s (username)
   );
