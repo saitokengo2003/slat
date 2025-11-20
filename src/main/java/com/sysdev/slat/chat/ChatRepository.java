@@ -43,7 +43,7 @@ public class ChatRepository {
   }
 
   /**
-   * DMメッセージ履歴を取得します。
+   * DMメッセージ履歴を取得します。（リアクション対象外のためID取得なし）
    */
   public List<MessageHistoryDto> findDmHistory(String userId1, String userId2) {
     String sql = """
@@ -59,6 +59,7 @@ public class ChatRepository {
         sql,
         (rs, rowNum) -> {
           MessageHistoryDto dto = new MessageHistoryDto();
+          // DMはリアクション対象外のため MessageId の設定はなし
           dto.setSenderId(rs.getString("sender_id"));
           dto.setBody(rs.getString("body"));
           dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
@@ -69,12 +70,12 @@ public class ChatRepository {
   }
 
   /**
-   * ✅ グループメッセージ履歴を取得します。 (新規追加)
+   * ✅ グループメッセージ履歴を取得します。 (IDを取得するように修正)
    */
   public List<MessageHistoryDto> findGroupHistory(String groupId) {
-    // SQL: 指定された group_id のメッセージを messages テーブルから取得し、日付でソート
+    // SQL: id を追加
     String sql = """
-            SELECT sender_id, body, created_at
+            SELECT id, sender_id, body, created_at
             FROM messages
             WHERE
                 group_id = ?
@@ -85,13 +86,13 @@ public class ChatRepository {
         sql,
         (rs, rowNum) -> {
           MessageHistoryDto dto = new MessageHistoryDto();
+          dto.setMessageId(rs.getObject("id", UUID.class)); // ⭐ IDを設定
           dto.setSenderId(rs.getString("sender_id"));
           dto.setBody(rs.getString("body"));
           dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
           return dto;
         },
-        UUID.fromString(groupId) // UUIDに変換してパラメータとして渡す
-    );
+        UUID.fromString(groupId));
   }
 
   // ... (groupExists, insertGroup, etc. は省略) ...
