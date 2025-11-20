@@ -65,99 +65,142 @@
         </ul>
       </aside>
 
-      <!-- ✅ メインコンテンツ -->
-      <main class="main-content">
-        <div class="top-bar d-flex justify-content-between align-items-center">
-          <form th:action="@{/search}" method="post">
+      <!-- メインコンテンツ -->
+      <main class="main-content home-main">
+        <!-- 検索+ログアウト -->
+        <div class="home-topbar d-flex justify-content-between align-items-center mb-3">
+          <form th:action="@{/search}" method="post" class="d-flex home-search-area">
             <input
               type="text"
-              class="search-bar"
+              class="form-control home-search-input"
               name="keyword"
-              placeholder="検索"
+              placeholder="メッセージ・ユーザーを検索"
               th:value="${keyword}"
             />
-            <button type="submit" class="search-btn">検索</button>
+            <button type="submit" class="btn btn-primary ms-2 home-search-btn">検索</button>
           </form>
 
           <form th:action="@{/logout}" method="post">
-            <button type="submit" class="logout-btn">ログアウト</button>
+            <button type="submit" class="btn btn-outline-danger home-logout-btn">ログアウト</button>
           </form>
         </div>
 
-        <div class="mt-3">
-          <p th:if="${keyword != null}">
-            "<span th:text="${keyword}"></span>" の検索結果 (<span
-              th:text="${#lists.size(results)}"
-            ></span
-            >件)
-          </p>
-        </div>
-
-        <table class="table table-striped" th:if="${results != null}">
-          <thead>
-            <tr>
-              <th>日時</th>
-              <th>グループ</th>
-              <th>ユーザー</th>
-              <th>メッセージ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="r : ${results}">
-              <td th:text="${r.createdAt}">2025-11-13 10:00</td>
-              <td th:text="${r.groupName}">General</td>
-              <td>
-                <span th:text="${r.senderDisplayName}">山田太郎</span>
-                (<span th:text="${r.senderUsername}">taro</span>)
-              </td>
-              <td th:text="${r.body}">メッセージ本文</td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(results)}">
-              <td colspan="4">該当するメッセージはありませんでした。</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2 class="page-title">ホーム</h2>
-
-        <ul class="chat-list">
-          <li>
-            <div class="chat-left">
-              <span class="chat-icon">T</span>
-              <span class="chat-text">チャット内容・・・</span>
-            </div>
-            <div class="dropdown">
-              <button class="dropdown-btn">⋯</button>
-              <div class="dropdown-menu">
-                <a href="#">編集</a>
-                <a href="#">削除</a>
-                <a href="#">詳細</a>
+        <!-- 検索結果ヘッダ -->
+        <section th:if="${keyword != null}" class="mb-3">
+          <div class="card shadow-sm home-search-summary-card">
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="card-title mb-1">検索結果</h5>
+                <p class="mb-0 text-muted">
+                  「<span th:text="${keyword}"></span>」の検索結果 （
+                  <span th:text="${#lists.size(results)}"></span>件）
+                </p>
               </div>
             </div>
-          </li>
+          </div>
+        </section>
 
-          <li>
-            <div class="chat-left">
-              <span class="chat-icon">ℓ</span>
-              <span class="chat-text">チャット内容・・・</span>
-            </div>
-            <div class="dropdown">
-              <button class="dropdown-btn">⋯</button>
-              <div class="dropdown-menu">
-                <a href="#">編集</a>
-                <a href="#">削除</a>
-                <a href="#">詳細</a>
+        <!-- 検索結果テーブル -->
+        <section th:if="${results != null}">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-3 text-muted">メッセージ一覧</h6>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 180px">日時</th>
+                      <th style="width: 180px">グループ</th>
+                      <th style="width: 220px">ユーザー</th>
+                      <th>メッセージ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="r : ${results}">
+                      <td th:text="${#temporals.format(r.createdAt, 'yyyy/MM/dd HH:mm')}">
+                        2025/11/13 10:00
+                      </td>
+                      <td th:text="${r.groupName}">General</td>
+                      <td>
+                        <span class="fw-semibold" th:text="${r.senderDisplayName}">山田太郎</span>
+                        <span class="text-muted small">
+                          （<span th:text="${r.senderUsername}">taro</span>）
+                        </span>
+                      </td>
+                      <td th:text="${r.body}">メッセージ本文</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(results)}">
+                      <td colspan="4" class="text-center text-muted py-4">
+                        該当するメッセージはありませんでした。
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </li>
-        </ul>
-        <a href="login">ログイン画面へ</a><br />
-        <a href="accountadmin">アカウント管理画面へ</a><br />
-        <a href="accountcreate">アカウント作成画面へ</a><br />
-        <a href="admin">管理者メニューへ</a><br />
-        <a href="groupcreate">グループ作成画面へ</a><br />
-        <a href="groupinfo">グループ詳細画面へ</a><br />
-        <a href="chat">チャット画面へ</a>
+          </div>
+        </section>
+
+        <!-- ホームコンテンツ -->
+        <section class="home-section-root">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="home-page-title mb-0">ホーム</h2>
+          </div>
+        </section>
+
+        <!-- ボタンエリア -->
+        <section class="home-quick-links mt-4">
+          <div class="row g-3">
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/login}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">ログイン画面へ</div>
+                <div class="home-quick-link-sub">ログイン画面の確認・動作テスト</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/accountadmin}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">アカウント管理画面へ</div>
+                <div class="home-quick-link-sub">ユーザー一覧・編集・削除</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/accountcreate}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">アカウント作成画面へ</div>
+                <div class="home-quick-link-sub">新規ユーザーを追加</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/admin}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">管理者メニューへ</div>
+                <div class="home-quick-link-sub">管理機能の一覧</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/groupcreate}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">グループ作成画面へ</div>
+                <div class="home-quick-link-sub">新しいグループ／クラスを作成</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/groupinfo}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">グループ詳細画面へ</div>
+                <div class="home-quick-link-sub">既存グループの管理</div>
+              </a>
+            </div>
+
+            <div class="col-md-4 col-sm-6">
+              <a th:href="@{/chat}" class="btn w-100 shadow-sm home-quick-link-btn">
+                <div class="home-quick-link-main">チャット画面へ</div>
+                <div class="home-quick-link-sub">実際のチャットを確認</div>
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
 
