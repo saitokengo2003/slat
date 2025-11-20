@@ -254,7 +254,6 @@ body {
   ✅ チャット画面（修正版）
 ================================ */
 .chat-area {
-  display: flex;
   flex-direction: column;
   gap: 25px;
   padding: 20px;
@@ -264,16 +263,46 @@ body {
 }
 
 .message {
+  /* ⭐ MODIFIED: flex-wrap: wrap を追加し、子要素が折り返せるようにする */
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
   max-width: fit-content;
   position: relative;
+  margin-bottom: 15px;
 }
 
+/* ⭐ NEW: 期限ラベルのスタイル */
+.expiration-label {
+  /* 期限が切れていない時は赤文字で強調 */
+  color: #dc3545; /* 赤色 */
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 4px; /* メッセージとの間に少しスペース */
+
+  /* ⭐ NEW: message コンテナの先頭に配置 */
+  order: 0;
+  flex-basis: 100%; /* 行全体を占有 */
+  text-align: left;
+}
+
+/* ⭐ NEW: アバター、吹き出し、時刻、リアクションの順序を定義 */
+/* アバターとバブルの行 */
+.message .avatar {
+  order: 1;
+}
+.message .bubble {
+  order: 2;
+  margin-left: 8px; /* アバターの横に配置されるようマージンを調整 */
+}
+.message.right .bubble {
+  margin-left: 8px;
+}
+
+/* ⭐ MODIFIED: left/right のアライメントと要素配置の調整 */
 .message.left {
   align-items: flex-start;
 }
-
 .message.right {
   align-items: flex-end;
   margin-left: auto; /* ← これで右寄せを保証 */
@@ -287,19 +316,89 @@ body {
   max-width: 400px;
   word-wrap: break-word;
 }
-
-/* 右側（自分の吹き出し）だけ色変更したい場合は以下を追加可 */
 .message.right .bubble {
-  background: #b2dfdb; /* ←少し落ち着いた右側カラー例 */
+  background: #b2dfdb;
 }
 
-/* ✅ リアクション位置：吹き出し下に整列 */
-.message .reaction {
+/* ✅ NEW: 期限切れメッセージのスタイル */
+.message.expired .bubble {
+  background: #e0e0e0;
+  color: #888;
+  text-decoration: none;
+}
+.message.expired .message-time {
+  opacity: 0.5;
+}
+.message.expired .reaction {
+  opacity: 0.8;
+}
+.message.expired .bubble::before {
+  content: "EXPIRED";
+  font-size: 10px;
+  font-weight: bold;
+  color: red;
+  display: block;
+  margin-bottom: 5px;
+}
+.message.expired .expiration-label {
+  color: #6c757d; /* 期限切れ後はグレーに */
+  font-weight: normal;
+}
+
+/* ⭐ MODIFIED: 時刻とリアクションを横並びにするため、flex-basis: auto に変更 */
+.message-time {
+  order: 4; /* ⭐ 4番目に表示 */
+  flex-basis: auto; /* ⭐ MODIFIED: コンテンツ幅に合わせる */
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.message .reactions-container {
+  order: 3; /* ⭐ 3番目に表示 */
+  flex-basis: auto; /* ⭐ MODIFIED: コンテンツ幅に合わせる */
   display: flex;
+  margin-top: 4px;
+  margin-left: 8px;
+}
+
+/* 左側 (相手) の配置 */
+.message.left .message-time {
+  align-self: flex-start;
+  margin-left: 8px;
+  margin-right: 0;
+}
+.message.left .reactions-container {
+  align-self: flex-start;
+  margin-left: 50px; /* ⭐ MODIFIED: アバターの幅 + マージン分を確保し、左寄せ */
+}
+.message.left .expiration-label {
+  text-align: left;
+}
+
+/* 右側 (自分) の配置 */
+.message.right .message-time {
+  align-self: flex-end;
+  text-align: right;
+  margin-right: 8px;
+  margin-left: 0;
+}
+.message.right .reactions-container {
+  align-self: flex-end;
+  margin-right: 8px;
+  margin-left: 0;
+}
+.message.right .expiration-label {
+  text-align: right;
+}
+
+/* ✅ リアクションの位置は維持 */
+.message .reaction {
+  display: inline-flex;
   align-items: center;
   font-size: 13px;
   color: #333;
-  margin-top: 4px;
   margin-left: 8px;
 }
 
@@ -307,6 +406,34 @@ body {
   justify-content: flex-end;
   margin-right: 8px;
   margin-left: 0;
+}
+
+/* ===============================
+  ✅ 期限設定ボタン (新規追加)
+================================ */
+.expiration-btn {
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #333;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+  padding-bottom: 3px;
+}
+
+.expiration-btn:hover {
+  background: #e0e0e0;
+}
+
+/* ⭐ 期限が設定された状態（例として active クラスを使用） */
+.expiration-btn.active {
+  background: #ff9800;
+  color: white;
+  box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
 }
 
 /* ===============================
@@ -336,9 +463,9 @@ body {
 .send-btn {
   width: 45px;
   height: 45px;
-  border: none; /* ボーダーを削除 */
-  border-radius: 50%; /* 正円にする */
-  background: #e0e0e0; /* 初期状態: 灰色 (非活性) */
+  border: none;
+  border-radius: 50%;
+  background: #e0e0e0;
   color: #a0a0a0;
   font-size: 22px;
   cursor: default;
@@ -352,7 +479,7 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 .send-btn.active:hover {
-  background: #1b5e20; /* ホバーで濃くする */
+  background: #1b5e20;
 }
 
 /* ===============================
@@ -384,7 +511,7 @@ body {
 
 /* ✅ 押した状態を明確に */
 .reaction.active {
-  background-color: rgba(255, 152, 0, 0.15); /* 柔らかいオレンジ背景 */
+  background-color: rgba(255, 152, 0, 0.15);
   border: 1px solid rgba(255, 152, 0, 0.6);
   color: #ff9800;
   font-weight: bold;
@@ -436,5 +563,5 @@ body {
   margin: 8px auto;
   width: 50px;
   border-radius: 12px;
-  transition: all 0.25s ease; /* ← アニメーション */
+  transition: all 0.25s ease;
 }

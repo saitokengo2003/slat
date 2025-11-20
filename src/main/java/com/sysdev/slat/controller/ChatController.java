@@ -56,6 +56,7 @@ public class ChatController {
 
     model.addAttribute("loggedInUserId", userData.getUserId());
     model.addAttribute("displayName", userData.getDisplayName());
+    model.addAttribute("loggedInUserRole", userData.getRoleCode()); // ✅ NEW: ロールコードを追加
 
     // DM相手リストを取得
     List<UserData> otherUsers = userService.findAllOtherUsers(userData.getUserId());
@@ -81,6 +82,7 @@ public class ChatController {
       return "ERROR: User not authenticated.";
     }
 
+    // ⭐ MODIFIED: 送信者が不正なIDを設定できないよう、セッションのIDで上書きする
     chatRequest.setSenderId(userData.getUserId());
 
     if (chatRequest.getBody() == null || chatRequest.getBody().trim().isEmpty()
@@ -91,7 +93,10 @@ public class ChatController {
 
     try {
       chatService.saveChatMessage(chatRequest);
-      return "OK";
+      return "SUCCESS"; // 戻り値を "OK" から "SUCCESS" に変更
+    } catch (SecurityException e) {
+      // ✅ 権限エラーの場合の処理を追加
+      return e.getMessage();
     } catch (Exception e) {
       System.err.println("Message Save Error: " + e.getMessage());
       return "ERROR: Failed to save message due to internal server error.";
