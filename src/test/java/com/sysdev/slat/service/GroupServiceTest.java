@@ -16,8 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -53,7 +53,6 @@ class GroupServiceTest {
     assertFalse(target.validateName(""));
     assertFalse(target.validateName("   "));
 
-    // 256文字の文字列生成
     String longName = "a".repeat(256);
     assertFalse(target.validateName(longName));
   }
@@ -66,9 +65,6 @@ class GroupServiceTest {
     // 1. Ready
     List<String> members = List.of(MEMBER, "member2");
 
-    // jdbc.update は成功すると更新件数(int)を返すが、戻り値を使わない実装なので設定不要(0が返る)
-    // 必要なら doReturn(1).when(jdbc).update(...);
-
     // 2. Do
     boolean result = target.createGroup(OWNER, "New Group", members);
 
@@ -76,13 +72,8 @@ class GroupServiceTest {
     assertTrue(result);
 
     // SQL呼び出し検証
-    // (1) グループ本体のINSERT (UUIDはランダム生成なので any() で受ける)
     verify(jdbc).update(contains("INSERT INTO group_s"), any(UUID.class), eq("New Group"), eq(OWNER));
-
-    // (2) オーナーのINSERT
     verify(jdbc).update(contains("INSERT INTO group_members"), any(UUID.class), eq(OWNER));
-
-    // (3) メンバーのバッチINSERT
     verify(jdbc).batchUpdate(contains("INSERT INTO group_members"), any(BatchPreparedStatementSetter.class));
   }
 
@@ -97,8 +88,6 @@ class GroupServiceTest {
 
     // 3. Assert
     assertTrue(result);
-
-    // メンバー追加の batchUpdate は呼ばれないはず
     verify(jdbc, never()).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
   }
 
@@ -106,9 +95,8 @@ class GroupServiceTest {
   @DisplayName("createGroup: 異常系 (DBエラー発生)")
   void testCreateGroupDbError() {
     // 1. Ready
-    // 最初のINSERTで例外を投げる
-    doThrow(new DataAccessException("DB Error") {
-    }).when(jdbc).update(contains("INSERT INTO group_s"), any(), any(), any());
+    doThrow(new QueryTimeoutException("DB Error")).when(jdbc).update(contains("INSERT INTO group_s"), any(), any(),
+        any());
 
     // 2. Do
     boolean result = target.createGroup(OWNER, "Error Group", List.of(MEMBER));
@@ -173,9 +161,7 @@ class GroupServiceTest {
   @DisplayName("deleteGroup: 正常系")
   void testDeleteGroupSuccess() {
     // 1. Ready
-    // メンバー削除(件数は問わない)
     doReturn(5).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID));
-    // グループ削除(1件)
     doReturn(1).when(jdbc).update(contains("DELETE FROM group_s"), eq(TEST_UUID));
 
     // 2. Do
@@ -189,6 +175,10 @@ class GroupServiceTest {
   @DisplayName("deleteGroup: 異常系 (グループが存在しない/削除件数0)")
   void testDeleteGroupFailZero() {
     // 1. Ready
+    // 【修正】1回目の削除呼び出し（group_members）に対するスタブを追加
+    doReturn(0).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID));
+
+    // 2回目の削除呼び出し（group_s）に対するスタブ
     doReturn(0).when(jdbc).update(contains("DELETE FROM group_s"), eq(TEST_UUID));
 
     // 2. Do
@@ -202,8 +192,8 @@ class GroupServiceTest {
   @DisplayName("deleteGroup: 異常系 (DB例外)")
   void testDeleteGroupException() {
     // 1. Ready
-    doThrow(new DataAccessException("Delete Error") {
-    }).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID));
+    doThrow(new QueryTimeoutException("Delete Error")).when(jdbc).update(contains("DELETE FROM group_members"),
+        eq(TEST_UUID));
 
     // 2. Do
     boolean result = target.deleteGroup(TEST_UUID);
@@ -228,7 +218,7 @@ class GroupServiceTest {
   }
 
   @Test
-  @DisplayName("deleteGroupMember: 失敗 (オーナー削除しようとした場合などはSQL条件で0件になる)")
+  @DisplayName("deleteGroupMember: 失敗")
   void testDeleteGroupMemberFail() {
     // 1. Ready
     doReturn(0).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID), eq(OWNER));
@@ -256,10 +246,9 @@ class GroupServiceTest {
   }
 
   @Test
-  @DisplayName("addGroupMember: 失敗 (既に参加済みなどはSQL条件で0件になる)")
+  @DisplayName("addGroupMember: 失敗 (既に参加済み)")
   void testAddGroupMemberFail() {
     // 1. Ready
-    // ON CONFLICT DO NOTHING で0件更新になった場合
     doReturn(0).when(jdbc).update(contains("INSERT INTO group_members"), eq(TEST_UUID), eq(MEMBER));
 
     // 2. Do
@@ -273,8 +262,9 @@ class GroupServiceTest {
   @DisplayName("addGroupMember: 異常系 (DB例外)")
   void testAddGroupMemberException() {
     // 1. Ready
-    doThrow(new DataAccessException("Insert Error") {
-    }).when(jdbc).update(contains("INSERT INTO group_members"), any(), any());
+    // 【修正】引数のマッチャーを any() ではなく any(Object.class) で明示
+    doThrow(new QueryTimeoutException("Insert Error"))
+        .when(jdbc).update(contains("INSERT INTO group_members"), any(Object.class), any(Object.class));
 
     // 2. Do
     boolean result = target.addGroupMember(TEST_UUID, MEMBER);

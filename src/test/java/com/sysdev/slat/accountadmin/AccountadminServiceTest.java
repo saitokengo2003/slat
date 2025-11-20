@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.QueryTimeoutException;
 
 import com.sysdev.slat.user.User;
 import com.sysdev.slat.user.UserRepository;
@@ -32,8 +33,11 @@ class AccountadminServiceTest {
   @InjectMocks
   private AccountadminService target;
 
-  // テスト用のダミーUUID文字列
   private final String VALID_UUID_STR = "550e8400-e29b-41d4-a716-446655440000";
+
+  // -------------------------------------------------------
+  // テストケース
+  // -------------------------------------------------------
 
   @Test
   @DisplayName("アカウント一覧取得(Entity): 正常系")
@@ -44,7 +48,6 @@ class AccountadminServiceTest {
     User user2 = new User();
     user2.setUsername("user2");
 
-    // findAllが呼ばれたらリストを返す
     doReturn(List.of(user1, user2)).when(userRepository).findAll();
 
     // 2. Do
@@ -61,14 +64,14 @@ class AccountadminServiceTest {
   void testDeleteAccount() throws SQLException {
     // 1. Ready
     String accountId = "user123";
-    // voidメソッドなので何もしない設定（省略可能だが明示）
-    doNothing().when(accountadminRepository).delete(accountId);
+
+    // 【修正】deleteメソッドはintを返すため、doNothing()ではなくdoReturn(1)を使用
+    doReturn(1).when(accountadminRepository).delete(accountId);
 
     // 2. Do
     target.deleteAccount(accountId);
 
     // 3. Assert
-    // accountadminRepository.delete が1回呼ばれたことを検証
     verify(accountadminRepository, times(1)).delete(accountId);
   }
 
@@ -81,24 +84,23 @@ class AccountadminServiceTest {
     form.setPassword("password123");
     form.setName("新規 太郎");
     form.setRole("STUDENT");
-    form.setGrade("1"); // 数値変換できる文字列
+    form.setGrade("1");
     form.setClassId("A");
-    form.setNumber("10");
+    form.setNumber(10); // Integer型
 
     // 2. Do
     target.createAccount(form);
 
     // 3. Assert
-    // saveメソッドに渡されたUserオブジェクトを捕まえて中身をチェックする
     ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
     verify(userRepository).save(userCaptor.capture());
 
     User savedUser = userCaptor.getValue();
     assertEquals("new_user", savedUser.getUsername());
     assertEquals("新規 太郎", savedUser.getDisplayName());
-    assertEquals(1, savedUser.getGrade()); // 数値に変換されていること
-    assertEquals("active", savedUser.getStatus()); // デフォルト値の確認
-    assertNotNull(savedUser.getCreatedAt()); // 日時が入っていること
+    assertEquals(1, savedUser.getGrade());
+    assertEquals("active", savedUser.getStatus());
+    assertNotNull(savedUser.getCreatedAt());
   }
 
   @Test
@@ -107,7 +109,7 @@ class AccountadminServiceTest {
     // 1. Ready
     AccountForm form = new AccountForm();
     form.setUserId("user_ng_grade");
-    form.setGrade("NotNumber"); // 数値ではない
+    form.setGrade("NotNumber");
 
     // 2. Do
     target.createAccount(form);
@@ -118,9 +120,7 @@ class AccountadminServiceTest {
 
     User savedUser = userCaptor.getValue();
     assertEquals("user_ng_grade", savedUser.getUsername());
-    // Grade設定時にエラーになっても処理は続き、Gradeは設定されない（null or 0）
-    // Userクラスの初期値に依存しますが、setGradeが呼ばれていないことを確認
-    assertNull(savedUser.getGrade()); // Integerフィールドの初期値がnullの場合
+    assertNull(savedUser.getGrade());
   }
 
   @Test
@@ -142,8 +142,8 @@ class AccountadminServiceTest {
     assertEquals(VALID_UUID_STR, result.getId());
     assertEquals("target_user", result.getUserId());
     assertEquals("ターゲット", result.getName());
-    assertEquals("2", result.getGrade()); // Stringに変換されていること
-    assertEquals("", result.getPassword()); // パスワードは空文字になっていること
+    assertEquals("2", result.getGrade());
+    assertEquals("", result.getPassword());
   }
 
   @Test
@@ -174,13 +174,10 @@ class AccountadminServiceTest {
   void testUpdateAccount() {
     // 1. Ready
     UUID uuid = UUID.fromString(VALID_UUID_STR);
-
-    // 既存データのモック
     User existingUser = new User();
     existingUser.setUsername("old_name");
     doReturn(Optional.of(existingUser)).when(userRepository).findById(uuid);
 
-    // 更新用フォームデータ
     AccountForm form = new AccountForm();
     form.setUserId("new_name");
     form.setPassword("new_pass");
@@ -190,10 +187,7 @@ class AccountadminServiceTest {
     target.updateAccount(VALID_UUID_STR, form);
 
     // 3. Assert
-    // saveが呼ばれたか検証
     verify(userRepository).save(existingUser);
-
-    // 中身が書き換わっているか検証
     assertEquals("new_name", existingUser.getUsername());
     assertEquals("new_pass", existingUser.getPasswordHash());
     assertEquals(3, existingUser.getGrade());
@@ -212,5 +206,134 @@ class AccountadminServiceTest {
     assertThrows(RuntimeException.class, () -> {
       target.updateAccount(VALID_UUID_STR, form);
     });
+  }
+
+  // --- 追加カバレッジ ---
+
+  @Test
+  @DisplayName("findAllActiveAccounts: 正常系")
+  void testFindAllActiveAccounts() {
+    // 1. Ready
+    AccountadminData data = new AccountadminData();
+    doReturn(List.of(data)).when(accountadminRepository).findAllActiveAccounts();
+
+    // 2. Do
+    List<AccountadminData> result = target.findAllActiveAccounts();
+
+    // 3. Assert
+    assertEquals(1, result.size());
+    verify(accountadminRepository, times(1)).findAllActiveAccounts();
+  }
+
+  @Test
+  @DisplayName("insertAccount: 正常系")
+  void testInsertAccount() throws SQLException {
+    // 1. Ready
+    AccountadminData data = new AccountadminData();
+    data.setUsername("insert_user");
+
+    // 2. Do
+    target.insertAccount(data);
+
+    // 3. Assert
+    verify(accountadminRepository, times(1)).insert(data);
+  }
+
+  @Test
+  @DisplayName("createAccount: DB例外発生時 (DataAccessException)")
+  void testCreateAccountDataAccessException() {
+    // 1. Ready
+    AccountForm form = new AccountForm();
+    form.setUserId("error_user");
+
+    doThrow(new QueryTimeoutException("DB Timeout")).when(userRepository).save(any(User.class));
+
+    // 2. Do & 3. Assert
+    RuntimeException e = assertThrows(RuntimeException.class, () -> target.createAccount(form));
+    assertTrue(e.getMessage().contains("アカウント登録エラー"));
+  }
+
+  @Test
+  @DisplayName("createAccount: 予期せぬ例外発生時 (Exception)")
+  void testCreateAccountGeneralException() {
+    // 1. Ready
+    AccountForm form = new AccountForm();
+    form.setUserId("error_user");
+
+    doThrow(new RuntimeException("Unexpected")).when(userRepository).save(any(User.class));
+
+    // 2. Do & 3. Assert
+    RuntimeException e = assertThrows(RuntimeException.class, () -> target.createAccount(form));
+    assertTrue(e.getMessage().contains("予期せぬエラーが発生しました"));
+  }
+
+  @Test
+  @DisplayName("getAccountById: 学年(Grade)がnullの場合")
+  void testGetAccountByIdNullGrade() {
+    // 1. Ready
+    UUID uuid = UUID.fromString(VALID_UUID_STR);
+    User mockUser = new User();
+    mockUser.setUsername("null_grade_user");
+    mockUser.setGrade(null);
+
+    doReturn(Optional.of(mockUser)).when(userRepository).findById(uuid);
+
+    // 2. Do
+    AccountForm result = target.getAccountById(VALID_UUID_STR);
+
+    // 3. Assert
+    assertEquals("", result.getGrade());
+  }
+
+  @Test
+  @DisplayName("updateAccount: 学年が数値でない場合 (NumberFormatException)")
+  void testUpdateAccountInvalidGrade() {
+    // 1. Ready
+    UUID uuid = UUID.fromString(VALID_UUID_STR);
+    User existingUser = new User();
+    existingUser.setUsername("existing");
+    doReturn(Optional.of(existingUser)).when(userRepository).findById(uuid);
+
+    AccountForm form = new AccountForm();
+    form.setGrade("InvalidNumber");
+
+    // 2. Do
+    target.updateAccount(VALID_UUID_STR, form);
+
+    // 3. Assert
+    verify(userRepository).save(existingUser);
+    assertNull(existingUser.getGrade());
+  }
+
+  @Test
+  @DisplayName("updateAccount: DB例外発生時")
+  void testUpdateAccountDataAccessException() {
+    // 1. Ready
+    UUID uuid = UUID.fromString(VALID_UUID_STR);
+    User existingUser = new User();
+    doReturn(Optional.of(existingUser)).when(userRepository).findById(uuid);
+
+    AccountForm form = new AccountForm();
+    doThrow(new QueryTimeoutException("DB Error")).when(userRepository).save(any(User.class));
+
+    // 2. Do & 3. Assert
+    RuntimeException e = assertThrows(RuntimeException.class, () -> target.updateAccount(VALID_UUID_STR, form));
+    assertTrue(e.getMessage().contains("アカウント登録エラー"));
+  }
+
+  @Test
+  @DisplayName("updateAccount: 予期せぬ例外発生時")
+  void testUpdateAccountGeneralException() {
+    // 1. Ready
+    UUID uuid = UUID.fromString(VALID_UUID_STR);
+    User existingUser = new User();
+    doReturn(Optional.of(existingUser)).when(userRepository).findById(uuid);
+
+    AccountForm form = new AccountForm();
+    doThrow(new RuntimeException("Unknown")).when(userRepository).save(any(User.class));
+
+    // 2. Do & 3. Assert
+    RuntimeException e = assertThrows(RuntimeException.class, () -> target.updateAccount(VALID_UUID_STR, form));
+    assertTrue(e.getMessage().contains("予期せぬエラーが発生しました"));
   }
 }

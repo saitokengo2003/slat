@@ -34,7 +34,7 @@ public class AccountadminRepository {
   // -----------------------------------------------------------------
   // RowMapper (DBアクセス時のマッピング)
   // -----------------------------------------------------------------
-  private static class AccountadminDataRowMapper implements RowMapper<AccountadminData> {
+  static class AccountadminDataRowMapper implements RowMapper<AccountadminData> {
     @Override
     public AccountadminData mapRow(ResultSet rs, int rowNum) throws SQLException {
       AccountadminData data = new AccountadminData();

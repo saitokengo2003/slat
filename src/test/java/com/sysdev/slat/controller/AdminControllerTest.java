@@ -4,12 +4,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.sysdev.slat.user.UserData;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -18,6 +21,16 @@ public class AdminControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
+  private UserData mockUser;
+
+  @BeforeEach
+  void setUp() {
+    // テスト実行前にログインユーザー情報を作成
+    mockUser = new UserData();
+    mockUser.setUserId("admin");
+    mockUser.setDisplayName("管理者");
+  }
+
   @Test
   @DisplayName("管理者トップ画面表示: 正常系")
   void testGetAdmin() throws Exception {
@@ -25,7 +38,8 @@ public class AdminControllerTest {
 
     // 2. Do & 3. Check
     // GETリクエストを送り、ステータス200とビュー名を確認
-    mockMvc.perform(get("/admin"))
+    mockMvc.perform(get("/admin")
+        .sessionAttr("userData", mockUser)) // ★ログイン状態を付与
         .andExpect(status().isOk())
         .andExpect(view().name("admin/index"));
   }

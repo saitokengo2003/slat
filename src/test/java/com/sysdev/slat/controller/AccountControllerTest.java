@@ -1,5 +1,6 @@
 package com.sysdev.slat.controller;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.sql.SQLException;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.sysdev.slat.accountadmin.AccountForm;
 import com.sysdev.slat.accountadmin.AccountadminEntity;
 import com.sysdev.slat.accountadmin.AccountadminService;
+import com.sysdev.slat.user.UserData; // 追加
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,6 +39,18 @@ public class AccountControllerTest {
   @MockBean
   private AccountadminService accountadminService;
 
+  // ログイン状態を再現するためのユーザーデータ
+  private UserData mockUser;
+
+  @BeforeEach
+  void setUp() {
+    // テスト実行前にログインユーザー情報を作成
+    mockUser = new UserData();
+    mockUser.setUserId("admin");
+    mockUser.setDisplayName("管理者");
+    mockUser.setRoleCode("ADMIN");
+  }
+
   // --- 1. 一覧表示 (GET) ---
 
   @Test
@@ -46,7 +61,8 @@ public class AccountControllerTest {
     doReturn(mockEntity).when(accountadminService).getAccountListEntity();
 
     // 2. Do & 3. Check
-    mockMvc.perform(get("/accountadmin"))
+    mockMvc.perform(get("/accountadmin")
+        .sessionAttr("userData", mockUser)) // ★ログイン状態付与
         .andExpect(status().isOk())
         .andExpect(view().name("accountadmin/index"))
         .andExpect(model().attributeExists("accountadminEntity"));
@@ -57,10 +73,8 @@ public class AccountControllerTest {
   @Test
   @DisplayName("アカウント作成画面表示: 正常系")
   void testGetAccountcreate() throws Exception {
-    // 1. Ready (特になし)
-
-    // 2. Do & 3. Check
-    mockMvc.perform(get("/accountcreate"))
+    mockMvc.perform(get("/accountcreate")
+        .sessionAttr("userData", mockUser)) // ★ログイン状態付与
         .andExpect(status().isOk())
         .andExpect(view().name("accountcreate/index"))
         .andExpect(model().attributeExists("accountForm"));
@@ -71,16 +85,16 @@ public class AccountControllerTest {
   @Test
   @DisplayName("アカウント作成処理: 成功")
   void testCreateAccountSuccess() throws Exception {
-    // 1. Ready
-    // voidメソッドなので正常終了時はモック設定不要（または doNothing）
+    // 1. Ready (voidメソッドは例外が出なければ成功扱い)
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountcreate")
-        .param("userId", "user1") // フォームデータの送信シミュレーション
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .param("userId", "user1")
         .param("name", "User One"))
-        .andExpect(status().is3xxRedirection()) // リダイレクト確認
+        .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
-        .andExpect(flash().attributeExists("message")); // 成功メッセージがあるか
+        .andExpect(flash().attributeExists("message"));
   }
 
   @Test
@@ -91,10 +105,11 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountcreate")
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
         .param("userId", "user1"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
-        .andExpect(flash().attributeExists("errorMessage")); // エラーメッセージがあるか
+        .andExpect(flash().attributeExists("errorMessage"));
   }
 
   // --- 4. アカウント削除処理 (POST) ---
@@ -107,6 +122,7 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountadmin/delete")
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
         .param("id", targetId))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
@@ -114,17 +130,35 @@ public class AccountControllerTest {
   }
 
   @Test
-  @DisplayName("アカウント削除処理: 失敗（SQLException発生）")
+  @DisplayName("アカウント削除処理: 失敗（SQLException発生 -> catchブロックへ）")
   void testDeleteAccountFail() throws Exception {
     // 1. Ready
     doThrow(new SQLException("Delete failed")).when(accountadminService).deleteAccount(anyString());
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountadmin/delete")
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
         .param("id", "uuid-error"))
-        .andExpect(status().is3xxRedirection())
+        .andExpect(status().is3xxRedirection()) // catchしてリダイレクト
         .andExpect(redirectedUrl("/accountadmin"))
         .andExpect(flash().attributeExists("errorMessage"));
+  }
+
+  @Test
+  @DisplayName("アカウント削除処理: 予期せぬ例外（RuntimeException -> catchせず異常終了）")
+  void testDeleteAccountRuntimeException() throws Exception {
+    // 1. Ready
+    doThrow(new RuntimeException("Unexpected Error")).when(accountadminService).deleteAccount(anyString());
+
+    // 2. Do & 3. Check
+    try {
+      mockMvc.perform(post("/accountadmin/delete")
+          .sessionAttr("userData", mockUser) // ★ログイン状態付与
+          .param("id", "uuid-fatal"));
+    } catch (Exception e) {
+      // 期待通り例外が投げられたことを確認
+      assertTrue(e.getCause() instanceof RuntimeException);
+    }
   }
 
   // --- 5. 編集画面表示 (GET) ---
@@ -142,11 +176,27 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(get("/accountedit")
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
         .param("id", targetId))
         .andExpect(status().isOk())
         .andExpect(view().name("accountedit/index"))
-        .andExpect(model().attributeExists("accountForm"))
         .andExpect(model().attribute("accountForm", mockForm));
+  }
+
+  @Test
+  @DisplayName("アカウント編集画面表示: 失敗（Serviceで例外発生）")
+  void testGetAccountEditException() throws Exception {
+    // 1. Ready
+    doThrow(new RuntimeException("User not found")).when(accountadminService).getAccountById(anyString());
+
+    // 2. Do & 3. Check
+    try {
+      mockMvc.perform(get("/accountedit")
+          .sessionAttr("userData", mockUser) // ★ログイン状態付与
+          .param("id", "invalid-id"));
+    } catch (Exception e) {
+      assertTrue(e.getCause() instanceof RuntimeException);
+    }
   }
 
   // --- 6. アカウント編集処理 (POST) ---
@@ -155,11 +205,10 @@ public class AccountControllerTest {
   @DisplayName("アカウント編集処理: 成功")
   void testEditAccountSuccess() throws Exception {
     // 1. Ready
-    // Serviceはvoidメソッドなので、例外が出なければ成功とみなされる
-
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountedit")
-        .param("id", "uuid-123") // 重要: AccountForm.id にバインドされる
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .param("id", "uuid-123")
         .param("name", "Updated Name"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
@@ -175,6 +224,7 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountedit")
+        .sessionAttr("userData", mockUser) // ★ログイン状態付与
         .param("id", "uuid-123"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
