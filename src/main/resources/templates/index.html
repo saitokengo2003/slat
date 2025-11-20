@@ -46,8 +46,10 @@
             th:data-user-id="${user.userId}"
             th:data-display-name="${user.displayName}"
           >
-            <span class="icon" th:text="${#strings.substring(user.displayName, 0, 1)}">A</span>
-            <span class="menu-text" th:text="${user.displayName}">ユーザー名</span>
+            <a th:href="@{/chat}" class="user-list-link">
+              <span class="icon" th:text="${#strings.substring(user.displayName, 0, 1)}">A</span>
+              <span class="menu-text" th:text="${user.displayName}">ユーザー名</span>
+            </a>
           </li>
         </ul>
 
@@ -59,8 +61,10 @@
             th:data-group-id="${group.id}"
             th:data-display-name="${group.name}"
           >
-            <span class="group-icon" th:text="${#strings.substring(group.name, 0, 1)}">G</span>
-            <span class="menu-text" th:text="${group.name}">グループ名</span>
+            <a th:href="@{/chat}" class="group-list-link">
+              <span class="group-icon" th:text="${#strings.substring(group.name, 0, 1)}">G</span>
+              <span class="menu-text" th:text="${group.name}">グループ名</span>
+            </a>
           </li>
         </ul>
       </aside>
