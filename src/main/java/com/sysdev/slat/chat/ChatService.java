@@ -38,10 +38,12 @@ public class ChatService {
 
     if (request.getGroupId() != null && !request.getGroupId().isEmpty()) {
       // 2. グループチャットの場合: messages テーブルに保存
+      // ⭐ 復元: グループメッセージの保存処理を呼び出す
       chatRepository.saveGroupMessage(request);
 
     } else if (request.getRecipientId() != null && !request.getRecipientId().isEmpty()) {
       // 1. 個人チャット（DM）の場合: dmmessage テーブルに保存
+      // ⭐ 復元: DMメッセージの保存処理を呼び出す
       chatRepository.saveDmMessage(request);
 
     } else {
