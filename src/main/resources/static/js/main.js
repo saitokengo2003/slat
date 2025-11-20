@@ -5,6 +5,11 @@ const loggedInUserId = document.getElementById("logged-in-user-id")
   ? document.getElementById("logged-in-user-id").value
   : null;
 
+// ✅ NEW: ログインユーザーのロールをDOMから取得
+const loggedInUserRole = document.getElementById("logged-in-user-role")
+  ? document.getElementById("logged-in-user-role").value
+  : null;
+
 // サイドバー開閉
 const sidebar = document.getElementById("sidebar");
 const toggleBtn = document.getElementById("menu-toggle");
@@ -18,11 +23,18 @@ if (toggleBtn) {
 const sendBtn = document.querySelector(".send-btn");
 const chatInput = document.querySelector(".chat-input");
 const chatArea = document.querySelector(".chat-area");
+const expirationBtn = document.querySelector(".expiration-btn");
+
+// ✅ NEW: モーダル要素の取得と初期化
+const expirationModalElement = document.getElementById("expirationModal");
+const expirationModal = expirationModalElement ? new bootstrap.Modal(expirationModalElement) : null;
 
 // 選択中のチャット相手のID (DM用)
 let currentRecipientId = null;
 // ⭐ 追加: 選択中のグループのID (グループチャット用)
 let currentGroupId = null;
+// ✅ 追加: 期限付きメッセージの有効期限
+let expirationTime = null;
 
 // スクロール最下部へ
 const scrollToBottom = () => {
@@ -30,7 +42,7 @@ const scrollToBottom = () => {
 };
 
 /* --------------------------------------------------------
-  DM履歴の読み込み（変更なし）
+  DM履歴の読み込み
 -------------------------------------------------------- */
 function loadDmHistory(recipientId) {
   chatArea.innerHTML = "";
@@ -56,9 +68,17 @@ function loadDmHistory(recipientId) {
 
       messages.forEach((msg) => {
         const isSentByMe = msg.senderId === loggedInUserId;
-        const displayName = msg.senderName || msg.senderId; // DMは messageId/reactions は null のまま addMessage を呼び出す
+        const displayName = msg.senderName || msg.senderId;
 
-        addMessage(msg.body, isSentByMe, displayName);
+        addMessage(
+          msg.body,
+          isSentByMe,
+          displayName,
+          msg.messageId,
+          msg.reactions || [],
+          msg.createdAt,
+          msg.expirationTime
+        );
       });
 
       scrollToBottom();
@@ -89,12 +109,14 @@ async function sendMessageHandler(messageBody) {
     messageData = {
       groupId: currentGroupId,
       body: messageBody,
+      expirationTime: expirationTime,
     };
   } else if (currentRecipientId) {
     // DMの場合
     messageData = {
       recipientId: currentRecipientId,
       body: messageBody,
+      expirationTime: expirationTime,
     };
   } else {
     alert("チャット相手を選択してください。");
@@ -115,10 +137,14 @@ async function sendMessageHandler(messageBody) {
         loadGroupHistory(currentGroupId);
       } else {
         // DMはローカルで追加
-        addMessage(messageBody, true, loggedInUserId);
+        loadDmHistory(currentRecipientId);
       } // メッセージ送信後：入力欄とボタン色を元に戻す
       chatInput.value = "";
       sendBtn.classList.remove("active");
+
+      // ✅ 期限設定をリセットし、ボタンの色を戻す
+      expirationTime = null;
+      expirationBtn.classList.remove("active");
     } else {
       alert("送信失敗: " + (await response.text()));
     }
@@ -129,17 +155,15 @@ async function sendMessageHandler(messageBody) {
 }
 
 /* --------------------------------------------------------
-   ⭐ リアクションAPIを呼び出し、画面を更新するハンドラ (グループチャット用)
+   ⭐ リアクションAPIを呼び出し、画面を更新するハンドラ (グループチャット/DM兼用)
 -------------------------------------------------------- */
 function handleReactionClick(messageId, reactionElement) {
-  if (!messageId || !currentGroupId) {
-    console.error("メッセージIDまたはグループIDがないためリアクションできません。", {
-      messageId,
-      currentGroupId,
-    });
+  if (!messageId) {
+    console.error("メッセージIDがないためリアクションできません。", { messageId });
     return;
-  } // リアクションボタンが持つ emoji データを取得
+  }
 
+  // サーバー側でmessageIdからテーブルを判断すると仮定し、既存のAPIをそのまま使う
   const emoji = reactionElement.getAttribute("data-emoji");
 
   fetch("/api/reaction/toggle", {
@@ -153,11 +177,15 @@ function handleReactionClick(messageId, reactionElement) {
     .then((response) => response.text())
     .then((result) => {
       if (result === "ADDED" || result === "REMOVED") {
-        // API成功後、画面を再読み込みして最新のリアクションを取得 (簡易的な方法)
-        loadGroupHistory(currentGroupId);
+        // API成功後、画面を再読み込み
+        if (currentGroupId) {
+          loadGroupHistory(currentGroupId);
+        } else if (currentRecipientId) {
+          loadDmHistory(currentRecipientId);
+        }
       } else {
         console.error("リアクションのトグル失敗:", result);
-      } // アニメーション (クリック感のフィードバック)
+      }
 
       reactionElement.classList.add("clicked");
       setTimeout(() => reactionElement.classList.remove("clicked"), 200);
@@ -170,17 +198,54 @@ function handleReactionClick(messageId, reactionElement) {
 /* --------------------------------------------------------
   ★ 右側（自分）・左側（相手）表示対応 addMessage() の修正
 -------------------------------------------------------- */
-// ⭐ messageId, initialReactions を引数に追加
+// ⭐ MODIFIED: expirationTime を引数に追加
 function addMessage(
   text,
   isRight = true,
   displayName = "",
   messageId = null,
-  initialReactions = []
+  initialReactions = [],
+  createdAt = null,
+  expirationTime = null // 期限情報を受け取る
 ) {
   const message = document.createElement("div");
   message.classList.add("message");
-  message.classList.add(isRight ? "right" : "left"); // ⭐ メッセージIDを data 属性として設定 (グループチャット用)
+  message.classList.add(isRight ? "right" : "left");
+
+  // ✅ NEW: 期限ラベルの追加と期限切れ判定ロジック
+  if (expirationTime) {
+    const now = new Date();
+    const expiryDate = new Date(expirationTime);
+
+    // 1. 期限切れ判定と本文の変更
+    if (now >= expiryDate) {
+      message.classList.add("expired");
+      text = `[期限切れ] ${text}`;
+    }
+
+    // 2. ⭐ NEW: 期限ラベル要素の作成
+    const labelElement = document.createElement("div");
+    labelElement.classList.add("expiration-label");
+
+    // 日付と時刻の整形 (toLocaleStringで簡潔に)
+    const expiryString = expiryDate.toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // 期限切れでない場合は「有効期限: YYYY/MM/DD HH:mm」と表示
+    if (now < expiryDate) {
+      labelElement.textContent = `有効期限: ${expiryString}まで`;
+    } else {
+      labelElement.textContent = `このメッセージは ${expiryString} に期限切れとなりました`;
+    }
+
+    // ⭐ NEW: message コンテナの先頭にラベルを挿入 (order: 0で最上位に)
+    message.appendChild(labelElement);
+  }
 
   if (messageId) {
     message.setAttribute("data-message-id", messageId);
@@ -195,16 +260,48 @@ function addMessage(
 
   const bubble = document.createElement("div");
   bubble.classList.add("bubble");
-  bubble.textContent = text; // ⭐ リアクションの表示ロジック
+  bubble.textContent = text;
 
+  // ✅ MODIFIED: 時刻要素の生成とフォーマット（日付と時刻）
+  if (createdAt) {
+    const timeElement = document.createElement("div");
+    timeElement.classList.add("message-time");
+
+    const date = new Date(createdAt);
+
+    // 日付 (YYYY/MM/DD) の整形
+    const dateString = date
+      .toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\//g, "/");
+
+    // 時刻 (HH:mm) の整形
+    const timeString = date.toLocaleTimeString("ja-JP", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // 日付と時刻を結合して表示
+    timeElement.textContent = `${dateString} ${timeString}`;
+
+    message.appendChild(timeElement); // メッセージコンテナに時刻を追加
+  }
+
+  // ⭐ MODIFIED: リアクションを機能リアクションに一本化 (復元)
   if (messageId) {
-    // 1. グループチャット (機能するリアクション)
+    // 1. グループチャット / DM (機能するリアクション)
     const reactionsContainer = document.createElement("div");
     reactionsContainer.classList.add("reactions-container");
 
     function renderReactions(reactions) {
       const reactionCounts = reactions.reduce((acc, reaction) => {
-        acc[reaction.emoji] = acc[reaction.emoji] || { count: 0, isReacted: false };
+        acc[reaction.emoji] = acc[reaction.emoji] || {
+          count: 0,
+          isReacted: false,
+        };
         acc[reaction.emoji].count++;
         if (reaction.userId === loggedInUserId) {
           acc[reaction.emoji].isReacted = true;
@@ -242,42 +339,14 @@ function addMessage(
       }
     }
 
-    // グループチャット履歴の初期リアクションをレンダリング
+    // グループチャット/DM履歴の初期リアクションをレンダリング
     renderReactions(initialReactions);
-    message.appendChild(reactionsContainer); // ⭐ メッセージにコンテナを追加 (バブル外)
-  } else {
-    // 2. DM / 送信直後のメッセージ (見かけだけのリアクションを復元)
-    const reaction = document.createElement("div");
-    reaction.classList.add("reaction");
-    reaction.innerHTML = `<span class="emoji">😊</span> <span class="count">0</span>`;
-
-    let reacted = false;
-    reaction.addEventListener("click", () => {
-      const countSpan = reaction.querySelector(".count");
-      let count = parseInt(countSpan.textContent);
-
-      if (!reacted) {
-        count++;
-        reaction.classList.add("active");
-        reacted = true;
-      } else {
-        count--;
-        reaction.classList.remove("active");
-        reacted = false;
-      }
-
-      countSpan.textContent = count;
-
-      reaction.classList.add("clicked");
-      setTimeout(() => reaction.classList.remove("clicked"), 200);
-    });
-
-    message.appendChild(reaction); // ⭐ ダミーのリアクションをメッセージに追加
+    // ⭐ MODIFIED: リアクションコンテナをDOMに追加
+    message.appendChild(reactionsContainer);
   }
 
   message.appendChild(avatar);
   message.appendChild(bubble);
-  // ⭐ リアクションは既に上記の分岐内で message に追加済み
 
   chatArea.appendChild(message);
 
@@ -300,9 +369,17 @@ function loadGroupHistory(groupId) {
 
       messages.forEach((msg) => {
         const isSentByMe = msg.senderId === loggedInUserId;
-        const displayName = msg.senderName || msg.senderId; // ⭐ messageId と reactions を渡す
+        const displayName = msg.senderName || msg.senderId;
 
-        addMessage(msg.body, isSentByMe, displayName, msg.messageId, msg.reactions || []);
+        addMessage(
+          msg.body,
+          isSentByMe,
+          displayName,
+          msg.messageId,
+          msg.reactions || [],
+          msg.createdAt,
+          msg.expirationTime
+        );
       });
 
       scrollToBottom();
@@ -401,6 +478,68 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         sendBtn.classList.remove("active");
       }
+    });
+  }
+
+  // ======================================
+  // ✅ MODIFIED: 期限設定ボタンのクリックイベントリスナー (権限チェック)
+  // ======================================
+
+  if (expirationBtn && expirationModal) {
+    expirationBtn.addEventListener("click", () => {
+      // ⭐ MODIFIED: ロールチェック。権限がない場合は alert して処理を確実に終了
+      if (loggedInUserRole === "student") {
+        alert("権限エラー: 期限付きメッセージは管理者または教師のみ設定可能です。");
+        return;
+      }
+
+      // 権限がある場合（admin または teacher）はモーダルを表示する準備へ
+
+      // 既存の値をモーダルにセット（任意）
+      if (expirationTime) {
+        const expiryDate = new Date(expirationTime);
+        document.getElementById("expiryDate").value = expiryDate.toISOString().substring(0, 10);
+        document.getElementById("expiryTime").value = expiryDate.toTimeString().substring(0, 5);
+      } else {
+        // デフォルトで空にしておく
+        document.getElementById("expiryDate").value = "";
+        document.getElementById("expiryTime").value = "";
+      }
+      expirationModal.show();
+    });
+  }
+
+  // ======================================
+  // ✅ NEW: カスタム日時設定ボタンのイベント処理
+  // ======================================
+  const setCustomExpirationBtn = document.getElementById("setCustomExpirationBtn");
+  if (setCustomExpirationBtn) {
+    setCustomExpirationBtn.addEventListener("click", () => {
+      const dateInput = document.getElementById("expiryDate").value;
+      const timeInput = document.getElementById("expiryTime").value;
+
+      if (!dateInput || !timeInput) {
+        alert("日付と時刻の両方を指定してください。");
+        return;
+      }
+
+      // 日付と時刻を結合して Date オブジェクトを作成
+      const combinedDateTimeString = `${dateInput}T${timeInput}:00`;
+      const selectedDate = new Date(combinedDateTimeString);
+      const now = new Date();
+
+      if (selectedDate <= now) {
+        alert("有効期限は現在時刻よりも未来の日時である必要があります。");
+        return;
+      }
+
+      // サーバーに送信するために ISO 8601 形式に変換
+      expirationTime = selectedDate.toISOString();
+      expirationBtn.classList.add("active");
+
+      alert(`有効期限を設定しました: ${selectedDate.toLocaleString("ja-JP")}`);
+
+      expirationModal.hide(); // モーダルを閉じる
     });
   }
 });

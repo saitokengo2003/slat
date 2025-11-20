@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport; // ✅ 追加: IterableをStreamに変換するために必要
+import java.util.stream.StreamSupport; // ✅ 既存
 
 @Service
 public class UserService {
@@ -60,5 +60,26 @@ public class UserService {
           return data;
         })
         .collect(Collectors.toList());
+  }
+
+  // ✅ NEW: 期限付きメッセージの権限チェックのために必要なメソッドを追加
+  /**
+   * 指定されたユーザーIDのロールコードを取得します。
+   *
+   * @param userId ユーザーID (usernameに相当)
+   * @return ユーザーのロールコード (例: "admin", "teacher", "student")
+   */
+  public String getUserRole(String userId) {
+    // ユーザーID (username) を使ってユーザー情報を検索
+    Optional<User> userOpt = userRepository.findByUsername(userId);
+
+    if (userOpt.isEmpty()) {
+      // ユーザーが見つからない場合は、権限なしを示すロールを返す
+      return "guest";
+    }
+
+    // Userオブジェクトが持つロールコードを返す
+    // ChatServiceで使用しているため、ここで User クラスに getRoleCode() があることが前提です。
+    return userOpt.get().getRoleCode();
   }
 }

@@ -18,40 +18,66 @@ public class ChatRepository {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  // --- 省略されていたコードはすべて復元されています ---
+  // --- saveDmMessage (ID生成と挿入を追加) ---
 
   /**
    * DMメッセージを dmmessage テーブルに保存します。
    */
   public void saveDmMessage(ChatRequest request) {
-    String sql = "INSERT INTO dmmessage (sender_id, recipient_id, body) VALUES (?, ?, ?)";
-    jdbcTemplate.update(sql,
-        request.getSenderId(),
-        request.getRecipientId(),
-        request.getBody());
+    // ⭐ MODIFIED: IDを生成して保存に追加 (DB側で自動生成されている場合は削除または修正が必要)
+    UUID messageId = UUID.randomUUID();
+
+    if (request.getExpirationTime() != null) {
+      // ⭐ MODIFIED: expiration_timeの挿入に対応
+      String sql = "INSERT INTO dmmessage (id, sender_id, recipient_id, body, expiration_time) VALUES (?, ?, ?, ?, ?)";
+      jdbcTemplate.update(sql,
+          messageId,
+          request.getSenderId(),
+          request.getRecipientId(),
+          request.getBody(),
+          request.getExpirationTime());
+    } else {
+      String sql = "INSERT INTO dmmessage (id, sender_id, recipient_id, body) VALUES (?, ?, ?, ?)";
+      jdbcTemplate.update(sql,
+          messageId,
+          request.getSenderId(),
+          request.getRecipientId(),
+          request.getBody());
+    }
   }
 
   /**
-   * グループメッセージを messages テーブルに保存します。
+   * グループメッセージを messages テーブルに保存します。（期限情報に対応）
    */
   public void saveGroupMessage(ChatRequest request) {
-    String sql = "INSERT INTO messages (group_id, sender_id, body) VALUES (?, ?, ?)";
-    jdbcTemplate.update(sql,
-        UUID.fromString(request.getGroupId()),
-        request.getSenderId(),
-        request.getBody());
+    if (request.getExpirationTime() != null) {
+      String sql = "INSERT INTO messages (group_id, sender_id, body, expiration_time) VALUES (?, ?, ?, ?)";
+      jdbcTemplate.update(sql,
+          UUID.fromString(request.getGroupId()),
+          request.getSenderId(),
+          request.getBody(),
+          request.getExpirationTime());
+    } else {
+      String sql = "INSERT INTO messages (group_id, sender_id, body) VALUES (?, ?, ?)";
+      jdbcTemplate.update(sql,
+          UUID.fromString(request.getGroupId()),
+          request.getSenderId(),
+          request.getBody());
+    }
   }
 
+  // --- findDmHistory (IDとexpiration_timeの取得を追加) ---
+
   /**
-   * DMメッセージ履歴を取得します。（リアクション対象外のためID取得なし）
+   * DMメッセージ履歴を取得します。（IDとexpiration_timeを取得）
    */
   public List<MessageHistoryDto> findDmHistory(String userId1, String userId2) {
     String sql = """
-            SELECT sender_id, body, created_at
+            SELECT id, sender_id, body, created_at, expiration_time
             FROM dmmessage
             WHERE
-                (sender_id = ? AND recipient_id = ?) OR
-                (sender_id = ? AND recipient_id = ?)
+                ((sender_id = ? AND recipient_id = ?) OR
+                (sender_id = ? AND recipient_id = ?))
             ORDER BY created_at ASC
         """;
 
@@ -59,10 +85,11 @@ public class ChatRepository {
         sql,
         (rs, rowNum) -> {
           MessageHistoryDto dto = new MessageHistoryDto();
-          // DMはリアクション対象外のため MessageId の設定はなし
+          dto.setMessageId(rs.getObject("id", UUID.class));
           dto.setSenderId(rs.getString("sender_id"));
           dto.setBody(rs.getString("body"));
           dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+          dto.setExpirationTime(rs.getObject("expiration_time", OffsetDateTime.class)); // 期限情報を設定
           return dto;
         },
         userId1, userId2,
@@ -70,12 +97,11 @@ public class ChatRepository {
   }
 
   /**
-   * ✅ グループメッセージ履歴を取得します。 (IDを取得するように修正)
+   * グループメッセージ履歴を取得します。 (IDとexpiration_timeを取得)
    */
   public List<MessageHistoryDto> findGroupHistory(String groupId) {
-    // SQL: id を追加
     String sql = """
-            SELECT id, sender_id, body, created_at
+            SELECT id, sender_id, body, created_at, expiration_time
             FROM messages
             WHERE
                 group_id = ?
@@ -86,13 +112,34 @@ public class ChatRepository {
         sql,
         (rs, rowNum) -> {
           MessageHistoryDto dto = new MessageHistoryDto();
-          dto.setMessageId(rs.getObject("id", UUID.class)); // ⭐ IDを設定
+          dto.setMessageId(rs.getObject("id", UUID.class));
           dto.setSenderId(rs.getString("sender_id"));
           dto.setBody(rs.getString("body"));
           dto.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+          dto.setExpirationTime(rs.getObject("expiration_time", OffsetDateTime.class));
           return dto;
         },
         UUID.fromString(groupId));
+  }
+
+  // --- NEW: リアクション処理用ヘルパーメソッド ---
+
+  /**
+   * ⭐ NEW: 指定されたIDが messages テーブルに存在するか確認します。
+   */
+  public boolean isGroupMessage(UUID messageId) {
+    String sql = "SELECT COUNT(*) FROM messages WHERE id = ?";
+    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, messageId);
+    return count != null && count > 0;
+  }
+
+  /**
+   * ⭐ NEW: 指定されたIDが dmmessage テーブルに存在するか確認します。
+   */
+  public boolean isDmMessage(UUID messageId) {
+    String sql = "SELECT COUNT(*) FROM dmmessage WHERE id = ?";
+    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, messageId);
+    return count != null && count > 0;
   }
 
   // ... (groupExists, insertGroup, etc. は省略) ...

@@ -1,9 +1,9 @@
 package com.sysdev.slat.chat;
 
 import java.time.OffsetDateTime;
-import java.util.UUID; // 追加
-import java.util.List; // 追加
-import com.sysdev.slat.reactions.ReactionEntity; // ⭐ 追加
+import java.util.UUID;
+import java.util.List;
+import com.sysdev.slat.reactions.ReactionEntity;
 
 /**
  * DBから取得したメッセージ履歴を格納するDTO (Data Transfer Object) です。
@@ -13,23 +13,24 @@ public class MessageHistoryDto {
   private UUID messageId;
   private String senderId;
   private String body;
-  private OffsetDateTime createdAt; // ⭐ DBのTIMESTAMP WITH TIME ZONEに対応
+  private OffsetDateTime createdAt;
   private List<ReactionEntity> reactions;
+  private OffsetDateTime expirationTime; // ✅ NEW: 期限情報フィールドを追加
 
   // --- Getter/Setter ---
-  public UUID getMessageId() { // ⭐ 追加
+  public UUID getMessageId() {
     return messageId;
   }
 
-  public void setMessageId(UUID messageId) { // ⭐ 追加
+  public void setMessageId(UUID messageId) {
     this.messageId = messageId;
   }
 
-  public List<ReactionEntity> getReactions() { // ⭐ 追加
+  public List<ReactionEntity> getReactions() {
     return reactions;
   }
 
-  public void setReactions(List<ReactionEntity> reactions) { // ⭐ 追加
+  public void setReactions(List<ReactionEntity> reactions) {
     this.reactions = reactions;
   }
 
@@ -55,5 +56,14 @@ public class MessageHistoryDto {
 
   public void setCreatedAt(OffsetDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  // ✅ NEW: expirationTime の Getter/Setter
+  public OffsetDateTime getExpirationTime() {
+    return expirationTime;
+  }
+
+  public void setExpirationTime(OffsetDateTime expirationTime) {
+    this.expirationTime = expirationTime;
   }
 }
