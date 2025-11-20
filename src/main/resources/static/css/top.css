@@ -17,7 +17,7 @@ body {
 }
 
 /* ===============================
-  ✅ サイドバー（Google Chat風）
+  サイドバー（Google Chat風）
 ================================ */
 .sidebar {
   width: 250px;
@@ -56,7 +56,7 @@ body {
   display: none;
 }
 
-/* ⭐ 折りたたみ時のホームボタンを上下左右で中央配置 */
+/* 折りたたみ時のホームボタンを上下左右で中央配置 */
 .sidebar.collapsed .home-btn {
   justify-content: center;
   align-items: center; /* ← 縦方向も中央にする */
@@ -84,7 +84,7 @@ body {
 }
 
 /* ===============================
-  ✅ グループボタン（画像版）
+  グループボタン（画像版）
 ================================ */
 .create-group-icon {
   display: flex;
@@ -115,7 +115,7 @@ body {
 }
 
 /* ===============================
-  ✅ メニュータイトル
+  メニュータイトル
 ================================ */
 .menu-title {
   font-size: 14px;
@@ -128,7 +128,7 @@ body {
 }
 
 /* ===============================
-  ✅ メニューリスト
+  メニューリスト
 ================================ */
 .menu-list {
   list-style: none;
@@ -175,7 +175,7 @@ body {
 }
 
 /* ===============================
-  ✅ メインエリア
+  メインエリア
 ================================ */
 .main-content {
   flex-grow: 1;
@@ -187,7 +187,7 @@ body {
 }
 
 /* ===============================
-  ✅ トップバー（検索＋ログアウト）
+  トップバー（検索＋ログアウト）
 ================================ */
 .top-bar {
   display: flex;
@@ -236,7 +236,7 @@ body {
 }
 
 /* ===============================
-  ✅ チャット一覧
+  チャット一覧
 ================================ */
 .chat-list {
   list-style: none;
@@ -267,7 +267,7 @@ body {
 }
 
 /* ===============================
-  ✅ 右の「…」メニュー
+  右の「…」メニュー
 ================================ */
 .dropdown {
   position: relative;
@@ -340,7 +340,7 @@ body {
 }
 
 /* ===============================
-   ホームボタン
+  ホームボタン
 ================================ */
 .home-btn {
   display: flex;
@@ -369,4 +369,102 @@ body {
 }
 .sidebar.collapsed .home-btn {
   justify-content: center;
+}
+
+.home-main {
+  background-color: #f6f7fb;
+  padding: 24px 32px;
+}
+
+/* 上部バー */
+.home-main .home-topbar {
+  margin-bottom: 16px;
+}
+
+.home-main .home-search-area {
+  max-width: 600px;
+}
+
+.home-main .home-search-input {
+  border-radius: 999px;
+  padding-left: 14px;
+}
+
+.home-main .home-search-btn {
+  border-radius: 10px;
+  padding: 6px 18px;
+  font-weight: 600;
+}
+
+.home-main .home-logout-btn {
+  padding: 6px 18px;
+  font-weight: 600;
+}
+
+/* 検索結果サマリー */
+.home-main .home-search-summary-card {
+  border-radius: 16px;
+}
+
+/* ホーム見出し */
+.home-main .home-page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #2f5f3a;
+}
+
+/* ショートカットボタン */
+.home-main .home-quick-links {
+  margin-bottom: 32px;
+}
+
+.home-main .home-quick-link-btn {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #dde3ea;
+  text-align: left;
+  padding: 14px 16px;
+  display: block;
+  text-decoration: none;
+  color: #1f2933;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.home-main .home-quick-link-btn:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  border-color: #4c9a5b;
+}
+
+.home-main .home-quick-link-main {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.home-main .home-quick-link-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.home-main .home-search-area {
+  max-width: 600px;
+  width: 100%;
+}
+
+.home-main .home-search-input {
+  border-radius: 999px;
+  padding-left: 14px;
+  height: 42px;
+  font-size: 15px;
+}
+
+.home-main .home-search-btn {
+  border-radius: 999px;
+  padding: 6px 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  height: 42px;
+  display: flex;
+  align-items: center;
 }

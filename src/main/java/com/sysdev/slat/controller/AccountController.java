@@ -1,6 +1,7 @@
 package com.sysdev.slat.controller;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,6 +15,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.sysdev.slat.accountadmin.AccountForm;
 import com.sysdev.slat.accountadmin.AccountadminEntity;
 import com.sysdev.slat.accountadmin.AccountadminService;
+import com.sysdev.slat.user.UserData;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class AccountController {
@@ -25,12 +28,20 @@ public class AccountController {
     this.accountadminService = accountadminService;
   }
 
+  private final String SESSION_USER_DATA_KEY = "userData"; // LoginControllerとキーを合わせる
+
   /**
    * 1. アカウント一覧画面を表示します。
    * URL: /accountadmin
    */
   @GetMapping("/accountadmin")
-  public String showAccountList(Model model) {
+  public String showAccountList(Model model, HttpSession session) {
+    UserData userData = (UserData) session.getAttribute(SESSION_USER_DATA_KEY);
+
+    // ログインデータが存在すれば、表示名とIDをModelに追加する
+    if (userData != null) {
+      model.addAttribute("displayName", userData.getDisplayName());
+    }
     AccountadminEntity entity = accountadminService.getAccountListEntity();
     model.addAttribute("accountadminEntity", entity);
     return "accountadmin/index";
@@ -41,7 +52,11 @@ public class AccountController {
    * URL: /accountcreate
    */
   @GetMapping("/accountcreate")
-  public String getAccountcreate(Model model) {
+  public String getAccountcreate(Model model, HttpSession session) {
+    UserData userData = (UserData) session.getAttribute(SESSION_USER_DATA_KEY);
+    if (userData != null) {
+      model.addAttribute("displayName", userData.getDisplayName());
+    }
     model.addAttribute("accountForm", new AccountForm());
     return "accountcreate/index";
   }
