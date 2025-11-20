@@ -46,7 +46,9 @@ public class ChatController {
    * 1. チャット画面を表示する GET メソッド
    */
   @GetMapping("/chat")
-  public String getChat(Model model, HttpSession session) {
+  public String getChat(Model model, HttpSession session,
+      @RequestParam(name = "dmUserId", required = false) String dmUserId,
+      @RequestParam(name = "groupId", required = false) String groupId) {
 
     UserData userData = (UserData) session.getAttribute(SESSION_USER_DATA_KEY);
 
