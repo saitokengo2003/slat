@@ -17,9 +17,13 @@ public class AdminController {
   public String getAdmin(Model model, HttpSession session) {
     UserData userData = (UserData) session.getAttribute(SESSION_USER_DATA_KEY);
     System.out.println("[Log]" + userData);
+
     if (userData != null) {
       model.addAttribute("displayName", userData.getDisplayName());
+      if ("admin".equals(userData.getRoleCode())) {
+        return "admin/index";
+      }
     }
-    return "admin/index";
+    return "redirect:/";
   }
 }
