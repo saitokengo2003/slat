@@ -24,8 +24,6 @@ class UserServiceTest {
   @InjectMocks
   private UserService target;
 
-  // --- authenticate (認証) のテスト ---
-
   @Test
   @DisplayName("authenticate: 認証成功（ユーザーが存在しパスワードが一致）")
   void testAuthenticateSuccess() {
@@ -33,10 +31,9 @@ class UserServiceTest {
     String username = "user01";
     String password = "password123";
 
-    // DBから取得されるユーザー情報（パスワードは平文比較の仕様に基づく）
     User mockUser = new User();
     mockUser.setUsername(username);
-    mockUser.setPasswordHash(password); // ※本来はハッシュ値ですが、コード通り平文で設定
+    mockUser.setPasswordHash(password);
     mockUser.setDisplayName("テスト 太郎");
     mockUser.setRoleCode("STUDENT");
     mockUser.setGrade(1);
@@ -90,8 +87,6 @@ class UserServiceTest {
     assertNull(result);
   }
 
-  // --- findAllOtherUsers (他ユーザー取得) のテスト ---
-
   @Test
   @DisplayName("findAllOtherUsers: 自分以外のユーザーのみ取得できること")
   void testFindAllOtherUsers() {
@@ -110,7 +105,6 @@ class UserServiceTest {
     other2.setUsername("other2");
     other2.setDisplayName("他人2");
 
-    // リポジトリは Iterable<User> を返すが、List は Iterable を継承しているのでそのまま返せる
     List<User> dbList = Arrays.asList(me, other1, other2);
     doReturn(dbList).when(userRepository).findAll();
 
@@ -118,14 +112,10 @@ class UserServiceTest {
     List<UserData> result = target.findAllOtherUsers(myUsername);
 
     // 3. Assert
-    assertEquals(2, result.size()); // 自分(me)が除外されて2件になるはず
-
-    // 中身の検証（自分が入っていないか）
+    assertEquals(2, result.size());
     boolean containsMe = result.stream()
         .anyMatch(u -> u.getUserId().equals(myUsername));
     assertFalse(containsMe, "リストに自分自身が含まれてはいけません");
-
-    // 他人が含まれているか
     assertEquals("other1", result.get(0).getUserId());
     assertEquals("other2", result.get(1).getUserId());
   }
@@ -158,5 +148,39 @@ class UserServiceTest {
 
     // 3. Assert
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  @DisplayName("getUserRole: ユーザーが存在する場合、DBのロールコードが返却されること")
+  void testGetUserRole_Found() {
+    // 1. Ready
+    String username = "teacher1";
+    String expectedRole = "TEACHER";
+
+    User mockUser = new User();
+    mockUser.setUsername(username);
+    mockUser.setRoleCode(expectedRole);
+
+    doReturn(Optional.of(mockUser)).when(userRepository).findByUsername(username);
+
+    // 2. Do
+    String result = target.getUserRole(username);
+
+    // 3. Assert
+    assertEquals(expectedRole, result);
+  }
+
+  @Test
+  @DisplayName("getUserRole: ユーザーが存在しない場合、guest が返却されること")
+  void testGetUserRole_NotFound() {
+    // 1. Ready
+    String username = "unknown_user";
+    doReturn(Optional.empty()).when(userRepository).findByUsername(username);
+
+    // 2. Do
+    String result = target.getUserRole(username);
+
+    // 3. Assert
+    assertEquals("guest", result);
   }
 }

@@ -1,14 +1,12 @@
 package com.sysdev.slat.accountadmin;
 
 import java.time.OffsetDateTime;
-// ... (他のインポート) ...
 
 public class AccountadminData {
 
   public AccountadminData() {
-  } // 必須のデフォルトコンストラクタ
+  }
 
-  // フィールド定義
   private String id;
   private String username;
   private String password_hash;
@@ -16,15 +14,12 @@ public class AccountadminData {
   private OffsetDateTime created_at;
   private OffsetDateTime updated_at;
   private OffsetDateTime last_login_at;
-  private String display_name; // エラーの原因となったフィールド
+  private String display_name;
   private String role_code;
   private Integer grade;
   private String class_name;
   private Integer number;
 
-  // --- ゲッターとセッター（不足分を全て追加する必要があります） ---
-
-  // 元のコードで定義済み
   public String getId() {
     return id;
   }

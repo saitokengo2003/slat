@@ -23,7 +23,6 @@ class UserTest {
     String username = "user01";
     String passwordHash = "hashed_secret";
     String status = "active";
-    // 日時データ（UTCなどタイムゾーンを指定して生成）
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     String displayName = "田中 太郎";
     String roleCode = "STUDENT";
@@ -31,7 +30,7 @@ class UserTest {
     String className = "C組";
     Integer number = 15;
 
-    // 2. Do (Setterの実行)
+    // 2. Do
     user.setId(id);
     user.setUsername(username);
     user.setPasswordHash(passwordHash);
@@ -45,7 +44,7 @@ class UserTest {
     user.setClassName(className);
     user.setNumber(number);
 
-    // 3. Assert (Getterの結果検証)
+    // 3. Assert
     assertEquals(id, user.getId());
     assertEquals(username, user.getUsername());
     assertEquals(passwordHash, user.getPasswordHash());
@@ -67,7 +66,6 @@ class UserTest {
     User user = new User();
 
     // 2. Do
-    // プリミティブ型(intなど)ではなくラッパークラス(Integer, UUIDなど)なのでnull許容
     user.setId(null);
     user.setUsername(null);
     user.setPasswordHash(null);

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.sysdev.slat.user.UserData;
 
 @SpringBootTest
@@ -25,7 +24,6 @@ public class AdminControllerTest {
 
   @BeforeEach
   void setUp() {
-    // テスト実行前にログインユーザー情報を作成
     mockUser = new UserData();
     mockUser.setUserId("admin");
     mockUser.setDisplayName("管理者");
@@ -34,12 +32,11 @@ public class AdminControllerTest {
   @Test
   @DisplayName("管理者トップ画面表示: 正常系")
   void testGetAdmin() throws Exception {
-    // 1. Ready (特になし)
+    // 1. Ready
 
     // 2. Do & 3. Check
-    // GETリクエストを送り、ステータス200とビュー名を確認
     mockMvc.perform(get("/admin")
-        .sessionAttr("userData", mockUser)) // ★ログイン状態を付与
+        .sessionAttr("userData", mockUser))
         .andExpect(status().isOk())
         .andExpect(view().name("admin/index"));
   }

@@ -5,13 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import com.sysdev.slat.user.User;
 
 class AccountadminEntityTest {
@@ -23,16 +20,10 @@ class AccountadminEntityTest {
     AccountadminEntity entity = new AccountadminEntity();
 
     // 2. Do & 3. Assert
-
-    // taskList はフィールド宣言時に = new ArrayList<>() されているため null ではないはず
     assertNotNull(entity.getTaskList());
     assertTrue(entity.getTaskList().isEmpty());
-
-    // accountList も同様
     assertNotNull(entity.getAccountList());
     assertTrue(entity.getAccountList().isEmpty());
-
-    // errorMessage は初期化されていないため null
     assertNull(entity.getErrorMessage());
   }
 
@@ -44,13 +35,11 @@ class AccountadminEntityTest {
 
     // テストデータ作成
     List<AccountadminData> taskList = new ArrayList<>();
-    taskList.add(new AccountadminData()); // ダミーデータ
-
+    taskList.add(new AccountadminData());
     List<User> accountList = new ArrayList<>();
     User user = new User();
     user.setUsername("test_user");
     accountList.add(user);
-
     String errorMessage = "エラーが発生しました";
 
     // 2. Do
@@ -59,14 +48,11 @@ class AccountadminEntityTest {
     entity.setErrorMessage(errorMessage);
 
     // 3. Assert
-    // オブジェクトの参照が正しいか確認 (assertSame はメモリ上の同一性をチェック)
     assertSame(taskList, entity.getTaskList());
     assertEquals(1, entity.getTaskList().size());
-
     assertSame(accountList, entity.getAccountList());
     assertEquals(1, entity.getAccountList().size());
     assertEquals("test_user", entity.getAccountList().get(0).getUsername());
-
     assertEquals(errorMessage, entity.getErrorMessage());
   }
 

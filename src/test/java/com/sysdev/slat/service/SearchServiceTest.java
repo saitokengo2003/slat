@@ -18,16 +18,13 @@ public class SearchServiceTest {
   @DisplayName("searchMessages：1件の結果を返す")
   void testSearchMessages() throws Exception {
 
-    // JdbcTemplate のモック
     JdbcTemplate mockJdbc = mock(JdbcTemplate.class);
 
-    // SearchService に注入
     SearchService service = new SearchService();
     var f = SearchService.class.getDeclaredField("jdbc");
     f.setAccessible(true);
     f.set(service, mockJdbc);
 
-    // ResultSet モック
     ResultSet rs = mock(ResultSet.class);
 
     when(rs.getString("message_id")).thenReturn("msg123");
@@ -39,7 +36,6 @@ public class SearchServiceTest {
     when(rs.getString("sender_username")).thenReturn("user001");
     when(rs.getString("sender_display_name")).thenReturn("太郎");
 
-    // query のモック設定（曖昧性除去済）
     when(mockJdbc.query(
         anyString(),
         any(Object[].class),
