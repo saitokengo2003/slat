@@ -1,12 +1,11 @@
 package com.sysdev.slat.accountadmin;
 
 import java.time.OffsetDateTime;
-// ... (他のインポート) ...
 
 public class AccountadminData {
 
   public AccountadminData() {
-  } // 必須のデフォルトコンストラクタ
+  }
 
   // フィールド定義
   private String id;
@@ -22,9 +21,6 @@ public class AccountadminData {
   private String class_name;
   private Integer number;
 
-  // --- ゲッターとセッター（不足分を全て追加する必要があります） ---
-
-  // 元のコードで定義済み
   public String getId() {
     return id;
   }
@@ -81,7 +77,6 @@ public class AccountadminData {
     this.last_login_at = last_login_at;
   }
 
-  // 💡 エラーの原因となっているセッター
   public String getDisplay_name() {
     return display_name;
   }
