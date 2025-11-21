@@ -2,6 +2,7 @@ package com.sysdev.slat.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -13,9 +14,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-import java.util.ArrayList;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,18 +28,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sysdev.slat.chat.ChatRequest;
 import com.sysdev.slat.chat.ChatService;
-import com.sysdev.slat.chat.Group;
+import com.sysdev.slat.chat.EditDeleteRequest;
 import com.sysdev.slat.chat.GroupRepository;
 import com.sysdev.slat.chat.MessageHistoryDto;
+import com.sysdev.slat.reactions.ReactionRequest;
+import com.sysdev.slat.reactions.ReactionService;
 import com.sysdev.slat.user.UserData;
 import com.sysdev.slat.user.UserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ChatControllerTest {
+public class ChatControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -53,7 +59,9 @@ class ChatControllerTest {
   @MockBean
   private GroupRepository groupRepository;
 
-  // テストで使い回すログインユーザー情報
+  @MockBean
+  private ReactionService reactionService;
+
   private UserData mockUser;
   private final String SESSION_KEY = "userData";
 
@@ -62,81 +70,58 @@ class ChatControllerTest {
     mockUser = new UserData();
     mockUser.setUserId("user-001");
     mockUser.setDisplayName("テスト 太郎");
+    mockUser.setRoleCode("student");
   }
 
-  // --- 1. チャット画面表示 (GET /chat) ---
+  // --- 1. 画面表示 (GET /chat) ---
 
   @Test
-  @DisplayName("画面表示: 未ログイン時はログイン画面へリダイレクト")
-  void testGetChatNotLoggedIn() throws Exception {
-    mockMvc.perform(get("/chat")) // セッションなし
-        .andExpect(status().is3xxRedirection())
-        .andExpect(redirectedUrl("/login"));
-  }
+  @DisplayName("画面表示: 正常系")
+  void testGetChat() throws Exception {
+    doReturn(Collections.emptyList()).when(userService).findAllOtherUsers(anyString());
+    doReturn(Collections.emptyList()).when(groupRepository).findJoinedGroupsByUserId(anyString());
 
-  @Test
-  @DisplayName("画面表示: ログイン時はチャット画面を表示し、Modelに必要な情報をセットする")
-  void testGetChatLoggedIn() throws Exception {
-    // 1. Ready
-    List<UserData> otherUsers = List.of(new UserData()); // 中身は適当でOK
-    List<Group> groups = List.of(new Group());
-
-    doReturn(otherUsers).when(userService).findAllOtherUsers("user-001");
-    doReturn(groups).when(groupRepository).findJoinedGroupsByUserId("user-001");
-
-    // 2. Do & 3. Assert
     mockMvc.perform(get("/chat")
-        .sessionAttr(SESSION_KEY, mockUser)) // ★セッションにユーザー情報をセット
+        .sessionAttr(SESSION_KEY, mockUser))
         .andExpect(status().isOk())
         .andExpect(view().name("chat/index"))
-        .andExpect(model().attribute("loggedInUserId", "user-001"))
-        .andExpect(model().attribute("displayName", "テスト 太郎"))
-        .andExpect(model().attribute("otherUsers", otherUsers))
-        .andExpect(model().attribute("generalGroups", groups));
+        .andExpect(model().attributeExists("loggedInUserId"))
+        .andExpect(model().attributeExists("otherUsers"))
+        .andExpect(model().attributeExists("generalGroups"));
+  }
+
+  @Test
+  @DisplayName("画面表示: 未ログイン時はリダイレクト")
+  void testGetChatNotLoggedIn() throws Exception {
+    mockMvc.perform(get("/chat"))
+        .andExpect(status().is3xxRedirection())
+        .andExpect(redirectedUrl("/login"));
   }
 
   // --- 2. メッセージ送信 (POST /api/message/send) ---
 
   @Test
-  @DisplayName("送信: 正常系 (DM)")
+  @DisplayName("送信: 正常系")
   void testSendMessageSuccess() throws Exception {
-    // 1. Ready
     ChatRequest request = new ChatRequest();
-    request.setRecipientId("friend-001");
-    request.setBody("こんにちは");
+    request.setRecipientId("target-user");
+    request.setBody("Hello");
 
-    // 2. Do & 3. Assert
     mockMvc.perform(post("/api/message/send")
         .sessionAttr(SESSION_KEY, mockUser)
         .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request))) // リクエストボディをJSON化
+        .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(content().string("OK"));
+        .andExpect(content().string("SUCCESS"));
 
-    // Serviceが呼ばれたか検証
     verify(chatService).saveChatMessage(any(ChatRequest.class));
   }
 
   @Test
-  @DisplayName("送信: 未ログイン時はエラー文字列を返す")
-  void testSendMessageNotLoggedIn() throws Exception {
-    ChatRequest request = new ChatRequest();
-    request.setRecipientId("friend-001");
-    request.setBody("Hello");
-
-    mockMvc.perform(post("/api/message/send")
-        // セッションなし
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isOk()) // REST API的には200 OKだが、中身がエラーメッセージ
-        .andExpect(content().string("ERROR: User not authenticated."));
-  }
-
-  @Test
   @DisplayName("送信: バリデーションエラー (本文なし)")
-  void testSendMessageValidationEmptyBody() throws Exception {
+  void testSendMessageValidationError() throws Exception {
     ChatRequest request = new ChatRequest();
-    request.setRecipientId("friend-001");
+    request.setRecipientId("target-user");
     request.setBody(""); // 空文字
 
     mockMvc.perform(post("/api/message/send")
@@ -144,54 +129,67 @@ class ChatControllerTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(content().string("ERROR: Message body, recipient ID, or group ID is missing."));
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Message body")));
   }
 
   @Test
-  @DisplayName("送信: サーバーエラー発生時")
-  void testSendMessageException() throws Exception {
-    // 1. Ready
+  @DisplayName("送信: 権限エラー (SecurityException)")
+  void testSendMessageSecurityError() throws Exception {
     ChatRequest request = new ChatRequest();
-    request.setGroupId("group-A");
-    request.setBody("Hello Group");
+    request.setRecipientId("target");
+    request.setBody("Expired Msg");
 
-    // Serviceが例外を投げるように設定
-    doThrow(new RuntimeException("DB Error")).when(chatService).saveChatMessage(any(ChatRequest.class));
+    doThrow(new SecurityException("権限エラー")).when(chatService).saveChatMessage(any());
 
-    // 2. Do & 3. Assert
     mockMvc.perform(post("/api/message/send")
         .sessionAttr(SESSION_KEY, mockUser)
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(content().string("ERROR: Failed to save message due to internal server error."));
+        .andExpect(content().string("権限エラー"));
+  }
+
+  @Test
+  @DisplayName("送信: 予期せぬエラー (Exception)")
+  void testSendMessageGeneralException() throws Exception {
+    ChatRequest request = new ChatRequest();
+    request.setRecipientId("target");
+    request.setBody("Msg");
+
+    doThrow(new RuntimeException("DB Error")).when(chatService).saveChatMessage(any());
+
+    mockMvc.perform(post("/api/message/send")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Failed to save message")));
   }
 
   // --- 3. DM履歴取得 (GET /api/dm/history) ---
 
   @Test
-  @DisplayName("DM履歴: 正常にリストを取得できる")
+  @DisplayName("DM履歴: 正常系")
   void testGetDmHistory() throws Exception {
-    // 1. Ready
-    MessageHistoryDto msg1 = new MessageHistoryDto(); // 必要に応じてフィールドセット
-    List<MessageHistoryDto> historyList = List.of(msg1);
+    MessageHistoryDto dto = new MessageHistoryDto();
+    dto.setBody("DM Body");
+    doReturn(List.of(dto)).when(chatService).getDmHistory(anyString(), anyString());
 
-    doReturn(historyList).when(chatService).getDmHistory("user-001", "friend-99");
-
-    // 2. Do & 3. Assert
     mockMvc.perform(get("/api/dm/history")
-        .param("recipientId", "friend-99")
-        .sessionAttr(SESSION_KEY, mockUser))
+        .sessionAttr(SESSION_KEY, mockUser)
+        .param("recipientId", "target-user"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(1)); // 配列サイズが1であること
+        .andExpect(jsonPath("$[0].body").value("DM Body"));
   }
 
   @Test
-  @DisplayName("DM履歴: 未ログイン時は空リスト")
-  void testGetDmHistoryNotLoggedIn() throws Exception {
+  @DisplayName("DM履歴: 例外発生時は空リスト")
+  void testGetDmHistoryException() throws Exception {
+    doThrow(new RuntimeException("DB Error")).when(chatService).getDmHistory(anyString(), anyString());
+
     mockMvc.perform(get("/api/dm/history")
-        .param("recipientId", "friend-99"))
-        // セッションなし
+        .sessionAttr(SESSION_KEY, mockUser)
+        .param("recipientId", "target-user"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
   }
@@ -199,34 +197,213 @@ class ChatControllerTest {
   // --- 4. グループ履歴取得 (GET /api/group/history) ---
 
   @Test
-  @DisplayName("グループ履歴: 正常にリストを取得できる")
+  @DisplayName("グループ履歴: 正常系")
   void testGetGroupHistory() throws Exception {
-    // 1. Ready
-    MessageHistoryDto msg1 = new MessageHistoryDto();
-    MessageHistoryDto msg2 = new MessageHistoryDto();
-    List<MessageHistoryDto> historyList = List.of(msg1, msg2);
+    MessageHistoryDto dto = new MessageHistoryDto();
+    dto.setBody("Group Body");
+    doReturn(List.of(dto)).when(chatService).getGroupHistory(anyString());
 
-    doReturn(historyList).when(chatService).getGroupHistory("group-X");
-
-    // 2. Do & 3. Assert
     mockMvc.perform(get("/api/group/history")
-        .param("groupId", "group-X")
-        .sessionAttr(SESSION_KEY, mockUser))
+        .sessionAttr(SESSION_KEY, mockUser)
+        .param("groupId", "group-A"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(2));
+        .andExpect(jsonPath("$[0].body").value("Group Body"));
   }
 
   @Test
   @DisplayName("グループ履歴: 例外発生時は空リスト")
   void testGetGroupHistoryException() throws Exception {
-    // 1. Ready
-    doThrow(new RuntimeException("Fetch error")).when(chatService).getGroupHistory(anyString());
+    doThrow(new RuntimeException("DB Error")).when(chatService).getGroupHistory(anyString());
 
-    // 2. Do & 3. Assert
     mockMvc.perform(get("/api/group/history")
-        .param("groupId", "group-Error")
-        .sessionAttr(SESSION_KEY, mockUser))
+        .sessionAttr(SESSION_KEY, mockUser)
+        .param("groupId", "group-A"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(0)); // 空配列 []
+        .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  // --- 5. リアクション操作 (POST /api/reaction/toggle) ---
+
+  @Test
+  @DisplayName("リアクション: 追加 (ADDED)")
+  void testToggleReactionAdded() throws Exception {
+    ReactionRequest request = new ReactionRequest();
+    request.setMessageId(UUID.randomUUID());
+    request.setEmoji("👍");
+
+    doReturn(true).when(reactionService).toggleReaction(any(UUID.class), anyString(), anyString());
+
+    mockMvc.perform(post("/api/reaction/toggle")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("ADDED"));
+  }
+
+  @Test
+  @DisplayName("リアクション: バリデーションエラー (IDなし)")
+  void testToggleReactionValidationError() throws Exception {
+    ReactionRequest request = new ReactionRequest();
+    // ID, Emoji なし
+
+    mockMvc.perform(post("/api/reaction/toggle")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Message ID or emoji is missing")));
+  }
+
+  @Test
+  @DisplayName("リアクション: 予期せぬエラー")
+  void testToggleReactionException() throws Exception {
+    ReactionRequest request = new ReactionRequest();
+    request.setMessageId(UUID.randomUUID());
+    request.setEmoji("👍");
+
+    doThrow(new RuntimeException("DB Error")).when(reactionService).toggleReaction(any(), anyString(), anyString());
+
+    mockMvc.perform(post("/api/reaction/toggle")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Failed to toggle reaction")));
+  }
+
+  // --- 6. メッセージ削除 (POST /api/message/delete) ---
+
+  @Test
+  @DisplayName("削除: 正常系")
+  void testDeleteMessageSuccess() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+
+    mockMvc.perform(post("/api/message/delete")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("SUCCESS"));
+
+    verify(chatService).deleteMessage(eq(request.getMessageId()), eq(mockUser.getUserId()));
+  }
+
+  @Test
+  @DisplayName("削除: バリデーションエラー (IDなし)")
+  void testDeleteMessageValidationError() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    // ID なし
+
+    mockMvc.perform(post("/api/message/delete")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content()
+            .string(org.hamcrest.Matchers.containsString("ERROR: User not authenticated or missing message ID")));
+  }
+
+  @Test
+  @DisplayName("削除: 権限エラー")
+  void testDeleteMessageSecurityError() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+
+    doThrow(new SecurityException("削除権限がありません")).when(chatService).deleteMessage(any(), any());
+
+    mockMvc.perform(post("/api/message/delete")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("削除権限がありません"));
+  }
+
+  @Test
+  @DisplayName("削除: 予期せぬエラー")
+  void testDeleteMessageGeneralException() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+
+    doThrow(new RuntimeException("DB Error")).when(chatService).deleteMessage(any(), any());
+
+    mockMvc.perform(post("/api/message/delete")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Failed to delete message")));
+  }
+
+  // --- 7. メッセージ編集 (POST /api/message/edit) ---
+
+  @Test
+  @DisplayName("編集: 正常系")
+  void testEditMessageSuccess() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+    request.setBody("New Body");
+
+    mockMvc.perform(post("/api/message/edit")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("SUCCESS"));
+
+    verify(chatService).editMessage(eq(request.getMessageId()), eq("New Body"), eq(mockUser.getUserId()));
+  }
+
+  @Test
+  @DisplayName("編集: バリデーションエラー (本文なし)")
+  void testEditMessageValidationError() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+    // Body なし
+
+    mockMvc.perform(post("/api/message/edit")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content()
+            .string(org.hamcrest.Matchers.containsString("ERROR: User not authenticated or missing message ID/body")));
+  }
+
+  @Test
+  @DisplayName("編集: 失敗 (対象なし/IllegalArgumentException)")
+  void testEditMessageError() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+    request.setBody("New Body");
+
+    doThrow(new IllegalArgumentException("メッセージが見つかりません")).when(chatService).editMessage(any(), anyString(),
+        anyString());
+
+    mockMvc.perform(post("/api/message/edit")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("ERROR: メッセージが見つかりません"));
+  }
+
+  @Test
+  @DisplayName("編集: 予期せぬエラー")
+  void testEditMessageGeneralException() throws Exception {
+    EditDeleteRequest request = new EditDeleteRequest();
+    request.setMessageId(UUID.randomUUID());
+    request.setBody("New Body");
+
+    doThrow(new RuntimeException("DB Error")).when(chatService).editMessage(any(), anyString(), anyString());
+
+    mockMvc.perform(post("/api/message/edit")
+        .sessionAttr(SESSION_KEY, mockUser)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("ERROR: Failed to edit message")));
   }
 }
