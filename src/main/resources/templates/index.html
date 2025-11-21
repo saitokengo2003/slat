@@ -13,13 +13,13 @@
       rel="stylesheet"
     />
 
-    <!-- ✅ カスタムCSS -->
+    <!-- カスタムCSS -->
     <link rel="stylesheet" href="/css/top.css" />
   </head>
 
   <body>
     <div class="container-fluid p-0 d-flex">
-      <!-- ✅ サイドバー -->
+      <!-- サイドバー -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-top px-3 mb-3">
           <button class="menu-btn" id="menu-toggle">☰</button>
@@ -158,25 +158,25 @@
             <div class="col-md-4 col-sm-6">
               <a th:href="@{/login}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">ログイン画面へ</div>
-                <div class="home-quick-link-sub">ログイン画面の確認・動作テスト</div>
+                <div class="home-quick-link-sub">アカウントの切り替え</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/accountadmin}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">アカウント管理画面へ</div>
                 <div class="home-quick-link-sub">ユーザー一覧・編集・削除</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/accountcreate}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">アカウント作成画面へ</div>
                 <div class="home-quick-link-sub">新規ユーザーを追加</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/admin}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">管理者メニューへ</div>
                 <div class="home-quick-link-sub">管理機能の一覧</div>
@@ -208,7 +208,7 @@
       </main>
     </div>
 
-    <!-- ✅ JS -->
+    <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
   </body>
