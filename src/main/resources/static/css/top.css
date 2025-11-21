@@ -56,7 +56,6 @@ body {
   display: none;
 }
 
-/* 折りたたみ時のホームボタンを上下左右で中央配置 */
 .sidebar.collapsed .home-btn {
   justify-content: center;
   align-items: center; /* ← 縦方向も中央にする */
@@ -186,9 +185,6 @@ body {
   color: #2e7d32;
 }
 
-/* ===============================
-  トップバー（検索＋ログアウト）
-================================ */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -235,9 +231,6 @@ body {
   color: white;
 }
 
-/* ===============================
-  チャット一覧
-================================ */
 .chat-list {
   list-style: none;
 }
@@ -266,9 +259,6 @@ body {
   align-items: center;
 }
 
-/* ===============================
-  右の「…」メニュー
-================================ */
 .dropdown {
   position: relative;
 }
@@ -406,7 +396,6 @@ body {
   border-radius: 16px;
 }
 
-/* ホーム見出し */
 .home-main .home-page-title {
   font-size: 1.6rem;
   font-weight: 700;

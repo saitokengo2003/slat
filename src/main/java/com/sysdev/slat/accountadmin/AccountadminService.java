@@ -131,7 +131,7 @@ public class AccountadminService {
     form.setUserId(user.getUsername());
     form.setUserId(user.getUsername());
     form.setName(user.getDisplayName());
-    form.setPassword(""); // ← 安全のためハッシュは表示しない
+    form.setPassword("");
     form.setRole(user.getRoleCode());
     form.setGrade(user.getGrade() != null ? String.valueOf(user.getGrade()) : "");
     form.setClassId(user.getClassName());

@@ -7,7 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.sysdev.slat.reactions.ReactionService;
 import com.sysdev.slat.reactions.ReactionEntity;
-import com.sysdev.slat.user.UserService; // ⭐ UserServiceをインポート
+import com.sysdev.slat.user.UserService;
 import java.util.Map;
 
 @Service

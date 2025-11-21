@@ -90,7 +90,6 @@ hr {
   color: white;
 }
 
-/* ✅ スマホ・小画面対応（レスポンシブ追加） */
 @media (max-width: 480px) {
   .group-create-container {
     padding: 30px 25px;
@@ -142,7 +141,6 @@ hr {
   transform: scale(1.2);
 }
 
-/* ✅ 作成者フォームをグループ名と同じ大きさに揃える */
 input[name="owner"] {
   width: 100%;
   padding: 10px;
@@ -152,9 +150,8 @@ input[name="owner"] {
   box-sizing: border-box;
 }
 
-/* ===== チェック済み行のスタイル ===== */
 .account-table tr.selected {
-  background-color: #d9f0e2 !important; /* 薄い緑で選択中を明示 */
+  background-color: #d9f0e2 !important;
   transition: background-color 0.2s ease;
 }
 
@@ -166,7 +163,6 @@ input[name="owner"] {
   user-select: none;
 }
 
-/* 左上の戻るボタン */
 .back-button {
   position: absolute;
   top: 20px;

@@ -32,7 +32,6 @@ public class AccountController {
 
   /**
    * 1. アカウント一覧画面を表示します。
-   * URL: /accountadmin
    */
   @GetMapping("/accountadmin")
   public String showAccountList(Model model, HttpSession session) {
@@ -52,7 +51,6 @@ public class AccountController {
 
   /**
    * 2. アカウント作成画面表示 (GET)
-   * URL: /accountcreate
    */
   @GetMapping("/accountcreate")
   public String getAccountcreate(Model model, HttpSession session) {
@@ -66,7 +64,6 @@ public class AccountController {
 
   /**
    * 3. アカウント作成処理 (POST)
-   * URL: /accountcreate
    */
   @PostMapping("/accountcreate")
   public String createAccount(
@@ -86,7 +83,6 @@ public class AccountController {
 
   /**
    * 4. アカウント削除処理 (POST)
-   * URL: /accountadmin/delete
    */
   @PostMapping("/accountadmin/delete")
   public String deleteAccount(
@@ -106,17 +102,11 @@ public class AccountController {
 
   /**
    * 5. アカウント編集画面表示 (GET)
-   * URL: /accountedit
    */
   @GetMapping("/accountedit")
   public String getAccountEdit(@RequestParam("id") String id, Model model) {
-    // IDを使ってアカウント情報を取得
     AccountForm accountForm = accountadminService.getAccountById(id);
-
-    // 取得した情報を画面に渡す
     model.addAttribute("accountForm", accountForm);
-
-    // 編集画面(accountedit/index.html)を表示
     return "accountedit/index";
   }
 
@@ -129,7 +119,6 @@ public class AccountController {
     try {
       String uuid = accountForm.getId();
 
-      // Serviceを呼び出し、DB更新ロジックを実行
       accountadminService.updateAccount(uuid, accountForm);
 
       redirectAttributes.addFlashAttribute("message", "アカウントを正常に更新しました。");

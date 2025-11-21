@@ -9,7 +9,6 @@
 
     <link rel="stylesheet" href="/css/groupcreate.css" />
     <style>
-      /* ⚠️ 追加：警告メッセージのスタイル */
       .warning-message {
         color: red;
         font-size: 14px;
@@ -72,7 +71,6 @@
 
         <button class="create-btn" type="submit">作成する</button>
 
-        <!-- ⚠️ 追加：警告メッセージ -->
         <p id="warningMessage" class="warning-message">※ 参加者を1人以上選択してください。</p>
 
         <p th:if="${message}" th:text="${message}" class="ok"></p>
@@ -87,7 +85,6 @@
         const form = document.getElementById("groupForm");
         const warningMessage = document.getElementById("warningMessage");
 
-        // ✅ 各個別チェックボックスのクリック処理
         memberBoxes.forEach((box) => {
           box.addEventListener("change", () => {
             const row = box.closest("tr");
@@ -101,14 +98,12 @@
             const allChecked = Array.from(memberBoxes).every((b) => b.checked);
             checkAll.checked = allChecked;
 
-            // ✅ チェック変更時に警告を非表示に戻す
             if (Array.from(memberBoxes).some((b) => b.checked)) {
               warningMessage.style.display = "none";
             }
           });
         });
 
-        // ✅ 全選択チェックボックスのクリック処理
         if (checkAll) {
           checkAll.addEventListener("change", () => {
             const checked = checkAll.checked;
@@ -122,14 +117,12 @@
               }
             });
 
-            // ✅ チェック変更時に警告を非表示に戻す
             if (checked) {
               warningMessage.style.display = "none";
             }
           });
         }
 
-        // ✅ フォーム送信時の選択チェック
         form.addEventListener("submit", (e) => {
           const anyChecked = Array.from(memberBoxes).some((b) => b.checked);
           if (!anyChecked) {
