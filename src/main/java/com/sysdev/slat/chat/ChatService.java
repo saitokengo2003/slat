@@ -7,7 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.sysdev.slat.reactions.ReactionService;
 import com.sysdev.slat.reactions.ReactionEntity;
-import com.sysdev.slat.user.UserService; // ⭐ UserServiceをインポート
+import com.sysdev.slat.user.UserService;
 import java.util.Map;
 
 @Service
@@ -15,9 +15,8 @@ public class ChatService {
 
   private final ChatRepository chatRepository;
   private final ReactionService reactionService;
-  private final UserService userService; // ⭐ UserServiceの依存性注入
+  private final UserService userService;
 
-  // ⭐ MODIFIED: UserServiceをコンストラクタに追加
   public ChatService(ChatRepository chatRepository, ReactionService reactionService, UserService userService) {
     this.chatRepository = chatRepository;
     this.reactionService = reactionService;
@@ -26,19 +25,17 @@ public class ChatService {
 
   // 期限付きメッセージの送信権限をチェックするヘルパーメソッド
   private boolean isAllowedToSendExpiredMessage(String userId) {
-    // ⭐ UserServiceを使用してユーザーのロールを取得
     String role = userService.getUserRole(userId);
     return "admin".equals(role) || "teacher".equals(role);
   }
 
+  // --- 履歴取得とリアクション統合 ---
+
   /**
-   * DMメッセージ履歴を取得します。（リアクションデータを結合するように修正）
+   * DMメッセージ履歴を取得します。（DM専用リアクションデータを結合）
    */
   public List<MessageHistoryDto> getDmHistory(String userId1, String userId2) {
-    // 1. メッセージ履歴を取得
     List<MessageHistoryDto> history = chatRepository.findDmHistory(userId1, userId2);
-
-    // 2. 履歴内の全メッセージIDを抽出
     List<UUID> messageIds = history.stream()
         .map(MessageHistoryDto::getMessageId)
         .filter(java.util.Objects::nonNull)
@@ -48,14 +45,11 @@ public class ChatService {
       return history;
     }
 
-    // ⭐ MODIFIED: DM専用リアクションを一括取得
+    // DM専用リアクションを取得
     List<ReactionEntity> allDmReactions = reactionService.getDmReactionsByMessageIds(messageIds);
-
-    // 3. メッセージIDをキーとしてリアクションをマップに整理
     Map<UUID, List<ReactionEntity>> reactionsMap = allDmReactions.stream()
         .collect(Collectors.groupingBy(ReactionEntity::getMessageId));
 
-    // 4. 履歴DTOにリアクションデータをセット
     history.forEach(dto -> {
       List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
       dto.setReactions(reactions);
@@ -65,7 +59,35 @@ public class ChatService {
   }
 
   /**
-   * メッセージをDBに保存します。（保存先をDMとグループチャットで振り分け、期限付きメッセージに対応）
+   * グループメッセージ履歴を取得します。（グループ専用リアクションデータを結合）
+   */
+  public List<MessageHistoryDto> getGroupHistory(String groupId) {
+    List<MessageHistoryDto> history = chatRepository.findGroupHistory(groupId);
+    List<UUID> messageIds = history.stream()
+        .map(MessageHistoryDto::getMessageId)
+        .filter(java.util.Objects::nonNull)
+        .collect(Collectors.toList());
+
+    if (messageIds.isEmpty()) {
+      return history;
+    }
+
+    List<ReactionEntity> allReactions = reactionService.getReactionsByMessageIds(messageIds);
+    Map<UUID, List<ReactionEntity>> reactionsMap = allReactions.stream()
+        .collect(Collectors.groupingBy(ReactionEntity::getMessageId));
+
+    history.forEach(dto -> {
+      List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
+      dto.setReactions(reactions);
+    });
+
+    return history;
+  }
+
+  // --- メッセージ保存 ---
+
+  /**
+   * メッセージをDBに保存します。（期限付きメッセージに対応）
    */
   @Transactional
   public void saveChatMessage(ChatRequest request) {
@@ -74,7 +96,6 @@ public class ChatService {
       throw new IllegalArgumentException("Sender ID and message body are required.");
     }
 
-    // 期限付きメッセージの場合の権限チェック
     if (request.getExpirationTime() != null) {
       if (!isAllowedToSendExpiredMessage(request.getSenderId())) {
         throw new SecurityException("権限エラー: 期限付きメッセージは管理者または教師のみ送信可能です。");
@@ -82,48 +103,56 @@ public class ChatService {
     }
 
     if (request.getGroupId() != null && !request.getGroupId().isEmpty()) {
-      // 2. グループチャットの場合: messages テーブルに保存
       chatRepository.saveGroupMessage(request);
-
     } else if (request.getRecipientId() != null && !request.getRecipientId().isEmpty()) {
-      // 1. 個人チャット（DM）の場合: dmmessage テーブルに保存
       chatRepository.saveDmMessage(request);
-
     } else {
       throw new IllegalArgumentException("Recipient ID or Group ID is required.");
     }
   }
 
+  // --- 削除機能 ---
+
   /**
-   * グループメッセージ履歴を取得します。（変更なし）
+   * メッセージの削除 (物理削除)
    */
-  public List<MessageHistoryDto> getGroupHistory(String groupId) {
-    // 1. メッセージ履歴を取得
-    List<MessageHistoryDto> history = chatRepository.findGroupHistory(groupId);
+  @Transactional
+  public void deleteMessage(UUID messageId, String currentUserId) {
+    // 1. 権限チェック (メッセージの送信者であるかを確認)
+    String senderId = chatRepository.findSenderIdByMessageId(messageId);
 
-    // 2. 履歴内の全メッセージIDを抽出
-    List<UUID> messageIds = history.stream()
-        .map(MessageHistoryDto::getMessageId)
-        .filter(java.util.Objects::nonNull)
-        .collect(Collectors.toList());
-
-    if (messageIds.isEmpty()) {
-      return history;
+    if (!currentUserId.equals(senderId)) {
+      throw new SecurityException("権限エラー: 他のユーザーのメッセージは削除できません。");
     }
 
-    // 3. 全メッセージのリアクションを一括取得
-    List<ReactionEntity> allReactions = reactionService.getReactionsByMessageIds(messageIds);
+    // 2. 物理削除の実行
+    chatRepository.deleteMessagePhysical(messageId);
+  }
 
-    // 4. メッセージIDをキーとしてリアクションをマップに整理
-    Map<UUID, List<ReactionEntity>> reactionsMap = allReactions.stream()
-        .collect(Collectors.groupingBy(ReactionEntity::getMessageId));
+  // --- ⭐ NEW: 編集機能 ---
 
-    // 5. 履歴DTOにリアクションデータをセット
-    history.forEach(dto -> {
-      List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
-      dto.setReactions(reactions);
-    });
+  /**
+   * メッセージの編集 (本文更新)
+   */
+  @Transactional
+  public void editMessage(UUID messageId, String newBody, String currentUserId) {
+    if (newBody == null || newBody.trim().isEmpty()) {
+      throw new IllegalArgumentException("メッセージ本文は必須です。");
+    }
 
-    return history;
+    // 1. 権限チェック (メッセージの送信者であるかを確認)
+    String senderId = chatRepository.findSenderIdByMessageId(messageId);
+
+    if (!currentUserId.equals(senderId)) {
+      throw new SecurityException("権限エラー: 他のユーザーのメッセージは編集できません。");
+    }
+
+    // 2. 本文の更新を実行
+    int updatedRows = chatRepository.updateMessageBody(messageId, newBody);
+
+    if (updatedRows == 0) {
+      // updateMessageBody はメッセージIDが見つからない場合 0 を返すため
+      throw new IllegalArgumentException("メッセージIDが見つかりません。");
+    }
   }
 }
