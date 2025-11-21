@@ -12,7 +12,7 @@ public class AccountForm {
   private String classId; // HTML: class / DB: class_name
   private Integer number; // HTML: number / DB: number
 
-  // ★追加: idのgetter/setter
+  // idのgetter/setter
   public String getId() {
     return id;
   }

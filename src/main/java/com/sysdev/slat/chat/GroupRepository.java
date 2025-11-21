@@ -27,7 +27,4 @@ public interface GroupRepository extends CrudRepository<Group, UUID> {
                 gm.user_id = :userId
             """)
     List<Group> findJoinedGroupsByUserId(@Param("userId") String userId);
-
-    // ⭐ findGroupHistory の誤った実装（メソッドボディ）は削除されました。
-    // このインターフェースにはこれ以上メソッドを追加しません。
 }

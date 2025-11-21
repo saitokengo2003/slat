@@ -1,4 +1,3 @@
-// DmReactionEntity.java (新規作成)
 package com.sysdev.slat.reactions;
 
 import org.springframework.data.annotation.Id;
@@ -9,13 +8,13 @@ import java.time.OffsetDateTime;
 /**
  * dm_reactions テーブルに対応するデータベースエンティティです。
  */
-@Table("dm_reactions") // ⭐ DM専用テーブルを参照
+@Table("dm_reactions")
 public class DmReactionEntity {
 
   @Id
   private UUID id;
 
-  private UUID dmMessageId; // ⭐ DMメッセージID (dmmessage.id)
+  private UUID dmMessageId;
   private String userId;
   private String emoji;
   private OffsetDateTime createdAt = OffsetDateTime.now();

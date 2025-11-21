@@ -9,7 +9,6 @@ public class ReactionRequest {
   private UUID messageId; // リアクション対象のメッセージID
   private String emoji; // 使用する絵文字
 
-  // --- Getter/Setter ---
   public UUID getMessageId() {
     return messageId;
   }

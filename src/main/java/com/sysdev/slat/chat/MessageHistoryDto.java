@@ -15,7 +15,9 @@ public class MessageHistoryDto {
   private String body;
   private OffsetDateTime createdAt;
   private List<ReactionEntity> reactions;
-  private OffsetDateTime expirationTime; // ✅ NEW: 期限情報フィールドを追加
+  private OffsetDateTime expirationTime;
+
+  private List<String> nonReactingStudentNames;
 
   // --- Getter/Setter ---
   public UUID getMessageId() {
@@ -58,12 +60,19 @@ public class MessageHistoryDto {
     this.createdAt = createdAt;
   }
 
-  // ✅ NEW: expirationTime の Getter/Setter
   public OffsetDateTime getExpirationTime() {
     return expirationTime;
   }
 
   public void setExpirationTime(OffsetDateTime expirationTime) {
     this.expirationTime = expirationTime;
+  }
+
+  public List<String> getNonReactingStudentNames() {
+    return nonReactingStudentNames;
+  }
+
+  public void setNonReactingStudentNames(List<String> nonReactingStudentNames) {
+    this.nonReactingStudentNames = nonReactingStudentNames;
   }
 }

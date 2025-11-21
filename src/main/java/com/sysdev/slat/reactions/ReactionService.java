@@ -5,17 +5,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import com.sysdev.slat.chat.ChatRepository; // ⭐ ChatRepositoryをインポート
+import java.time.OffsetDateTime;
+import com.sysdev.slat.chat.ChatRepository;
 
 @Service
 public class ReactionService {
 
-  private final ReactionRepository groupReactionRepository; // グループ用 (reactionsテーブル)
-  private final DmReactionRepository dmReactionRepository; // ⭐ NEW: DM用 (dm_reactionsテーブル)
-  private final ChatRepository chatRepository; // ⭐ NEW: メッセージIDの判別用
+  private final ReactionRepository groupReactionRepository;
+  private final DmReactionRepository dmReactionRepository;
+  private final ChatRepository chatRepository;
 
-  // ⭐ MODIFIED: コンストラクタにDM用リポジトリとChatRepositoryを追加
   public ReactionService(ReactionRepository groupReactionRepository, DmReactionRepository dmReactionRepository,
       ChatRepository chatRepository) {
     this.groupReactionRepository = groupReactionRepository;
@@ -23,87 +22,65 @@ public class ReactionService {
     this.chatRepository = chatRepository;
   }
 
-  /**
-   * リアクションを登録・または削除する（トグル機能）
-   * * ⭐ MODIFIED: messageId が DM か Group かを判定し、処理を振り分ける
-   */
+  // --- リアクション操作 ---
+
   @Transactional
   public boolean toggleReaction(UUID messageId, String userId, String emoji) {
-
-    // 1. Group Message (messagesテーブル) にIDが存在するか確認
     if (chatRepository.isGroupMessage(messageId)) {
-      return toggleGroupReaction(messageId, userId, emoji);
-    }
-    // 2. DM Message (dmmessageテーブル) にIDが存在するか確認
-    else if (chatRepository.isDmMessage(messageId)) {
-      return toggleDmReaction(messageId, userId, emoji);
-    }
+      Optional<ReactionEntity> existingReaction = groupReactionRepository.findByMessageIdAndUserIdAndEmoji(messageId,
+          userId, emoji);
 
-    // どちらのIDにも該当しない場合
-    return false;
+      if (existingReaction.isPresent()) {
+        groupReactionRepository.delete(existingReaction.get());
+        return false; // 削除
+      } else {
+        ReactionEntity newReaction = new ReactionEntity();
+        newReaction.setMessageId(messageId);
+        newReaction.setUserId(userId);
+        newReaction.setEmoji(emoji);
+        groupReactionRepository.save(newReaction);
+        return true; // 追加
+      }
+    } else if (chatRepository.isDmMessage(messageId)) {
+      Optional<DmReactionEntity> existingReaction = dmReactionRepository.findByDmMessageIdAndUserIdAndEmoji(messageId,
+          userId, emoji);
+
+      if (existingReaction.isPresent()) {
+        dmReactionRepository.delete(existingReaction.get());
+        return false; // 削除
+      } else {
+        DmReactionEntity newReaction = new DmReactionEntity();
+        newReaction.setDmMessageId(messageId);
+        newReaction.setUserId(userId);
+        newReaction.setEmoji(emoji);
+        dmReactionRepository.save(newReaction);
+        return true; // 追加
+      }
+    }
+    throw new IllegalArgumentException("メッセージIDが見つかりません。");
   }
 
-  // --- プライベートヘルパーメソッド ---
+  // --- リアクション取得 (履歴統合用) ---
 
-  private boolean toggleGroupReaction(UUID messageId, String userId, String emoji) {
-    Optional<ReactionEntity> existingReaction = groupReactionRepository
-        .findByMessageIdAndUserIdAndEmoji(messageId, userId, emoji);
-
-    if (existingReaction.isPresent()) {
-      groupReactionRepository.delete(existingReaction.get());
-      return false; // 削除
-    } else {
-      ReactionEntity newReaction = new ReactionEntity();
-      newReaction.setMessageId(messageId);
-      newReaction.setUserId(userId);
-      newReaction.setEmoji(emoji);
-      groupReactionRepository.save(newReaction);
-      return true; // 登録
-    }
-  }
-
-  // ⭐ NEW: DMリアクションの登録・削除を処理するメソッド
-  private boolean toggleDmReaction(UUID messageId, String userId, String emoji) {
-    // DmReactionEntity/DmReactionRepository を使用してトグル
-    Optional<DmReactionEntity> existingReaction = dmReactionRepository
-        .findByDmMessageIdAndUserIdAndEmoji(messageId, userId, emoji);
-
-    if (existingReaction.isPresent()) {
-      dmReactionRepository.delete(existingReaction.get());
-      return false; // 削除
-    } else {
-      DmReactionEntity newReaction = new DmReactionEntity();
-      newReaction.setDmMessageId(messageId); // ⭐ DM用のFKを使用
-      newReaction.setUserId(userId);
-      newReaction.setEmoji(emoji);
-      dmReactionRepository.save(newReaction);
-      return true; // 登録
-    }
-  }
-
-  /**
-   * メッセージIDのリストから、対応するリアクションをまとめて取得する (グループチャット用)
-   */
   public List<ReactionEntity> getReactionsByMessageIds(List<UUID> messageIds) {
     return groupReactionRepository.findByMessageIds(messageIds);
   }
 
-  /**
-   * ⭐ NEW: DMメッセージIDのリストから、対応するリアクションをまとめて取得する (DMチャット用)
-   */
-  public List<ReactionEntity> getDmReactionsByMessageIds(List<UUID> messageIds) {
-    List<DmReactionEntity> dmReactions = dmReactionRepository.findByDmMessageIds(messageIds);
+  public List<DmReactionEntity> getDmReactionsByMessageIds(List<UUID> dmMessageIds) {
+    return dmReactionRepository.findByDmMessageIds(dmMessageIds);
+  }
 
-    // 戻り値の型を ReactionEntity に合わせるため、マッピングを行う
-    return dmReactions.stream()
-        .map(dm -> {
-          // ReactionEntity はグループチャットのDTOだが、クライアントの期待する形式に合わせるため流用
-          ReactionEntity re = new ReactionEntity();
-          re.setMessageId(dm.getDmMessageId()); // MessageIdとしてDMのIDをセット
-          re.setUserId(dm.getUserId());
-          re.setEmoji(dm.getEmoji());
-          return re;
-        })
-        .collect(Collectors.toList());
+  /**
+   * 特定のメッセージに、期限 (expirationTime) までに付けられたリアクションを取得する (グループチャット用)
+   */
+  public List<ReactionEntity> getGroupReactionsBefore(UUID messageId, OffsetDateTime expirationTime) {
+    return groupReactionRepository.findByMessageIdAndCreatedAtBefore(messageId, expirationTime);
+  }
+
+  /**
+   * 特定のDMメッセージに、期限 (expirationTime) までに付けられたリアクションを取得する (DMチャット用)
+   */
+  public List<DmReactionEntity> getDmReactionsBefore(UUID dmMessageId, OffsetDateTime expirationTime) {
+    return dmReactionRepository.findByDmMessageIdAndCreatedAtBefore(dmMessageId, expirationTime);
   }
 }
