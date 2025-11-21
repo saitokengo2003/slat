@@ -16,7 +16,7 @@ import com.sysdev.slat.chat.ChatService;
 import com.sysdev.slat.chat.MessageHistoryDto;
 import com.sysdev.slat.chat.ChatRequest;
 import com.sysdev.slat.chat.GroupRepository;
-import com.sysdev.slat.chat.EditDeleteRequest; // 削除・編集用DTO
+import com.sysdev.slat.chat.EditDeleteRequest;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -204,7 +204,7 @@ public class ChatController {
   }
 
   /**
-   * ⭐ NEW: 7. メッセージを編集する POST APIエンドポイント
+   * 7. メッセージを編集する POST APIエンドポイント
    */
   @PostMapping("/api/message/edit")
   @ResponseBody

@@ -8,6 +8,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 public class ChatRepository {
@@ -18,8 +19,6 @@ public class ChatRepository {
   public ChatRepository(JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
-
-  // --- メッセージ保存 ---
 
   /**
    * DMメッセージを dmmessage テーブルに保存します。（期限情報に対応）
@@ -64,8 +63,6 @@ public class ChatRepository {
           request.getBody());
     }
   }
-
-  // --- 履歴取得 ---
 
   /**
    * DMメッセージ履歴を取得します。
@@ -121,8 +118,6 @@ public class ChatRepository {
         UUID.fromString(groupId));
   }
 
-  // --- 削除・編集用ヘルパーメソッド ---
-
   /**
    * メッセージIDから送信者IDを取得します。（権限チェック用）
    */
@@ -157,9 +152,9 @@ public class ChatRepository {
   }
 
   /**
-   * ⭐ NEW: メッセージIDをキーに、メッセージ本文を更新します。
+   * メッセージIDをキーに、メッセージ本文を更新します。
    * (DM, グループメッセージのどちらにも対応します)
-   * 
+   *
    * @return 更新されたレコード数
    */
   public int updateMessageBody(UUID messageId, String newBody) {
@@ -178,7 +173,42 @@ public class ChatRepository {
     return updatedRows;
   }
 
-  // --- リアクション処理用ヘルパーメソッド (ReactionServiceで使用) ---
+  /**
+   * DMメッセージの送信者と受信者のIDを取得する
+   */
+  public List<String> getDmParticipants(UUID messageId) {
+    String sql = "SELECT sender_id, recipient_id FROM dmmessage WHERE id = ?";
+
+    try {
+      return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+        String senderId = rs.getString("sender_id");
+        String recipientId = rs.getString("recipient_id");
+        return List.of(senderId, recipientId);
+      }, messageId);
+    } catch (EmptyResultDataAccessException e) {
+      return List.of();
+    }
+  }
+
+  /**
+   * グループメッセージのグループIDを取得する
+   */
+  public Optional<UUID> getGroupIdByMessageId(UUID messageId) {
+    String sql = "SELECT group_id FROM messages WHERE id = ?";
+    try {
+      return Optional.ofNullable(jdbcTemplate.queryForObject(sql, UUID.class, messageId));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * グループメンバーのユーザーIDリストを取得する
+   */
+  public List<String> getGroupMembers(UUID groupId) {
+    String sql = "SELECT user_id FROM group_members WHERE group_id = ?";
+    return jdbcTemplate.queryForList(sql, String.class, groupId);
+  }
 
   public boolean isGroupMessage(UUID messageId) {
     String sql = "SELECT COUNT(*) FROM messages WHERE id = ?";
@@ -192,7 +222,6 @@ public class ChatRepository {
     return count != null && count > 0;
   }
 
-  // (GroupRepositoryに属するはずのメソッドは省略)
   public boolean groupExists(String groupId) {
     /* ... */ return false;
   }

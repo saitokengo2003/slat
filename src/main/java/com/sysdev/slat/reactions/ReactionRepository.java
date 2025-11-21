@@ -6,20 +6,24 @@ import org.springframework.data.jdbc.repository.query.Query;
 import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
+import java.time.OffsetDateTime;
 
 public interface ReactionRepository extends CrudRepository<ReactionEntity, UUID> {
 
-  /**
-   * 特定のメッセージに、特定のユーザーが、同じ絵文字を付けているかを確認する
-   */
-  Optional<ReactionEntity> findByMessageIdAndUserIdAndEmoji(UUID messageId, String userId, String emoji); // ←
-                                                                                                          // 本文なし、セミコロン
+  Optional<ReactionEntity> findByMessageIdAndUserIdAndEmoji(UUID messageId, String userId, String emoji);
 
-  /**
-   * 複数のメッセージIDに対するリアクションをまとめて取得する
-   */
   @Query("SELECT * FROM reactions WHERE message_id IN (:messageIds)")
-  List<ReactionEntity> findByMessageIds(@Param("messageIds") List<UUID> messageIds); // ← 本文なし、セミコロン
+  List<ReactionEntity> findByMessageIds(@Param("messageIds") List<UUID> messageIds);
 
-  // このインターフェースのすべてのメソッドは、本文を持っていません。
+  /**
+   * 特定のメッセージに、期限内にリアクションしたユーザーのリストを取得する
+   * created_at が expirationTime 以前 (<=) のリアクションを取得
+   */
+  @Query("""
+      SELECT * FROM reactions
+      WHERE message_id = :messageId AND created_at <= :expirationTime
+      """)
+  List<ReactionEntity> findByMessageIdAndCreatedAtBefore(
+      @Param("messageId") UUID messageId,
+      @Param("expirationTime") OffsetDateTime expirationTime);
 }

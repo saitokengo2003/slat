@@ -14,12 +14,11 @@ public class ReactionEntity {
   @Id
   private UUID id;
 
-  private UUID messageId; // どのメッセージに付けられたか (messages.id)
+  private UUID messageId; // どのメッセージに付けられたか
   private String userId; // 誰がリアクションしたか
-  private String emoji; // どの絵文字か (例: "👍", "❤️")
+  private String emoji; // どの絵文字か
   private OffsetDateTime createdAt = OffsetDateTime.now();
 
-  // Constructor, Getters, Setters...
   public ReactionEntity() {
   }
 

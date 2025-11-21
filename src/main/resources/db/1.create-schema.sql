@@ -120,7 +120,7 @@ CREATE TABLE
   );
 
 -- -----------------------------------------------------
--- Table dmmessage (DMメッセージ - group_sに依存しない設計)
+-- Table dmmessage (DMメッセージ)
 -- -----------------------------------------------------
 CREATE TABLE
   dmmessage (
@@ -131,7 +131,6 @@ CREATE TABLE
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reaction_deadline_at TIMESTAMP WITH TIME ZONE,
     deadline_scope VARCHAR(50),
-    -- ⭐ CHECK制約を一行にまとめる
     deadline_status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (
       deadline_status IN ('open', 'closed', 'evaluated')
     ),
@@ -143,6 +142,19 @@ CREATE TABLE
 ALTER TABLE dmmessage
 ADD COLUMN expiration_time TIMESTAMP WITH TIME ZONE NULL;
 
+ALTER TABLE dmmessage
+DROP CONSTRAINT fk_dm_recipient;
+
+ALTER TABLE dmmessage
+ADD CONSTRAINT fk_dm_recipient FOREIGN KEY (recipient_id) REFERENCES users_s (username) ON DELETE CASCADE;
+
+ALTER TABLE dmmessage
+DROP CONSTRAINT IF EXISTS fk_dm_sender;
+
+-- Sender ID の制約を ON DELETE CASCADE で再作成
+ALTER TABLE dmmessage
+ADD CONSTRAINT fk_dm_sender FOREIGN KEY (sender_id) REFERENCES users_s (username) ON DELETE CASCADE;
+
 -- DMメッセージにリアクションをつけるためのテーブル
 CREATE TABLE
   dm_reactions (
@@ -150,9 +162,15 @@ CREATE TABLE
     dm_message_id UUID NOT NULL, -- FK dmmessage.id
     user_id VARCHAR(100) NOT NULL, -- FK users_s.id
     emoji VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 作成日
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_dm_reaction UNIQUE (dm_message_id, user_id, emoji),
     -- DMメッセージ削除でリアクションも削除
     CONSTRAINT fk_dm_reaction_message FOREIGN KEY (dm_message_id) REFERENCES dmmessage (id) ON DELETE CASCADE,
     CONSTRAINT fk_dm_reaction_user FOREIGN KEY (user_id) REFERENCES users_s (username)
   );
+
+ALTER TABLE dm_reactions
+DROP CONSTRAINT fk_dm_reaction_user;
+
+ALTER TABLE dm_reactions
+ADD CONSTRAINT fk_dm_reaction_user FOREIGN KEY (user_id) REFERENCES users_s (username) ON DELETE CASCADE;
