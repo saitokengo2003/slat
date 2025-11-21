@@ -3,14 +3,12 @@ package com.sysdev.slat.accountadmin;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-import java.sql.ResultSet; // 追加
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +35,6 @@ class AccountadminRepositoryTest {
     AccountadminData dummyData = new AccountadminData();
     dummyData.setUsername("test_user");
     List<AccountadminData> expectedList = List.of(dummyData);
-
     doReturn(expectedList).when(jdbc).query(anyString(), any(Map.class), any(RowMapper.class));
 
     // 2. Do
@@ -46,7 +43,6 @@ class AccountadminRepositoryTest {
     // 3. Assert
     assertEquals(1, result.size());
     assertEquals("test_user", result.get(0).getUsername());
-
     verify(jdbc).query(contains("SELECT \"id\""), eq(Collections.emptyMap()), any(RowMapper.class));
   }
 
@@ -62,10 +58,8 @@ class AccountadminRepositoryTest {
 
     // 3. Assert
     assertEquals(1, result);
-
     ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
     verify(jdbc).update(contains("DELETE FROM"), captor.capture());
-
     Map<String, Object> params = captor.getValue();
     assertEquals(targetId, params.get("id"));
   }
@@ -94,7 +88,6 @@ class AccountadminRepositoryTest {
     data.setGrade(1);
     data.setClass_name("A");
     data.setNumber(10);
-
     doReturn(1).when(jdbc).update(anyString(), any(Map.class));
 
     // 2. Do
@@ -105,7 +98,6 @@ class AccountadminRepositoryTest {
 
     ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
     verify(jdbc).update(contains("INSERT INTO"), captor.capture());
-
     Map<String, Object> params = captor.getValue();
     assertEquals("new_user", params.get("username"));
     assertEquals("hash_pass", params.get("password_hash"));
@@ -118,7 +110,6 @@ class AccountadminRepositoryTest {
     // 1. Ready
     AccountadminData data = new AccountadminData();
     data.setUsername("fail_user");
-
     doReturn(0).when(jdbc).update(anyString(), any(Map.class));
 
     // 2. Do & 3. Assert
@@ -126,18 +117,11 @@ class AccountadminRepositoryTest {
     assertTrue(e.getMessage().contains("失敗しました"));
   }
 
-  // -------------------------------------------------------------------------
-  // ▼ 追加: RowMapper の内部ロジックをテストしてカバレッジを100%にする
-  // -------------------------------------------------------------------------
-
   @Test
   @DisplayName("RowMapper: データマッピングのテスト (全項目あり)")
   void testRowMapperMapping() throws SQLException {
     // 1. Ready
-    // ResultSet のモックを作成
     ResultSet rs = mock(ResultSet.class);
-
-    // ResultSet が返す値を設定
     doReturn("uuid-001").when(rs).getString("id");
     doReturn("user_test").when(rs).getString("username");
     doReturn("hashed_pass").when(rs).getString("password_hash");
@@ -146,29 +130,25 @@ class AccountadminRepositoryTest {
     doReturn("STUDENT").when(rs).getString("role_code");
     doReturn("A").when(rs).getString("class_name");
 
-    // 日時型
     OffsetDateTime now = OffsetDateTime.now();
     doReturn(now).when(rs).getObject("created_at", OffsetDateTime.class);
     doReturn(now).when(rs).getObject("updated_at", OffsetDateTime.class);
     doReturn(now).when(rs).getObject("last_login_at", OffsetDateTime.class);
 
-    // 数値型 (wasNull() は false = 値あり を返す設定)
     doReturn(2).when(rs).getInt("grade");
     doReturn(15).when(rs).getInt("number");
     doReturn(false).when(rs).wasNull();
 
-    // テスト対象の RowMapper をインスタンス化 (privateを外したことでアクセス可能)
     RowMapper<AccountadminData> rowMapper = new AccountadminRepository.AccountadminDataRowMapper();
 
     // 2. Do
-    // mapRow を直接実行
     AccountadminData data = rowMapper.mapRow(rs, 1);
 
     // 3. Assert
     assertEquals("uuid-001", data.getId());
     assertEquals("user_test", data.getUsername());
     assertEquals(now, data.getCreated_at());
-    assertEquals(2, data.getGrade()); // 数値が入っていること
+    assertEquals(2, data.getGrade());
     assertEquals(15, data.getNumber());
   }
 
@@ -177,16 +157,9 @@ class AccountadminRepositoryTest {
   void testRowMapperNullHandling() throws SQLException {
     // 1. Ready
     ResultSet rs = mock(ResultSet.class);
-
-    // 最低限のスタブ設定
     doReturn("uuid-002").when(rs).getString("id");
-
-    // grade, number の取得シミュレーション
-    doReturn(0).when(rs).getInt("grade"); // JDBC仕様: SQL NULL は int 0 になる
+    doReturn(0).when(rs).getInt("grade");
     doReturn(0).when(rs).getInt("number");
-
-    // ★ここが重要: getIntの直後に呼ばれる wasNull() が true を返すように設定
-    // これにより else { data.setGrade(null); } のルートを通す
     doReturn(true).when(rs).wasNull();
 
     RowMapper<AccountadminData> rowMapper = new AccountadminRepository.AccountadminDataRowMapper();
@@ -195,7 +168,6 @@ class AccountadminRepositoryTest {
     AccountadminData data = rowMapper.mapRow(rs, 1);
 
     // 3. Assert
-    // Integer型フィールドが null になっていることを確認
     assertNull(data.getGrade());
     assertNull(data.getNumber());
   }

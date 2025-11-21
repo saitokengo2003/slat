@@ -1,10 +1,8 @@
 package com.sysdev.slat.accountadmin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,8 +50,6 @@ class AccountadminDataTest {
     assertEquals(now, data.getLast_login_at());
     assertEquals(displayName, data.getDisplay_name());
     assertEquals(roleCode, data.getRole_code());
-
-    // ★★★ ここが足りていませんでした ★★★
     assertEquals(grade, data.getGrade());
     assertEquals(className, data.getClass_name());
     assertEquals(number, data.getNumber());

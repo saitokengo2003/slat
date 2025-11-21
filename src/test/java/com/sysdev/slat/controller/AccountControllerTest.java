@@ -12,9 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-
 import java.sql.SQLException;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,11 +21,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.sysdev.slat.accountadmin.AccountForm;
 import com.sysdev.slat.accountadmin.AccountadminEntity;
 import com.sysdev.slat.accountadmin.AccountadminService;
-import com.sysdev.slat.user.UserData; // 追加
+import com.sysdev.slat.user.UserData;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,20 +35,15 @@ public class AccountControllerTest {
 
   @MockBean
   private AccountadminService accountadminService;
-
-  // ログイン状態を再現するためのユーザーデータ
   private UserData mockUser;
 
   @BeforeEach
   void setUp() {
-    // テスト実行前にログインユーザー情報を作成
     mockUser = new UserData();
     mockUser.setUserId("admin");
     mockUser.setDisplayName("管理者");
     mockUser.setRoleCode("ADMIN");
   }
-
-  // --- 1. 一覧表示 (GET) ---
 
   @Test
   @DisplayName("アカウント一覧画面表示: 正常系")
@@ -62,34 +54,30 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(get("/accountadmin")
-        .sessionAttr("userData", mockUser)) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser))
         .andExpect(status().isOk())
         .andExpect(view().name("accountadmin/index"))
         .andExpect(model().attributeExists("accountadminEntity"));
   }
 
-  // --- 2. 作成画面表示 (GET) ---
-
   @Test
   @DisplayName("アカウント作成画面表示: 正常系")
   void testGetAccountcreate() throws Exception {
     mockMvc.perform(get("/accountcreate")
-        .sessionAttr("userData", mockUser)) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser))
         .andExpect(status().isOk())
         .andExpect(view().name("accountcreate/index"))
         .andExpect(model().attributeExists("accountForm"));
   }
 
-  // --- 3. アカウント作成処理 (POST) ---
-
   @Test
   @DisplayName("アカウント作成処理: 成功")
   void testCreateAccountSuccess() throws Exception {
-    // 1. Ready (voidメソッドは例外が出なければ成功扱い)
+    // 1. Ready
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountcreate")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("userId", "user1")
         .param("name", "User One"))
         .andExpect(status().is3xxRedirection())
@@ -105,14 +93,12 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountcreate")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("userId", "user1"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
         .andExpect(flash().attributeExists("errorMessage"));
   }
-
-  // --- 4. アカウント削除処理 (POST) ---
 
   @Test
   @DisplayName("アカウント削除処理: 成功")
@@ -122,7 +108,7 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountadmin/delete")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("id", targetId))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
@@ -137,9 +123,9 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountadmin/delete")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("id", "uuid-error"))
-        .andExpect(status().is3xxRedirection()) // catchしてリダイレクト
+        .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))
         .andExpect(flash().attributeExists("errorMessage"));
   }
@@ -153,15 +139,12 @@ public class AccountControllerTest {
     // 2. Do & 3. Check
     try {
       mockMvc.perform(post("/accountadmin/delete")
-          .sessionAttr("userData", mockUser) // ★ログイン状態付与
+          .sessionAttr("userData", mockUser)
           .param("id", "uuid-fatal"));
     } catch (Exception e) {
-      // 期待通り例外が投げられたことを確認
       assertTrue(e.getCause() instanceof RuntimeException);
     }
   }
-
-  // --- 5. 編集画面表示 (GET) ---
 
   @Test
   @DisplayName("アカウント編集画面表示: 正常系")
@@ -176,7 +159,7 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(get("/accountedit")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("id", targetId))
         .andExpect(status().isOk())
         .andExpect(view().name("accountedit/index"))
@@ -192,14 +175,12 @@ public class AccountControllerTest {
     // 2. Do & 3. Check
     try {
       mockMvc.perform(get("/accountedit")
-          .sessionAttr("userData", mockUser) // ★ログイン状態付与
+          .sessionAttr("userData", mockUser)
           .param("id", "invalid-id"));
     } catch (Exception e) {
       assertTrue(e.getCause() instanceof RuntimeException);
     }
   }
-
-  // --- 6. アカウント編集処理 (POST) ---
 
   @Test
   @DisplayName("アカウント編集処理: 成功")
@@ -207,7 +188,7 @@ public class AccountControllerTest {
     // 1. Ready
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountedit")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("id", "uuid-123")
         .param("name", "Updated Name"))
         .andExpect(status().is3xxRedirection())
@@ -224,7 +205,7 @@ public class AccountControllerTest {
 
     // 2. Do & 3. Check
     mockMvc.perform(post("/accountedit")
-        .sessionAttr("userData", mockUser) // ★ログイン状態付与
+        .sessionAttr("userData", mockUser)
         .param("id", "uuid-123"))
         .andExpect(status().is3xxRedirection())
         .andExpect(redirectedUrl("/accountadmin"))

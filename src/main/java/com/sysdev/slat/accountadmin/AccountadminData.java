@@ -7,7 +7,6 @@ public class AccountadminData {
   public AccountadminData() {
   }
 
-  // フィールド定義
   private String id;
   private String username;
   private String password_hash;
@@ -15,7 +14,7 @@ public class AccountadminData {
   private OffsetDateTime created_at;
   private OffsetDateTime updated_at;
   private OffsetDateTime last_login_at;
-  private String display_name; // エラーの原因となったフィールド
+  private String display_name;
   private String role_code;
   private Integer grade;
   private String class_name;

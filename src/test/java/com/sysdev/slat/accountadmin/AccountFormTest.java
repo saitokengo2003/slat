@@ -2,7 +2,6 @@ package com.sysdev.slat.accountadmin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +58,7 @@ class AccountFormTest {
     form.setRole(null);
     form.setGrade(null);
     form.setClassId(null);
-    form.setNumber(null); // Integer型なのでnull許容
+    form.setNumber(null);
 
     // 3. Assert
     assertNull(form.getId());
