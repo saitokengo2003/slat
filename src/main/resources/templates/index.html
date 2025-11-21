@@ -158,25 +158,25 @@
             <div class="col-md-4 col-sm-6">
               <a th:href="@{/login}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">ログイン画面へ</div>
-                <div class="home-quick-link-sub">ログイン画面の確認・動作テスト</div>
+                <div class="home-quick-link-sub">アカウントの切り替え</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/accountadmin}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">アカウント管理画面へ</div>
                 <div class="home-quick-link-sub">ユーザー一覧・編集・削除</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/accountcreate}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">アカウント作成画面へ</div>
                 <div class="home-quick-link-sub">新規ユーザーを追加</div>
               </a>
             </div>
 
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-4 col-sm-6" th:if="${role == 'admin'}">
               <a th:href="@{/admin}" class="btn w-100 shadow-sm home-quick-link-btn">
                 <div class="home-quick-link-main">管理者メニューへ</div>
                 <div class="home-quick-link-sub">管理機能の一覧</div>
