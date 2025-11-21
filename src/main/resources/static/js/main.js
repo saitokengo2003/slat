@@ -27,6 +27,16 @@ const expirationBtn = document.querySelector(".expiration-btn");
 const expirationModalElement = document.getElementById("expirationModal");
 const expirationModal = expirationModalElement ? new bootstrap.Modal(expirationModalElement) : null;
 
+// ⭐ REVIVED: 編集モーダル関連の変数
+const editMessageModalElement = document.getElementById("editMessageModal");
+const editMessageModal = editMessageModalElement
+  ? new bootstrap.Modal(editMessageModalElement)
+  : null;
+const editMessageIdInput = document.getElementById("edit-message-id");
+const editMessageBodyTextarea = document.getElementById("edit-message-body");
+const saveEditBtn = document.getElementById("saveEditBtn");
+
+// 選択中のチャット相手のID (DM用)
 let currentRecipientId = null;
 let currentGroupId = null;
 let expirationTime = null;
@@ -167,14 +177,17 @@ function handleReactionClick(messageId, reactionElement) {
           loadDmHistory(currentRecipientId);
         }
       } else {
+        alert("リアクション処理失敗: " + result); // 失敗時もユーザーに通知
         console.error("リアクションのトグル失敗:", result);
       }
 
+      // アニメーションはそのまま実行
       reactionElement.classList.add("clicked");
       setTimeout(() => reactionElement.classList.remove("clicked"), 200);
     })
     .catch((error) => {
       console.error("リアクションのトグル失敗:", error);
+      alert("通信エラーが発生しました。");
     });
 }
 
@@ -264,6 +277,7 @@ function addMessage(
     message.appendChild(timeElement); // メッセージコンテナに時刻を追加
   }
 
+  // ⭐ MODIFIED: リアクションを機能リアクションに一本化
   if (messageId) {
     // 1. グループチャット / DM (機能するリアクション)
     const reactionsContainer = document.createElement("div");
@@ -319,6 +333,33 @@ function addMessage(
   message.appendChild(avatar);
   message.appendChild(bubble);
 
+  //自分のメッセージの場合のみ、削除ボタンと編集ボタンを追加
+  if (isRight && messageId) {
+    const menuContainer = document.createElement("div");
+    menuContainer.classList.add("message-menu"); // 新しいCSSクラス
+    menuContainer.setAttribute("data-message-id", messageId);
+
+    // ⭐ NEW: 編集ボタン
+    const editBtn = document.createElement("button");
+    editBtn.classList.add("btn", "btn-sm", "btn-light", "edit-btn");
+    editBtn.textContent = "✎"; // 編集アイコン
+    editBtn.title = "編集";
+    editBtn.onclick = () => openEditModal(messageId, text); // 編集モーダルを開く関数を呼び出す
+
+    menuContainer.appendChild(editBtn);
+
+    // 削除ボタン
+    const deleteBtn = document.createElement("button");
+    deleteBtn.classList.add("btn", "btn-sm", "btn-light", "delete-btn");
+    deleteBtn.textContent = "53"; // 削除アイコン
+    deleteBtn.title = "削除";
+    deleteBtn.onclick = () => deleteMessageConfirm(messageId);
+
+    menuContainer.appendChild(deleteBtn);
+
+    message.appendChild(menuContainer); // message コンテナに追加
+  }
+
   chatArea.appendChild(message);
 
   scrollToBottom();
@@ -355,6 +396,141 @@ function loadGroupHistory(groupId) {
     .catch((err) => {
       chatArea.innerHTML = `<p class="error-message">読み込みエラー: ${err}</p>`;
     });
+}
+
+/* --------------------------------------------------------
+   ⭐ リアクションAPIを呼び出し、画面を更新するハンドラ (グループチャット/DM兼用)
+-------------------------------------------------------- */
+function handleReactionClick(messageId, reactionElement) {
+  if (!messageId) {
+    console.error("メッセージIDがないためリアクションできません。", { messageId });
+    return;
+  }
+
+  // サーバー側でmessageIdからテーブルを判断すると仮定し、既存のAPIをそのまま使う
+  const emoji = reactionElement.getAttribute("data-emoji");
+
+  fetch("/api/reaction/toggle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messageId: messageId,
+      emoji: emoji,
+    }),
+  })
+    .then((response) => response.text())
+    .then((result) => {
+      if (result === "ADDED" || result === "REMOVED") {
+        // API成功後、画面を再読み込み
+        if (currentGroupId) {
+          loadGroupHistory(currentGroupId);
+        } else if (currentRecipientId) {
+          loadDmHistory(currentRecipientId);
+        }
+      } else {
+        alert("リアクション処理失敗: " + result); // 失敗時もユーザーに通知
+        console.error("リアクションのトグル失敗:", result);
+      }
+
+      // アニメーションはそのまま実行
+      reactionElement.classList.add("clicked");
+      setTimeout(() => reactionElement.classList.remove("clicked"), 200);
+    })
+    .catch((error) => {
+      console.error("リアクションのトグル失敗:", error);
+      alert("通信エラーが発生しました。");
+    });
+}
+
+/* --------------------------------------------------------
+  ⭐ NEW: 削除確認
+-------------------------------------------------------- */
+function deleteMessageConfirm(messageId) {
+  if (confirm("このメッセージを完全に削除しますか？ (復元できません)")) {
+    deleteMessageApi(messageId);
+  }
+}
+
+/* --------------------------------------------------------
+  ⭐ NEW: 削除API呼び出し
+-------------------------------------------------------- */
+async function deleteMessageApi(messageId) {
+  try {
+    const response = await fetch("/api/message/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: messageId }),
+    });
+
+    const result = await response.text();
+    if (result === "SUCCESS") {
+      // 履歴を再読み込みして削除結果を反映
+      if (currentGroupId) {
+        loadGroupHistory(currentGroupId);
+      } else if (currentRecipientId) {
+        loadDmHistory(currentRecipientId);
+      }
+    } else {
+      alert("削除失敗: " + result);
+    }
+  } catch (e) {
+    console.error("削除APIエラー:", e);
+    alert("削除中にエラーが発生しました。");
+  }
+}
+
+/* --------------------------------------------------------
+  ⭐ NEW: 編集モーダルを開く
+-------------------------------------------------------- */
+function openEditModal(messageId, currentBody) {
+  if (!editMessageModal) return;
+
+  // 1. メッセージIDと現在の本文をモーダルにセット
+  editMessageIdInput.value = messageId;
+  // [期限切れ] ラベルが本文についている場合は除去してセット
+  editMessageBodyTextarea.value = currentBody.replace("[期限切れ] ", "");
+
+  // 2. モーダルを表示
+  editMessageModal.show();
+}
+
+/* --------------------------------------------------------
+  ⭐ NEW: 編集API呼び出し
+-------------------------------------------------------- */
+async function editMessageApi() {
+  const messageId = editMessageIdInput.value;
+  const newBody = editMessageBodyTextarea.value.trim();
+
+  if (!messageId || !newBody) {
+    alert("メッセージIDまたは本文が不足しています。");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/message/edit", {
+      // ★ 新しいAPIエンドポイント
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // EditDeleteRequest DTO に messageId と body を渡す
+      body: JSON.stringify({ messageId: messageId, body: newBody }),
+    });
+
+    const result = await response.text();
+    if (result === "SUCCESS") {
+      editMessageModal.hide();
+      // 履歴を再読み込みして編集結果を反映
+      if (currentGroupId) {
+        loadGroupHistory(currentGroupId);
+      } else if (currentRecipientId) {
+        loadDmHistory(currentRecipientId);
+      }
+    } else {
+      alert("編集失敗: " + result);
+    }
+  } catch (e) {
+    console.error("編集APIエラー:", e);
+    alert("編集中にエラーが発生しました。");
+  }
 }
 
 /* --------------------------------------------------------
@@ -447,15 +623,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ======================================
+  // ⭐ NEW: 編集保存ボタンのイベント処理
+  // ======================================
+  if (saveEditBtn) {
+    saveEditBtn.addEventListener("click", editMessageApi);
+  }
+
+  // ======================================
+  // ✅ MODIFIED: 期限設定ボタンのクリックイベントリスナー (権限チェック)
+  // ======================================
+
   if (expirationBtn && expirationModal) {
     expirationBtn.addEventListener("click", () => {
       if (loggedInUserRole === "student") {
-        alert("権限エラー: 期限付きメッセージは管理者または教師のみ設定可能です。");
+        alert("権限エラー: 期限付きメッセージは管理者または講師のみ設定可能です。");
         return;
       }
 
       if (expirationTime) {
-        const expiryDate = new Date(expirationTime);
         document.getElementById("expiryDate").value = expiryDate.toISOString().substring(0, 10);
         document.getElementById("expiryTime").value = expiryDate.toTimeString().substring(0, 5);
       } else {
