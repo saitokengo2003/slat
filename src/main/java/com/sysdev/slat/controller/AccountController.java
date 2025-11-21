@@ -41,10 +41,13 @@ public class AccountController {
     // ログインデータが存在すれば、表示名とIDをModelに追加する
     if (userData != null) {
       model.addAttribute("displayName", userData.getDisplayName());
+      if ("admin".equals(userData.getRoleCode())) {
+        AccountadminEntity entity = accountadminService.getAccountListEntity();
+        model.addAttribute("accountadminEntity", entity);
+        return "accountadmin/index";
+      }
     }
-    AccountadminEntity entity = accountadminService.getAccountListEntity();
-    model.addAttribute("accountadminEntity", entity);
-    return "accountadmin/index";
+    return "redirect:/";
   }
 
   /**
