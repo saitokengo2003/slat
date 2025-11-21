@@ -5,17 +5,17 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -29,249 +29,288 @@ class ChatRepositoryTest {
   private ChatRepository target;
 
   // テスト用定数
-  private final String SENDER_ID = "sender123";
-  private final String RECIPIENT_ID = "recipient456";
-  private final String GROUP_ID_STR = "550e8400-e29b-41d4-a716-446655440000";
-  private final String BODY = "Hello World";
-  private final OffsetDateTime EXPIRATION = OffsetDateTime.now().plusDays(1);
+  private final UUID MSG_ID = UUID.randomUUID();
+  private final String USER1 = "user1";
+  private final String USER2 = "user2";
+  private final String GROUP_ID_STR = UUID.randomUUID().toString();
 
-  // -------------------------------------------------------
-  // saveDmMessage (DM保存) のテスト
-  // -------------------------------------------------------
+  // --- saveDmMessage ---
 
   @Test
-  @DisplayName("saveDmMessage: 期限(expirationTime)がある場合")
-  void testSaveDmMessage_WithExpiration() {
-    // 1. Ready
-    ChatRequest request = new ChatRequest();
-    request.setSenderId(SENDER_ID);
-    request.setRecipientId(RECIPIENT_ID);
-    request.setBody(BODY);
-    request.setExpirationTime(EXPIRATION);
+  @DisplayName("saveDmMessage: 期限なしの場合")
+  void testSaveDmMessageNoExpiration() {
+    ChatRequest req = new ChatRequest();
+    req.setSenderId(USER1);
+    req.setRecipientId(USER2);
+    req.setBody("Hello");
+    req.setExpirationTime(null);
 
-    // 2. Do
-    target.saveDmMessage(request);
+    target.saveDmMessage(req);
 
-    // 3. Assert
-    // updateメソッドが適切な引数で呼ばれたか検証
-    verify(jdbcTemplate, times(1)).update(
-        contains("INSERT INTO dmmessage"), // SQLにINSERTが含まれているか
-        any(UUID.class), // ID (ランダム生成なので any)
-        eq(SENDER_ID), // sender_id
-        eq(RECIPIENT_ID), // recipient_id
-        eq(BODY), // body
-        eq(EXPIRATION) // expiration_time
-    );
+    verify(jdbcTemplate).update(contains("INSERT INTO dmmessage"),
+        any(UUID.class), eq(USER1), eq(USER2), eq("Hello"));
   }
 
   @Test
-  @DisplayName("saveDmMessage: 期限(expirationTime)がない(null)場合")
-  void testSaveDmMessage_NoExpiration() {
-    // 1. Ready
-    ChatRequest request = new ChatRequest();
-    request.setSenderId(SENDER_ID);
-    request.setRecipientId(RECIPIENT_ID);
-    request.setBody(BODY);
-    request.setExpirationTime(null);
+  @DisplayName("saveDmMessage: 期限ありの場合")
+  void testSaveDmMessageWithExpiration() {
+    ChatRequest req = new ChatRequest();
+    req.setSenderId(USER1);
+    req.setRecipientId(USER2);
+    req.setBody("Hello Expire");
+    req.setExpirationTime(OffsetDateTime.now());
 
-    // 2. Do
-    target.saveDmMessage(request);
+    target.saveDmMessage(req);
 
-    // 3. Assert
-    verify(jdbcTemplate, times(1)).update(
-        contains("INSERT INTO dmmessage"),
-        any(UUID.class),
-        eq(SENDER_ID),
-        eq(RECIPIENT_ID),
-        eq(BODY)
-    // expiration_time 引数がないSQLが呼ばれるはず
-    );
+    verify(jdbcTemplate).update(contains("INSERT INTO dmmessage"),
+        any(UUID.class), eq(USER1), eq(USER2), eq("Hello Expire"), any(OffsetDateTime.class));
   }
 
-  // -------------------------------------------------------
-  // saveGroupMessage (グループ保存) のテスト
-  // -------------------------------------------------------
+  // --- saveGroupMessage ---
 
   @Test
-  @DisplayName("saveGroupMessage: 期限がある場合")
-  void testSaveGroupMessage_WithExpiration() {
-    // 1. Ready
-    ChatRequest request = new ChatRequest();
-    request.setGroupId(GROUP_ID_STR);
-    request.setSenderId(SENDER_ID);
-    request.setBody(BODY);
-    request.setExpirationTime(EXPIRATION);
+  @DisplayName("saveGroupMessage: 期限なしの場合")
+  void testSaveGroupMessageNoExpiration() {
+    ChatRequest req = new ChatRequest();
+    req.setGroupId(GROUP_ID_STR);
+    req.setSenderId(USER1);
+    req.setBody("Group Hello");
 
-    // 2. Do
-    target.saveGroupMessage(request);
+    target.saveGroupMessage(req);
 
-    // 3. Assert
-    verify(jdbcTemplate, times(1)).update(
-        contains("INSERT INTO messages"),
-        eq(UUID.fromString(GROUP_ID_STR)), // UUID変換後の値
-        eq(SENDER_ID),
-        eq(BODY),
-        eq(EXPIRATION));
+    verify(jdbcTemplate).update(contains("INSERT INTO messages"),
+        any(UUID.class), eq(USER1), eq("Group Hello"));
   }
 
   @Test
-  @DisplayName("saveGroupMessage: 期限がない場合")
-  void testSaveGroupMessage_NoExpiration() {
-    // 1. Ready
-    ChatRequest request = new ChatRequest();
-    request.setGroupId(GROUP_ID_STR);
-    request.setSenderId(SENDER_ID);
-    request.setBody(BODY);
-    request.setExpirationTime(null);
+  @DisplayName("saveGroupMessage: 期限ありの場合")
+  void testSaveGroupMessageWithExpiration() {
+    ChatRequest req = new ChatRequest();
+    req.setGroupId(GROUP_ID_STR);
+    req.setSenderId(USER1);
+    req.setBody("Group Expire");
+    req.setExpirationTime(OffsetDateTime.now());
 
-    // 2. Do
-    target.saveGroupMessage(request);
+    target.saveGroupMessage(req);
 
-    // 3. Assert
-    verify(jdbcTemplate, times(1)).update(
-        contains("INSERT INTO messages"),
-        eq(UUID.fromString(GROUP_ID_STR)),
-        eq(SENDER_ID),
-        eq(BODY));
+    verify(jdbcTemplate).update(contains("INSERT INTO messages"),
+        any(UUID.class), eq(USER1), eq("Group Expire"), any(OffsetDateTime.class));
   }
 
-  // -------------------------------------------------------
-  // findDmHistory (DM履歴取得) のテスト
-  // -------------------------------------------------------
+  // --- findDmHistory ---
 
   @Test
-  @DisplayName("findDmHistory: SQLとパラメータが正しく渡されているか")
-  @SuppressWarnings("unchecked")
+  @DisplayName("findDmHistory: 正常系")
   void testFindDmHistory() {
-    // 1. Ready
-    // queryメソッドが呼ばれたときに空リストを返すようにモック化
-    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any(), any()))
-        .thenReturn(new ArrayList<>());
+    MessageHistoryDto dto = new MessageHistoryDto();
+    dto.setBody("History Body");
 
-    // 2. Do
-    List<MessageHistoryDto> result = target.findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn(List.of(dto)).when(jdbcTemplate).query(anyString(), any(RowMapper.class), eq(USER1), eq(USER2), eq(USER2),
+        eq(USER1));
 
-    // 3. Assert
-    assertNotNull(result);
+    List<MessageHistoryDto> result = target.findDmHistory(USER1, USER2);
 
-    // 呼び出し引数の検証
-    verify(jdbcTemplate).query(
-        contains("SELECT id, sender_id"), // SQLの一部確認
-        any(RowMapper.class),
-        eq(SENDER_ID), // パラメータ順序1
-        eq(RECIPIENT_ID), // パラメータ順序2
-        eq(RECIPIENT_ID), // パラメータ順序3
-        eq(SENDER_ID) // パラメータ順序4
-    );
+    assertEquals(1, result.size());
+    assertEquals("History Body", result.get(0).getBody());
   }
 
-  // -------------------------------------------------------
-  // findGroupHistory (グループ履歴取得) のテスト
-  // -------------------------------------------------------
+  // --- findGroupHistory ---
 
   @Test
-  @DisplayName("findGroupHistory: SQLとパラメータが正しく渡されているか")
-  @SuppressWarnings("unchecked")
+  @DisplayName("findGroupHistory: 正常系")
   void testFindGroupHistory() {
-    // 1. Ready
-    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object.class)))
-        .thenReturn(new ArrayList<>());
+    MessageHistoryDto dto = new MessageHistoryDto();
+    dto.setBody("Group History Body");
 
-    // 2. Do
+    doReturn(List.of(dto)).when(jdbcTemplate).query(anyString(), any(RowMapper.class), any(UUID.class));
+
     List<MessageHistoryDto> result = target.findGroupHistory(GROUP_ID_STR);
 
-    // 3. Assert
-    assertNotNull(result);
-
-    verify(jdbcTemplate).query(
-        contains("SELECT id, sender_id"),
-        any(RowMapper.class),
-        eq(UUID.fromString(GROUP_ID_STR)));
+    assertEquals(1, result.size());
+    assertEquals("Group History Body", result.get(0).getBody());
   }
 
-  // -------------------------------------------------------
-  // isGroupMessage (存在確認) のテスト
-  // -------------------------------------------------------
+  // --- findSenderIdByMessageId ---
 
   @Test
-  @DisplayName("isGroupMessage: 存在する場合(count > 0) trueを返す")
-  void testIsGroupMessage_True() {
-    // 1. Ready
-    UUID msgId = UUID.randomUUID();
-    // queryForObject が 1 を返すように設定
-    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(msgId)))
-        .thenReturn(1);
+  @DisplayName("findSenderIdByMessageId: Groupテーブルで見つかった場合")
+  void testFindSenderIdByMessageIdFoundInGroup() {
+    doReturn(USER1).when(jdbcTemplate).queryForObject(contains("SELECT sender_id FROM messages"), eq(String.class),
+        eq(MSG_ID));
 
-    // 2. Do
-    boolean result = target.isGroupMessage(msgId);
+    String senderId = target.findSenderIdByMessageId(MSG_ID);
 
-    // 3. Assert
-    assertTrue(result);
-    verify(jdbcTemplate).queryForObject(contains("FROM messages"), eq(Integer.class), eq(msgId));
+    assertEquals(USER1, senderId);
   }
 
   @Test
-  @DisplayName("isGroupMessage: 存在しない場合(count == 0) falseを返す")
-  void testIsGroupMessage_False() {
-    // 1. Ready
-    UUID msgId = UUID.randomUUID();
-    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(msgId)))
-        .thenReturn(0);
+  @DisplayName("findSenderIdByMessageId: DMテーブルで見つかった場合")
+  void testFindSenderIdByMessageIdFoundInDm() {
+    doThrow(new EmptyResultDataAccessException(1)).when(jdbcTemplate)
+        .queryForObject(contains("SELECT sender_id FROM messages"), eq(String.class), eq(MSG_ID));
+    doReturn(USER2).when(jdbcTemplate).queryForObject(contains("SELECT sender_id FROM dmmessage"), eq(String.class),
+        eq(MSG_ID));
 
-    // 2. Do
-    boolean result = target.isGroupMessage(msgId);
+    String senderId = target.findSenderIdByMessageId(MSG_ID);
 
-    // 3. Assert
-    assertFalse(result);
+    assertEquals(USER2, senderId);
   }
 
   @Test
-  @DisplayName("isGroupMessage: nullが返ってきた場合 falseを返す")
-  void testIsGroupMessage_Null() {
-    // 1. Ready
-    UUID msgId = UUID.randomUUID();
-    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(msgId)))
-        .thenReturn(null);
+  @DisplayName("findSenderIdByMessageId: どちらにもない場合")
+  void testFindSenderIdByMessageIdNotFound() {
+    doThrow(new EmptyResultDataAccessException(1)).when(jdbcTemplate).queryForObject(anyString(), eq(String.class),
+        eq(MSG_ID));
 
-    // 2. Do
-    boolean result = target.isGroupMessage(msgId);
-
-    // 3. Assert
-    assertFalse(result);
+    assertThrows(IllegalArgumentException.class, () -> target.findSenderIdByMessageId(MSG_ID));
   }
 
-  // -------------------------------------------------------
-  // isDmMessage (存在確認) のテスト
-  // -------------------------------------------------------
+  // --- deleteMessagePhysical ---
 
   @Test
-  @DisplayName("isDmMessage: 存在する場合 trueを返す")
-  void testIsDmMessage_True() {
-    // 1. Ready
-    UUID msgId = UUID.randomUUID();
-    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(msgId)))
-        .thenReturn(1);
+  @DisplayName("deleteMessagePhysical: 正常系")
+  void testDeleteMessagePhysical() {
+    target.deleteMessagePhysical(MSG_ID);
 
-    // 2. Do
-    boolean result = target.isDmMessage(msgId);
+    verify(jdbcTemplate).update(contains("DELETE FROM messages"), eq(MSG_ID));
+    verify(jdbcTemplate).update(contains("DELETE FROM dmmessage"), eq(MSG_ID));
+  }
 
-    // 3. Assert
-    assertTrue(result);
-    verify(jdbcTemplate).queryForObject(contains("FROM dmmessage"), eq(Integer.class), eq(msgId));
+  // --- updateMessageBody ---
+
+  @Test
+  @DisplayName("updateMessageBody: Groupテーブルで更新成功")
+  void testUpdateMessageBodyGroup() {
+    doReturn(1).when(jdbcTemplate).update(contains("UPDATE messages"), eq("New Body"), eq(MSG_ID));
+
+    int result = target.updateMessageBody(MSG_ID, "New Body");
+
+    assertEquals(1, result);
+    verify(jdbcTemplate, never()).update(contains("UPDATE dmmessage"), any(), any());
   }
 
   @Test
-  @DisplayName("isDmMessage: 存在しない場合 falseを返す")
-  void testIsDmMessage_False() {
-    // 1. Ready
-    UUID msgId = UUID.randomUUID();
-    when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(msgId)))
-        .thenReturn(0);
+  @DisplayName("updateMessageBody: DMテーブルで更新成功")
+  void testUpdateMessageBodyDm() {
+    doReturn(0).when(jdbcTemplate).update(contains("UPDATE messages"), eq("New Body"), eq(MSG_ID));
+    doReturn(1).when(jdbcTemplate).update(contains("UPDATE dmmessage"), eq("New Body"), eq(MSG_ID));
 
-    // 2. Do
-    boolean result = target.isDmMessage(msgId);
+    int result = target.updateMessageBody(MSG_ID, "New Body");
 
-    // 3. Assert
-    assertFalse(result);
+    assertEquals(1, result);
+  }
+
+  // --- getDmParticipants ---
+
+  @Test
+  @DisplayName("getDmParticipants: 正常系")
+  void testGetDmParticipants() {
+    List<String> expected = List.of(USER1, USER2);
+    doReturn(expected).when(jdbcTemplate).queryForObject(contains("SELECT sender_id"), any(RowMapper.class),
+        eq(MSG_ID));
+
+    List<String> result = target.getDmParticipants(MSG_ID);
+
+    assertEquals(expected, result);
+  }
+
+  @Test
+  @DisplayName("getDmParticipants: データなし")
+  void testGetDmParticipantsEmpty() {
+    doThrow(new EmptyResultDataAccessException(1)).when(jdbcTemplate).queryForObject(contains("SELECT sender_id"),
+        any(RowMapper.class), eq(MSG_ID));
+
+    List<String> result = target.getDmParticipants(MSG_ID);
+
+    assertTrue(result.isEmpty());
+  }
+
+  // --- getGroupIdByMessageId ---
+
+  @Test
+  @DisplayName("getGroupIdByMessageId: 正常系")
+  void testGetGroupIdByMessageId() {
+    UUID groupId = UUID.randomUUID();
+    doReturn(groupId).when(jdbcTemplate).queryForObject(contains("SELECT group_id"), eq(UUID.class), eq(MSG_ID));
+
+    Optional<UUID> result = target.getGroupIdByMessageId(MSG_ID);
+
+    assertTrue(result.isPresent());
+    assertEquals(groupId, result.get());
+  }
+
+  @Test
+  @DisplayName("getGroupIdByMessageId: データなし")
+  void testGetGroupIdByMessageIdEmpty() {
+    doThrow(new EmptyResultDataAccessException(1)).when(jdbcTemplate).queryForObject(contains("SELECT group_id"),
+        eq(UUID.class), eq(MSG_ID));
+
+    Optional<UUID> result = target.getGroupIdByMessageId(MSG_ID);
+
+    assertTrue(result.isEmpty());
+  }
+
+  // --- getGroupMembers (追加) ---
+
+  @Test
+  @DisplayName("getGroupMembers: 正常系")
+  void testGetGroupMembers() {
+    List<String> members = List.of("u1", "u2");
+    UUID groupId = UUID.randomUUID();
+
+    doReturn(members).when(jdbcTemplate).queryForList(contains("SELECT user_id FROM group_members"), eq(String.class),
+        eq(groupId));
+
+    List<String> result = target.getGroupMembers(groupId);
+
+    assertEquals(members, result);
+  }
+
+  // --- isGroupMessage ---
+
+  @Test
+  @DisplayName("isGroupMessage: true")
+  void testIsGroupMessageTrue() {
+    doReturn(1).when(jdbcTemplate).queryForObject(contains("SELECT COUNT(*) FROM messages"), eq(Integer.class),
+        eq(MSG_ID));
+    assertTrue(target.isGroupMessage(MSG_ID));
+  }
+
+  @Test
+  @DisplayName("isGroupMessage: false")
+  void testIsGroupMessageFalse() {
+    doReturn(0).when(jdbcTemplate).queryForObject(contains("SELECT COUNT(*) FROM messages"), eq(Integer.class),
+        eq(MSG_ID));
+    assertFalse(target.isGroupMessage(MSG_ID));
+  }
+
+  // --- isDmMessage ---
+
+  @Test
+  @DisplayName("isDmMessage: true")
+  void testIsDmMessageTrue() {
+    doReturn(1).when(jdbcTemplate).queryForObject(contains("SELECT COUNT(*) FROM dmmessage"), eq(Integer.class),
+        eq(MSG_ID));
+    assertTrue(target.isDmMessage(MSG_ID));
+  }
+
+  @Test
+  @DisplayName("isDmMessage: false")
+  void testIsDmMessageFalse() {
+    doReturn(0).when(jdbcTemplate).queryForObject(contains("SELECT COUNT(*) FROM dmmessage"), eq(Integer.class),
+        eq(MSG_ID));
+    assertFalse(target.isDmMessage(MSG_ID));
+  }
+
+  // --- groupExists / insertGroup (プレースホルダー実装のテスト) ---
+
+  @Test
+  void testGroupExists() {
+    assertFalse(target.groupExists("any"));
+  }
+
+  @Test
+  void testInsertGroup() {
+    assertDoesNotThrow(() -> target.insertGroup("id", "name", false));
   }
 }

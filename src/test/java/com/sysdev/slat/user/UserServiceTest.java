@@ -24,6 +24,8 @@ class UserServiceTest {
   @InjectMocks
   private UserService target;
 
+  // --- authenticate (認証) のテスト ---
+
   @Test
   @DisplayName("authenticate: 認証成功（ユーザーが存在しパスワードが一致）")
   void testAuthenticateSuccess() {
@@ -86,6 +88,8 @@ class UserServiceTest {
     // 3. Assert
     assertNull(result);
   }
+
+  // --- findAllOtherUsers (他ユーザー取得) のテスト ---
 
   @Test
   @DisplayName("findAllOtherUsers: 自分以外のユーザーのみ取得できること")
@@ -150,6 +154,8 @@ class UserServiceTest {
     assertTrue(result.isEmpty());
   }
 
+  // --- getUserRole のテスト ---
+
   @Test
   @DisplayName("getUserRole: ユーザーが存在する場合、DBのロールコードが返却されること")
   void testGetUserRole_Found() {
@@ -182,5 +188,72 @@ class UserServiceTest {
 
     // 3. Assert
     assertEquals("guest", result);
+  }
+
+  // --- getDisplayName のテスト (追加) ---
+
+  @Test
+  @DisplayName("getDisplayName: ユーザーが存在する場合、表示名が返る")
+  void testGetDisplayName_Found() {
+    // 1. Ready
+    String username = "user01";
+    String displayName = "表示名 太郎";
+    User mockUser = new User();
+    mockUser.setUsername(username);
+    mockUser.setDisplayName(displayName);
+
+    doReturn(Optional.of(mockUser)).when(userRepository).findByUsername(username);
+
+    // 2. Do
+    String result = target.getDisplayName(username);
+
+    // 3. Assert
+    assertEquals(displayName, result);
+  }
+
+  @Test
+  @DisplayName("getDisplayName: ユーザーが存在しない場合、'不明なユーザー' が返る")
+  void testGetDisplayName_NotFound() {
+    // 1. Ready
+    String username = "unknown_id";
+    doReturn(Optional.empty()).when(userRepository).findByUsername(username);
+
+    // 2. Do
+    String result = target.getDisplayName(username);
+
+    // 3. Assert
+    // UserServiceの実装: return "不明なユーザー (" + userId + ")";
+    assertEquals("不明なユーザー (unknown_id)", result);
+  }
+
+  // --- getAllStudentIds のテスト (追加) ---
+
+  @Test
+  @DisplayName("getAllStudentIds: roleCodeが'student'のユーザーのみIDがリスト化される")
+  void testGetAllStudentIds() {
+    // 1. Ready
+    User student1 = new User();
+    student1.setUsername("s1");
+    student1.setRoleCode("student");
+
+    User student2 = new User();
+    student2.setUsername("s2");
+    student2.setRoleCode("student");
+
+    User teacher = new User();
+    teacher.setUsername("t1");
+    teacher.setRoleCode("teacher");
+
+    List<User> allUsers = Arrays.asList(student1, teacher, student2);
+    doReturn(allUsers).when(userRepository).findAll();
+
+    // 2. Do
+    List<String> result = target.getAllStudentIds();
+
+    // 3. Assert
+    assertEquals(2, result.size());
+    assertTrue(result.contains("s1"));
+    assertTrue(result.contains("s2"));
+    assertFalse(result.contains("t1")); // 先生は含まれない
   }
 }
