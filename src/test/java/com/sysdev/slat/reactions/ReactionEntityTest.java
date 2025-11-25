@@ -31,7 +31,7 @@ class ReactionEntityTest {
     entity.setMessageId(messageId);
     entity.setUserId(userId);
     entity.setEmoji(emoji);
-    entity.setCreatedAt(now); // 初期値を上書き
+    entity.setCreatedAt(now);
 
     // 3. Assert (Getter検証)
     assertEquals(id, entity.getId());
@@ -48,10 +48,8 @@ class ReactionEntityTest {
     ReactionEntity entity = new ReactionEntity();
 
     // 3. Assert
-    // フィールド宣言で = OffsetDateTime.now() されているため、nullではないはず
     assertNotNull(entity.getCreatedAt(), "createdAtは初期化時に自動設定されるべき");
 
-    // 他のフィールドはnullであること
     assertNull(entity.getId());
     assertNull(entity.getMessageId());
     assertNull(entity.getUserId());
@@ -69,7 +67,7 @@ class ReactionEntityTest {
     entity.setMessageId(null);
     entity.setUserId(null);
     entity.setEmoji(null);
-    entity.setCreatedAt(null); // 初期値をnullで上書き可能か
+    entity.setCreatedAt(null);
 
     // 3. Assert
     assertNull(entity.getId());

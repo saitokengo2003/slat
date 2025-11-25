@@ -23,7 +23,7 @@ class AccountFormTest {
     String classId = "A組";
     Integer number = 15;
 
-    // 2. Do (Setterの実行)
+    // 2. Do
     form.setId(id);
     form.setUserId(userId);
     form.setPassword(password);
@@ -33,7 +33,7 @@ class AccountFormTest {
     form.setClassId(classId);
     form.setNumber(number);
 
-    // 3. Assert (Getterの結果検証)
+    // 3. Assert
     assertEquals(id, form.getId());
     assertEquals(userId, form.getUserId());
     assertEquals(password, form.getPassword());

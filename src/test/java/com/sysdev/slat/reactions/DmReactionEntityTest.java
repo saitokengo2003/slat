@@ -31,7 +31,7 @@ class DmReactionEntityTest {
     entity.setDmMessageId(dmMessageId);
     entity.setUserId(userId);
     entity.setEmoji(emoji);
-    entity.setCreatedAt(now); // 初期値を上書き
+    entity.setCreatedAt(now);
 
     // 3. Assert (Getter検証)
     assertEquals(id, entity.getId());
@@ -48,10 +48,7 @@ class DmReactionEntityTest {
     DmReactionEntity entity = new DmReactionEntity();
 
     // 3. Assert
-    // フィールド宣言で = OffsetDateTime.now() されているため、nullではないはず
     assertNotNull(entity.getCreatedAt(), "createdAtは初期化時に自動設定されるべき");
-
-    // 他のフィールドはnullであること
     assertNull(entity.getId());
     assertNull(entity.getDmMessageId());
     assertNull(entity.getUserId());
@@ -69,7 +66,7 @@ class DmReactionEntityTest {
     entity.setDmMessageId(null);
     entity.setUserId(null);
     entity.setEmoji(null);
-    entity.setCreatedAt(null); // 初期値をnullで上書き可能か
+    entity.setCreatedAt(null);
 
     // 3. Assert
     assertNull(entity.getId());

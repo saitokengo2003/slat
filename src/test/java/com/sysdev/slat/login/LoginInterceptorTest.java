@@ -27,8 +27,6 @@ class LoginInterceptorTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockHttpSession session = new MockHttpSession();
-
-    // セッションに正規のUserDataオブジェクトをセット
     session.setAttribute(SESSION_KEY, new UserData());
     request.setSession(session);
 
@@ -47,8 +45,6 @@ class LoginInterceptorTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     MockHttpServletResponse response = new MockHttpServletResponse();
 
-    // セッションをセットしない (request.getSession(false) == null の状態)
-
     // 2. Do
     boolean result = interceptor.preHandle(request, response, new Object());
 
@@ -64,8 +60,6 @@ class LoginInterceptorTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockHttpSession session = new MockHttpSession();
-
-    // セッションはあるが、属性 "userData" はセットしない
     request.setSession(session);
 
     // 2. Do
@@ -83,8 +77,6 @@ class LoginInterceptorTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     MockHttpServletResponse response = new MockHttpServletResponse();
     MockHttpSession session = new MockHttpSession();
-
-    // キーは合っているが中身が UserData 型ではない（Stringなど）
     session.setAttribute(SESSION_KEY, "I am not UserData");
     request.setSession(session);
 
@@ -92,7 +84,6 @@ class LoginInterceptorTest {
     boolean result = interceptor.preHandle(request, response, new Object());
 
     // 3. Assert
-    // instanceof UserData チェックで弾かれるはず
     assertFalse(result);
     assertEquals("/login", response.getRedirectedUrl());
   }

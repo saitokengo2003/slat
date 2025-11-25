@@ -55,15 +55,12 @@ public class GroupControllerTest {
     mockUser.setDisplayName("管理者");
   }
 
-  /**
-   * Thymeleafのエラー回避用ダミーデータ作成メソッド
-   */
   private Map<String, Object> dummyGroupData() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", TEST_UUID);
     map.put("name", "ダミーグループ");
     map.put("created_by", "作成者");
-    map.put("created_at", OffsetDateTime.now()); // 日時型
+    map.put("created_at", OffsetDateTime.now());
     return map;
   }
 
@@ -151,12 +148,11 @@ public class GroupControllerTest {
   void testGroupinfoDetailFound() throws Exception {
     Map<String, Object> groupData = dummyGroupData();
 
-    // 【修正】テンプレートに合わせてキー名を修正＆追加
     Map<String, Object> memberMap = new HashMap<>();
-    memberMap.put("user_id", "u1"); // 修正: userId -> user_id
-    memberMap.put("display_name", "メンバー1"); // 追加
-    memberMap.put("role_in_group", "member"); // 追加
-    memberMap.put("role_code", "STUDENT"); // 追加
+    memberMap.put("user_id", "u1");
+    memberMap.put("display_name", "メンバー1");
+    memberMap.put("role_in_group", "member");
+    memberMap.put("role_code", "STUDENT");
 
     List<Map<String, Object>> members = List.of(memberMap);
     GroupDetailDto dto = new GroupDetailDto(groupData, members);

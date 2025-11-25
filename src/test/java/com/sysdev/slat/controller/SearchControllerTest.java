@@ -51,7 +51,6 @@ class SearchControllerTest {
   void testSearchMessage_normal() {
     String keyword = "test";
 
-    // SearchResultDto をモックで作成
     SearchResultDto dto1 = mock(SearchResultDto.class);
     SearchResultDto dto2 = mock(SearchResultDto.class);
 
@@ -61,9 +60,7 @@ class SearchControllerTest {
 
     String view = controller.searchMessage(keyword, model);
 
-    // searchService が呼ばれていることを確認
     verify(searchService).searchMessages(keyword);
-    // model にキーワードと結果が追加されていることを確認
     verify(model).addAttribute("keyword", keyword);
     verify(model).addAttribute("results", results);
 
