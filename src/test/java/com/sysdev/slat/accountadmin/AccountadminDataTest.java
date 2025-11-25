@@ -26,7 +26,7 @@ class AccountadminDataTest {
     String className = "B組";
     Integer number = 15;
 
-    // 2. Do (Setter実行)
+    // 2. Do
     data.setId(id);
     data.setUsername(username);
     data.setPassword_hash(passwordHash);
@@ -40,7 +40,7 @@ class AccountadminDataTest {
     data.setClass_name(className);
     data.setNumber(number);
 
-    // 3. Assert (Getter検証)
+    // 3. Assert
     assertEquals(id, data.getId());
     assertEquals(username, data.getUsername());
     assertEquals(passwordHash, data.getPassword_hash());

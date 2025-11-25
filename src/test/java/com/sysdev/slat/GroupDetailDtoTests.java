@@ -34,11 +34,8 @@ class GroupDetailDtoTest {
     GroupDetailDto dto = new GroupDetailDto(groupData, memberList);
 
     // 3. Assert
-    // 内容が一致しているか
     assertEquals(groupData, dto.getGroup());
     assertEquals(memberList, dto.getMembers());
-
-    // 必要であれば、オブジェクトの参照が同じであることも確認（完全に同じインスタンスが入っているか）
     assertSame(groupData, dto.getGroup());
     assertSame(memberList, dto.getMembers());
   }
@@ -47,7 +44,6 @@ class GroupDetailDtoTest {
   @DisplayName("異常系: 引数がnullの場合でもインスタンス化でき、nullが返却されること")
   void testNullValues() {
     // 1. Ready & 2. Do
-    // バリデーションがないため、nullが入る可能性がある前提のテスト
     GroupDetailDto dto = new GroupDetailDto(null, null);
 
     // 3. Assert

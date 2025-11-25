@@ -17,7 +17,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @DataJdbcTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY) // H2 Databaseを使用
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class DmReactionRepositoryTest {
 
   @Autowired
@@ -28,7 +28,6 @@ class DmReactionRepositoryTest {
 
   @BeforeEach
   void setUp() {
-    // テストごとにデータをクリアする（@DataJdbcTestは自動ロールバックするが、念のため）
     target.deleteAll();
   }
 
@@ -67,11 +66,10 @@ class DmReactionRepositoryTest {
     entity.setId(UUID.randomUUID());
     entity.setDmMessageId(messageId);
     entity.setUserId(userId);
-    entity.setEmoji("👍"); // 保存するのは "👍"
+    entity.setEmoji("👍");
     target.save(entity);
 
     // 2. Do
-    // 違う絵文字 "👎" で検索
     Optional<DmReactionEntity> result = target.findByDmMessageIdAndUserIdAndEmoji(messageId, userId, "👎");
 
     // 3. Assert
@@ -84,13 +82,10 @@ class DmReactionRepositoryTest {
     // 1. Ready
     UUID msgId1 = UUID.randomUUID();
     UUID msgId2 = UUID.randomUUID();
-    UUID msgId3 = UUID.randomUUID(); // 検索対象外
+    UUID msgId3 = UUID.randomUUID();
 
-    // メッセージ1 に対するリアクション
     createAndSaveReaction(msgId1, "u1", "A");
-    // メッセージ2 に対するリアクション
     createAndSaveReaction(msgId2, "u2", "B");
-    // メッセージ3 に対するリアクション (これは取得されないはず)
     createAndSaveReaction(msgId3, "u3", "C");
 
     List<UUID> searchIds = List.of(msgId1, msgId2);
@@ -110,11 +105,7 @@ class DmReactionRepositoryTest {
     // 1. Ready
     UUID messageId = UUID.randomUUID();
     OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-
-    // 基準となる期限（現在）
     OffsetDateTime expirationTime = now;
-
-    // A: 期限より前 (10分前) -> 取得されるべき
     DmReactionEntity pastReaction = new DmReactionEntity();
     pastReaction.setId(UUID.randomUUID());
     pastReaction.setDmMessageId(messageId);
@@ -122,7 +113,6 @@ class DmReactionRepositoryTest {
     pastReaction.setCreatedAt(now.minusMinutes(10));
     target.save(pastReaction);
 
-    // B: 期限より後 (10分後) -> 取得されないべき
     DmReactionEntity futureReaction = new DmReactionEntity();
     futureReaction.setId(UUID.randomUUID());
     futureReaction.setDmMessageId(messageId);
@@ -144,8 +134,6 @@ class DmReactionRepositoryTest {
     // 1. Ready
     UUID messageId = UUID.randomUUID();
     OffsetDateTime justNow = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-
-    // 期限と全く同じ日時のデータを作成
     DmReactionEntity justTimeReaction = new DmReactionEntity();
     justTimeReaction.setId(UUID.randomUUID());
     justTimeReaction.setDmMessageId(messageId);
@@ -154,7 +142,6 @@ class DmReactionRepositoryTest {
     target.save(justTimeReaction);
 
     // 2. Do
-    // SQLが <= (以下) なので含まれるはず
     List<DmReactionEntity> results = target.findByDmMessageIdAndCreatedAtBefore(messageId, justNow);
 
     // 3. Assert
@@ -162,7 +149,6 @@ class DmReactionRepositoryTest {
     assertThat(results.get(0).getUserId()).isEqualTo("boundary_user");
   }
 
-  // --- Helper Method ---
   private void createAndSaveReaction(UUID msgId, String userId, String emoji) {
     DmReactionEntity e = new DmReactionEntity();
     e.setId(UUID.randomUUID());

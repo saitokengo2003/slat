@@ -25,14 +25,14 @@ class ChatRequestTest {
         // 日時データ
         OffsetDateTime expireTime = OffsetDateTime.now(ZoneOffset.UTC);
 
-        // 2. Do (Setterの実行)
+        // 2. Do
         request.setGroupId(groupId);
         request.setSenderId(senderId);
         request.setRecipientId(recipientId);
         request.setBody(body);
         request.setExpirationTime(expireTime);
 
-        // 3. Assert (Getterの結果検証)
+        // 3. Assert
         assertEquals(groupId, request.getGroupId());
         assertEquals(senderId, request.getSenderId());
         assertEquals(recipientId, request.getRecipientId());
@@ -47,7 +47,6 @@ class ChatRequestTest {
         ChatRequest request = new ChatRequest();
 
         // 2. Do
-        // 全フィールドに明示的にnullをセット
         request.setGroupId(null);
         request.setSenderId(null);
         request.setRecipientId(null);

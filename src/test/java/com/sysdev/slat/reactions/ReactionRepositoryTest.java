@@ -16,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 
 @DataJdbcTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY) // H2 Databaseを使用
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 class ReactionRepositoryTest {
 
   @Autowired
@@ -24,7 +24,6 @@ class ReactionRepositoryTest {
 
   @BeforeEach
   void setUp() {
-    // テスト間の干渉を防ぐためデータをクリア
     target.deleteAll();
   }
 
@@ -55,7 +54,6 @@ class ReactionRepositoryTest {
     target.save(createReaction(messageId, "user-001", "🎉", OffsetDateTime.now()));
 
     // 2. Do
-    // 違うユーザーIDで検索
     Optional<ReactionEntity> result = target.findByMessageIdAndUserIdAndEmoji(messageId, "other-user", "🎉");
 
     // 3. Assert
@@ -68,7 +66,7 @@ class ReactionRepositoryTest {
     // 1. Ready
     UUID msg1 = UUID.randomUUID();
     UUID msg2 = UUID.randomUUID();
-    UUID msg3 = UUID.randomUUID(); // 対象外
+    UUID msg3 = UUID.randomUUID();
 
     target.save(createReaction(msg1, "u1", "A", OffsetDateTime.now()));
     target.save(createReaction(msg2, "u2", "B", OffsetDateTime.now()));
@@ -91,11 +89,9 @@ class ReactionRepositoryTest {
     OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     OffsetDateTime expirationTime = now;
 
-    // A: 期限より前 (1時間前) -> 取得されるべき
     ReactionEntity past = createReaction(messageId, "past_user", "A", now.minusHours(1));
     target.save(past);
 
-    // B: 期限より後 (1時間後) -> 取得されないべき
     ReactionEntity future = createReaction(messageId, "future_user", "B", now.plusHours(1));
     target.save(future);
 
@@ -114,12 +110,10 @@ class ReactionRepositoryTest {
     UUID messageId = UUID.randomUUID();
     OffsetDateTime justNow = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
 
-    // 期限と同じ日時のデータ
     ReactionEntity boundary = createReaction(messageId, "boundary_user", "C", justNow);
     target.save(boundary);
 
     // 2. Do
-    // SQL条件は <= なので含まれるはず
     List<ReactionEntity> results = target.findByMessageIdAndCreatedAtBefore(messageId, justNow);
 
     // 3. Assert
@@ -127,7 +121,6 @@ class ReactionRepositoryTest {
     assertThat(results.get(0).getUserId()).isEqualTo("boundary_user");
   }
 
-  // --- Helper Method ---
   private ReactionEntity createReaction(UUID msgId, String userId, String emoji, OffsetDateTime time) {
     ReactionEntity e = new ReactionEntity();
     e.setId(UUID.randomUUID());

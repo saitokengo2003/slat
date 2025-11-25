@@ -30,29 +30,16 @@ class LoginEntityTest {
     // 1. Ready
     LoginEntity config = new LoginEntity();
 
-    // モックの挙動定義 (メソッドチェーンをつなぐため)
-    // registry.addInterceptor(...) が呼ばれたら registration モックを返す
     when(registry.addInterceptor(any(LoginInterceptor.class))).thenReturn(registration);
 
-    // registration.addPathPatterns(...) が呼ばれたら registration モック自身を返す
     when(registration.addPathPatterns(anyString())).thenReturn(registration);
-
-    // (excludePathPatterns は戻り値を使わないので定義しなくても動くが、チェーンの最後なので念のため)
-    // when(registration.excludePathPatterns(any(String[].class))).thenReturn(registration);
 
     // 2. Do
     config.addInterceptors(registry);
 
     // 3. Assert
-
-    // (1) LoginInterceptorのインスタンスが登録されたか検証
     verify(registry, times(1)).addInterceptor(any(LoginInterceptor.class));
-
-    // (2) 対象パス "/**" が追加されたか検証
     verify(registration).addPathPatterns("/**");
-
-    // (3) 除外パスが正しく指定されたか検証
-    // excludePathPatternsは可変長引数(String...)なので、並び順通りに渡されているか確認
     verify(registration).excludePathPatterns(
         "/login",
         "/css/**",

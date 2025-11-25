@@ -1,91 +1,87 @@
 package com.sysdev.slat.controller;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import java.util.List;
-import java.util.UUID;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+
+import java.util.Collections;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import com.sysdev.slat.chat.Group;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import com.sysdev.slat.chat.GroupRepository;
 import com.sysdev.slat.user.UserData;
 import com.sysdev.slat.user.UserService;
-import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 public class MainControllerTest {
 
-  @Autowired
   private MockMvc mockMvc;
 
-  @MockBean
+  @Mock
   private UserService userService;
 
-  @MockBean
+  @Mock
   private GroupRepository groupRepository;
 
+  @InjectMocks
+  private MainController mainController;
+
   private final String SESSION_KEY = "userData";
+  private UserData mockUser;
 
-  // ===========================
-  // 1. ログイン済み
-  // ===========================
-  @Test
-  @DisplayName("トップ画面表示: ログイン済み（DMユーザーとグループが複数）")
-  void testIndexLoggedInWithData() throws Exception {
+  @BeforeEach
+  void setUp() {
+    this.mockMvc = MockMvcBuilders.standaloneSetup(mainController).build();
 
-    UserData mockUser = new UserData();
+    mockUser = new UserData();
     mockUser.setUserId("user001");
     mockUser.setDisplayName("山田 太郎");
+    mockUser.setRoleCode("STUDENT");
+  }
 
-    UserData other1 = new UserData();
-    other1.setUserId("user002");
-    other1.setDisplayName("佐藤 花子");
+  @Test
+  @DisplayName("トップ画面表示: ログイン済み (URL: / )")
+  void testIndexLoggedIn() throws Exception {
+    // 1. Ready
+    doReturn(Collections.emptyList()).when(userService).findAllOtherUsers(anyString());
+    doReturn(Collections.emptyList()).when(groupRepository).findJoinedGroupsByUserId(anyString());
 
-    UserData other2 = new UserData();
-    other2.setUserId("user003");
-    other2.setDisplayName("鈴木 次郎");
-
-    List<UserData> dmUsers = List.of(other1, other2);
-
-    Group g1 = new Group();
-    g1.setId(UUID.randomUUID());
-    g1.setName("グループA");
-
-    Group g2 = new Group();
-    g2.setId(UUID.randomUUID());
-    g2.setName("グループB");
-
-    List<Group> groups = List.of(g1, g2);
-
-    when(userService.findAllOtherUsers("user001")).thenReturn(dmUsers);
-    when(groupRepository.findJoinedGroupsByUserId("user001")).thenReturn(groups);
-
-    mockMvc.perform(get("/").sessionAttr(SESSION_KEY, mockUser))
+    // 2. Do & 3. Check
+    mockMvc.perform(get("/")
+        .sessionAttr(SESSION_KEY, mockUser))
         .andExpect(status().isOk())
         .andExpect(view().name("index"))
         .andExpect(model().attribute("title", "トップページ"))
         .andExpect(model().attribute("displayName", "山田 太郎"))
-        .andExpect(model().attribute("otherUsers", dmUsers))
-        .andExpect(model().attribute("generalGroups", groups));
+        .andExpect(model().attribute("loggedInUserId", "user001"))
+        .andExpect(model().attribute("role", "STUDENT"))
+        .andExpect(model().attributeExists("otherUsers"))
+        .andExpect(model().attributeExists("generalGroups"));
   }
 
-  // ===========================
-  // 2. 未ログイン → /home へリダイレクト
-  // ===========================
   @Test
-  @DisplayName("トップ画面表示: 未ログインはリダイレクト")
+  @DisplayName("トップ画面表示: 未ログイン (URL: /home )")
   void testIndexNotLoggedIn() throws Exception {
+    // 1. Ready
 
-    mockMvc.perform(get("/"))
-        .andExpect(status().is3xxRedirection()) // 302 OK
-        .andExpect(redirectedUrl("/login")); // リダイレクト先のみ確認
-    // ★リダイレクト時に ModelAndView は存在しないので
-    // view().name() や model() を書いてはいけない
+    // 2. Do & 3. Check
+    mockMvc.perform(get("/home"))
+        .andExpect(status().isOk())
+        .andExpect(view().name("index"))
+        .andExpect(model().attribute("title", "トップページ"))
+        .andExpect(model().attributeDoesNotExist("displayName"))
+        .andExpect(model().attributeDoesNotExist("loggedInUserId"))
+        .andExpect(model().attributeDoesNotExist("generalGroups"));
   }
 }

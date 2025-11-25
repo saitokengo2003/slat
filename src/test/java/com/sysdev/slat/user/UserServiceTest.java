@@ -24,8 +24,6 @@ class UserServiceTest {
   @InjectMocks
   private UserService target;
 
-  // --- authenticate (認証) のテスト ---
-
   @Test
   @DisplayName("authenticate: 認証成功（ユーザーが存在しパスワードが一致）")
   void testAuthenticateSuccess() {
@@ -88,8 +86,6 @@ class UserServiceTest {
     // 3. Assert
     assertNull(result);
   }
-
-  // --- findAllOtherUsers (他ユーザー取得) のテスト ---
 
   @Test
   @DisplayName("findAllOtherUsers: 自分以外のユーザーのみ取得できること")
@@ -190,8 +186,6 @@ class UserServiceTest {
     assertEquals("guest", result);
   }
 
-  // --- getDisplayName のテスト (追加) ---
-
   @Test
   @DisplayName("getDisplayName: ユーザーが存在する場合、表示名が返る")
   void testGetDisplayName_Found() {
@@ -222,11 +216,8 @@ class UserServiceTest {
     String result = target.getDisplayName(username);
 
     // 3. Assert
-    // UserServiceの実装: return "不明なユーザー (" + userId + ")";
     assertEquals("不明なユーザー (unknown_id)", result);
   }
-
-  // --- getAllStudentIds のテスト (追加) ---
 
   @Test
   @DisplayName("getAllStudentIds: roleCodeが'student'のユーザーのみIDがリスト化される")
@@ -254,6 +245,6 @@ class UserServiceTest {
     assertEquals(2, result.size());
     assertTrue(result.contains("s1"));
     assertTrue(result.contains("s2"));
-    assertFalse(result.contains("t1")); // 先生は含まれない
+    assertFalse(result.contains("t1"));
   }
 }

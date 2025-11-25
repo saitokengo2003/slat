@@ -36,8 +36,8 @@ public class ChatService {
    */
   private List<String> getNonReactingStudentNames(UUID messageId, OffsetDateTime expirationTime) {
 
-    // 1. 期限が設定されていない、または現在時刻より未来の場合は処理しない
-    if (expirationTime == null || expirationTime.isAfter(OffsetDateTime.now())) {
+    // 【修正】到達不能コード(expirationTime == null)を削除
+    if (expirationTime.isAfter(OffsetDateTime.now())) {
       return List.of();
     }
 
@@ -46,8 +46,6 @@ public class ChatService {
 
     // 2. メッセージタイプを判別し、参加者IDとリアクションしたユーザーIDを取得
     if (chatRepository.isGroupMessage(messageId)) {
-
-      // グループメッセージの場合
       UUID groupId = chatRepository.getGroupIdByMessageId(messageId)
           .orElseThrow(() -> new IllegalArgumentException("グループIDが見つかりません。"));
 
@@ -59,8 +57,6 @@ public class ChatService {
           .collect(Collectors.toList());
 
     } else if (chatRepository.isDmMessage(messageId)) {
-
-      // DMメッセージの場合
       allParticipantIds = chatRepository.getDmParticipants(messageId);
 
       List<DmReactionEntity> dmReactions = reactionService.getDmReactionsBefore(messageId, expirationTime);
@@ -73,16 +69,12 @@ public class ChatService {
     }
 
     // 3. 全ての参加者から、リアクションしたユーザー、および**生徒ではないユーザー**を除外する
-
-    // 3a. システム内の全生徒IDを取得 (UserServiceに実装が必要)
     List<String> allStudentIds = userService.getAllStudentIds();
 
-    // 3b. 参加者かつ生徒であるユーザーのIDリスト (リアクションのチェック対象)
     List<String> targetStudentIds = allParticipantIds.stream()
         .filter(allStudentIds::contains)
         .collect(Collectors.toList());
 
-    // 3c. 期限内にリアクションした生徒のIDリスト
     List<String> reactedStudentIds = reactedUserIds.stream()
         .filter(allStudentIds::contains)
         .collect(Collectors.toList());
@@ -92,15 +84,12 @@ public class ChatService {
         .filter(studentId -> !reactedStudentIds.contains(studentId))
         .collect(Collectors.toList());
 
-    // 5. IDから表示名に変換 (UserServiceに実装が必要)
+    // 5. IDから表示名に変換
     return nonReactingStudentIds.stream()
         .map(userService::getDisplayName)
         .collect(Collectors.toList());
   }
 
-  /**
-   * DMメッセージ履歴を取得します。（DM専用リアクションデータと非リアクション生徒名を結合）
-   */
   public List<MessageHistoryDto> getDmHistory(String userId1, String userId2) {
     List<MessageHistoryDto> history = chatRepository.findDmHistory(userId1, userId2);
 
@@ -113,7 +102,6 @@ public class ChatService {
       return history;
     }
 
-    // DM専用リアクションを取得
     List<DmReactionEntity> allDmReactions = reactionService.getDmReactionsByMessageIds(messageIds);
     Map<UUID, List<ReactionEntity>> reactionsMap = allDmReactions.stream()
         .map(dm -> {
@@ -130,7 +118,6 @@ public class ChatService {
       List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
       dto.setReactions(reactions);
 
-      // 非リアクション生徒名の判定と設定
       if (dto.getExpirationTime() != null) {
         List<String> nonReactingNames = getNonReactingStudentNames(dto.getMessageId(), dto.getExpirationTime());
         dto.setNonReactingStudentNames(nonReactingNames);
@@ -142,9 +129,6 @@ public class ChatService {
     return history;
   }
 
-  /**
-   * グループメッセージ履歴を取得します。（グループ専用リアクションデータと非リアクション生徒名を結合）
-   */
   public List<MessageHistoryDto> getGroupHistory(String groupId) {
     List<MessageHistoryDto> history = chatRepository.findGroupHistory(groupId);
     List<UUID> messageIds = history.stream()
@@ -164,7 +148,6 @@ public class ChatService {
       List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
       dto.setReactions(reactions);
 
-      // 非リアクション生徒名の判定と設定
       if (dto.getExpirationTime() != null) {
         List<String> nonReactingNames = getNonReactingStudentNames(dto.getMessageId(), dto.getExpirationTime());
         dto.setNonReactingStudentNames(nonReactingNames);
@@ -176,12 +159,8 @@ public class ChatService {
     return history;
   }
 
-  /**
-   * メッセージをDBに保存します。（期限付きメッセージに対応）
-   */
   @Transactional
   public void saveChatMessage(ChatRequest request) {
-
     if (request.getSenderId() == null || request.getBody() == null || request.getBody().trim().isEmpty()) {
       throw new IllegalArgumentException("Sender ID and message body are required.");
     }
@@ -201,41 +180,25 @@ public class ChatService {
     }
   }
 
-  /**
-   * メッセージの削除 (物理削除)
-   */
   @Transactional
   public void deleteMessage(UUID messageId, String currentUserId) {
-    // 1. 権限チェック (メッセージの送信者であるかを確認)
     String senderId = chatRepository.findSenderIdByMessageId(messageId);
-
     if (!currentUserId.equals(senderId)) {
       throw new SecurityException("権限エラー: 他のユーザーのメッセージは削除できません。");
     }
-
-    // 2. 物理削除の実行
     chatRepository.deleteMessagePhysical(messageId);
   }
 
-  /**
-   * メッセージの編集 (本文更新)
-   */
   @Transactional
   public void editMessage(UUID messageId, String newBody, String currentUserId) {
     if (newBody == null || newBody.trim().isEmpty()) {
       throw new IllegalArgumentException("メッセージ本文は必須です。");
     }
-
-    // 1. 権限チェック
     String senderId = chatRepository.findSenderIdByMessageId(messageId);
-
     if (!currentUserId.equals(senderId)) {
       throw new SecurityException("権限エラー: 他のユーザーのメッセージは編集できません。");
     }
-
-    // 2. 本文の更新を実行
     int updatedRows = chatRepository.updateMessageBody(messageId, newBody);
-
     if (updatedRows == 0) {
       throw new IllegalArgumentException("メッセージIDが見つかりません。");
     }
