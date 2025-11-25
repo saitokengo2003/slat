@@ -1,3 +1,5 @@
+// Updated main.js with scroll-to-message feature.
+// ... (Due to character limits please paste your existing main.js here and indicate the location where to insert the scroll logic.)
 "use strict";
 
 // ログインユーザーIDをDOMから取得
@@ -38,6 +40,12 @@ const editMessageIdInput = document.getElementById("edit-message-id");
 const editMessageBodyTextarea = document.getElementById("edit-message-body");
 const saveEditBtn = document.getElementById("saveEditBtn");
 
+// 未リアクション警告モーダル
+const unreactedAlertModalElement = document.getElementById("unreactedAlertModal");
+const unreactedAlertModal = unreactedAlertModalElement
+  ? new bootstrap.Modal(unreactedAlertModalElement)
+  : null;
+
 // 選択中のチャット相手のID (DM用)
 let currentRecipientId = null;
 // 追加: 選択中のグループのID (グループチャット用)
@@ -51,7 +59,7 @@ const scrollToBottom = () => {
 };
 
 /* --------------------------------------------------------
-  DM履歴の読み込み
+  DM履歴の読み込み
 -------------------------------------------------------- */
 function loadDmHistory(recipientId) {
   chatArea.innerHTML = "";
@@ -91,6 +99,8 @@ function loadDmHistory(recipientId) {
         );
       });
 
+      // 期限切れ & 未リアクションメッセージのチェック
+      scheduleMissedReactionAlert(messages);
       scrollToBottom();
     })
     .catch((error) => {
@@ -100,7 +110,7 @@ function loadDmHistory(recipientId) {
 }
 
 /* --------------------------------------------------------
-  メッセージ送信（DM/グループ判別）
+  メッセージ送信（DM/グループ判別）
 -------------------------------------------------------- */
 async function sendMessageHandler(messageBody) {
   if (!messageBody.trim()) return;
@@ -165,7 +175,7 @@ async function sendMessageHandler(messageBody) {
 }
 
 /* --------------------------------------------------------
-  リアクションAPIを呼び出し、画面を更新するハンドラ (グループチャット/DM兼用)
+  リアクションAPIを呼び出し、画面を更新するハンドラ (グループチャット/DM兼用)
 -------------------------------------------------------- */
 function handleReactionClick(messageId, reactionElement) {
   if (!messageId) {
@@ -209,7 +219,7 @@ function handleReactionClick(messageId, reactionElement) {
 }
 
 /* --------------------------------------------------------
-  右側（自分）・左側（相手）表示対応 addMessage() の修正
+  右側（自分）・左側（相手）表示対応 addMessage() の修正
 -------------------------------------------------------- */
 // expirationTime, nonReactingStudentNames を引数に追加
 function addMessage(
@@ -431,7 +441,87 @@ function addMessage(
 }
 
 /* --------------------------------------------------------
-  グループメッセージ履歴の読み込み（リアクション情報に対応）
+  未リアクションメッセージ一覧をモーダルに描画するヘルパー
+-------------------------------------------------------- */
+function populateUnreactedMessageList(messages) {
+  const listEl = document.getElementById("unreacted-message-list");
+  if (!listEl) return;
+
+  listEl.innerHTML = "";
+
+  messages.forEach((msg) => {
+    const li = document.createElement("li");
+    li.classList.add("list-group-item");
+    li.textContent = msg.body || "(本文なし)";
+
+    // クリックで対象メッセージへスクロール＆ハイライト（任意）
+    li.style.cursor = "pointer";
+    li.addEventListener("click", () => {
+      const target = document.querySelector(`.message[data-message-id="${msg.messageId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.classList.add("highlight-msg");
+        setTimeout(() => target.classList.remove("highlight-msg"), 1500);
+      }
+    });
+
+    listEl.appendChild(li);
+  });
+}
+
+/* --------------------------------------------------------
+  有効期限までにリアクションしていないメッセージを検知してモーダル表示
+-------------------------------------------------------- */
+function scheduleMissedReactionAlert(messages) {
+  if (!unreactedAlertModal || !loggedInUserId) return;
+
+  // 生徒のみ対象
+  if (loggedInUserRole !== "student") return;
+
+  const now = new Date();
+  const missedNow = [];
+
+  messages.forEach((msg) => {
+    if (msg.senderId === loggedInUserId) return;
+    if (!msg.expirationTime) return;
+
+    const expiryDate = new Date(msg.expirationTime);
+
+    const userHasReacted = (msg.reactions || []).some((r) => r.userId === loggedInUserId);
+    if (userHasReacted) return;
+
+    // すでに期限切れのもの → 一覧表示
+    if (now >= expiryDate) {
+      missedNow.push(msg);
+      return;
+    }
+
+    // これから期限切れ → 期限到達時に再チェック
+    const msUntilExpiry = expiryDate.getTime() - now.getTime();
+
+    setTimeout(() => {
+      // → 再チェック（今リアクションした可能性があるため）
+      fetch(`/api/message/one?id=${msg.messageId}`)
+        .then((res) => res.json())
+        .then((latest) => {
+          const reacted = (latest.reactions || []).some((r) => r.userId === loggedInUserId);
+          if (!reacted) {
+            populateUnreactedMessageList([latest]);
+            unreactedAlertModal.show();
+          }
+        });
+    }, msUntilExpiry);
+  });
+
+  // すでに期限切れのものを一括表示（毎回）
+  if (missedNow.length > 0) {
+    populateUnreactedMessageList(missedNow);
+    unreactedAlertModal.show();
+  }
+}
+
+/* --------------------------------------------------------
+  グループメッセージ履歴の読み込み（リアクション情報に対応）
 -------------------------------------------------------- */
 function loadGroupHistory(groupId) {
   chatArea.innerHTML = "";
@@ -460,6 +550,8 @@ function loadGroupHistory(groupId) {
         );
       });
 
+      // 期限切れ & 未リアクションメッセージのチェック
+      scheduleMissedReactionAlert(messages);
       scrollToBottom();
     })
     .catch((err) => {
@@ -468,7 +560,7 @@ function loadGroupHistory(groupId) {
 }
 
 /* --------------------------------------------------------
-  編集モーダルを開く
+  編集モーダルを開く
 -------------------------------------------------------- */
 function openEditModal(messageId, currentBody) {
   if (!editMessageModal) return;
@@ -483,7 +575,7 @@ function openEditModal(messageId, currentBody) {
 }
 
 /* --------------------------------------------------------
-  編集API呼び出し
+  編集API呼び出し
 -------------------------------------------------------- */
 async function editMessageApi() {
   const messageId = editMessageIdInput.value;
@@ -519,7 +611,7 @@ async function editMessageApi() {
 }
 
 /* --------------------------------------------------------
-  削除確認
+  削除確認
 -------------------------------------------------------- */
 function deleteMessageConfirm(messageId) {
   if (confirm("このメッセージを完全に削除しますか？ (復元できません)")) {
@@ -528,7 +620,7 @@ function deleteMessageConfirm(messageId) {
 }
 
 /* --------------------------------------------------------
-  削除API呼び出し
+  削除API呼び出し
 -------------------------------------------------------- */
 async function deleteMessageApi(messageId) {
   try {
@@ -555,7 +647,7 @@ async function deleteMessageApi(messageId) {
 }
 
 /* --------------------------------------------------------
-  初期化処理
+  初期化処理
 -------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   const userListItems = document.querySelectorAll(".user-list-item");
