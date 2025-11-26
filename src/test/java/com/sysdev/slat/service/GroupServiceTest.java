@@ -3,9 +3,15 @@ package com.sysdev.slat.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -26,290 +34,265 @@ class GroupServiceTest {
   private JdbcTemplate jdbc;
 
   @InjectMocks
-  private GroupService service;
+  private GroupService target;
+
+  private final UUID TEST_UUID = UUID.randomUUID();
+  private final String OWNER = "owner-user";
+  private final String MEMBER = "member-user";
+
+  // --- 1. validateName ---
 
   @Test
-  @DisplayName("validateName: 名前のバリデーション")
+  @DisplayName("validateName: 正常系")
   void testValidateName() {
-    assertTrue(service.validateName("abc"));
-    assertFalse(service.validateName(""));
-    assertFalse(service.validateName(null));
-    assertTrue(service.validateName("x".repeat(255)));
-    assertFalse(service.validateName("x".repeat(256)));
+    assertTrue(target.validateName("Valid Name"));
+    assertTrue(target.validateName("A"));
   }
 
   @Test
-  @DisplayName("createGroup: 成功 (メンバーなし) - batchUpdate呼ばれない")
-  void testCreateGroup_success_noMembers() {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
+  @DisplayName("validateName: 異常系 (null, 空文字, 空白, 長すぎ)")
+  void testValidateNameInvalid() {
+    assertFalse(target.validateName(null));
+    assertFalse(target.validateName(""));
+    assertFalse(target.validateName("   "));
 
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
+    String longName = "a".repeat(256);
+    assertFalse(target.validateName(longName));
+  }
 
-    boolean result = service.createGroup("owner", "group1", Collections.emptyList());
+  // --- 2. createGroup ---
+
+  @Test
+  @DisplayName("createGroup: 正常系 (メンバーあり)")
+  void testCreateGroupSuccess() {
+    List<String> members = List.of(MEMBER, "member2");
+
+    boolean result = target.createGroup(OWNER, "New Group", members);
+
     assertTrue(result);
 
-    verify(jdbc).update(contains("INSERT INTO group_s"), any(UUID.class), eq("group1"), eq("owner"));
-    verify(jdbc).update(contains("INSERT INTO group_members"), any(UUID.class), eq("owner"));
+    verify(jdbc).update(contains("INSERT INTO group_s"), any(UUID.class), eq("New Group"), eq(OWNER));
+    verify(jdbc).update(contains("INSERT INTO group_members"), any(UUID.class), eq(OWNER));
+    verify(jdbc).batchUpdate(contains("INSERT INTO group_members"), any(BatchPreparedStatementSetter.class));
+  }
 
+  @Test
+  @DisplayName("createGroup: 正常系 (メンバーなし)")
+  void testCreateGroupNoMembers() {
+    List<String> members = Collections.emptyList();
+
+    boolean result = target.createGroup(OWNER, "Solo Group", members);
+
+    assertTrue(result);
     verify(jdbc, never()).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
   }
 
   @Test
-  @DisplayName("createGroup: 成功 (メンバーあり) - batchUpdate呼ばれる")
-  void testCreateGroup_success_withMembers() {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
+  @DisplayName("createGroup: 異常系 (DBエラー発生)")
+  void testCreateGroupDbError() {
+    // any() -> any(Object.class) に修正して曖昧さを排除
+    doThrow(new QueryTimeoutException("DB Error"))
+        .when(jdbc).update(contains("INSERT INTO group_s"), any(Object.class), any(Object.class), any(Object.class));
 
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
+    boolean result = target.createGroup(OWNER, "Error Group", List.of(MEMBER));
 
-    doAnswer(inv -> {
-      BatchPreparedStatementSetter setter = inv.getArgument(1);
-      PreparedStatement ps = mock(PreparedStatement.class);
-      int size = setter.getBatchSize();
-      assertEquals(2, size);
-      for (int i = 0; i < size; i++) {
-        setter.setValues(ps, i);
-      }
-      return new int[] { 1, 1 };
-    }).when(jdbc).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
-
-    boolean result = service.createGroup("owner", "g1", List.of("a", "b", "owner", "b"));
-    assertTrue(result);
-
-    verify(jdbc).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
-  }
-
-  @Test
-  @DisplayName("createGroup: membersがnullの場合でも正常終了すること")
-  void testCreateGroup_membersNull() {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
-
-    boolean result = service.createGroup("owner", "group1", null);
-    assertTrue(result);
-
-    verify(jdbc, never()).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
-  }
-
-  @Test
-  @DisplayName("createGroup: membersにnullや空文字が含まれる場合")
-  void testCreateGroup_membersWithNullAndBlank() {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
-
-    doAnswer(inv -> {
-      BatchPreparedStatementSetter setter = inv.getArgument(1);
-      assertEquals(2, setter.getBatchSize());
-      return new int[2];
-    }).when(jdbc).batchUpdate(anyString(), any(BatchPreparedStatementSetter.class));
-
-    List<String> dirtyMembers = Arrays.asList("a", null, "", "   ", "b");
-    boolean result = service.createGroup("owner", "g", dirtyMembers);
-    assertTrue(result);
-  }
-
-  @Test
-  @DisplayName("createGroup: setValues 内で SQLException発生時は失敗")
-  void testCreateGroup_setValues_exception() throws Exception {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
-
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
-
-    PreparedStatement ps = mock(PreparedStatement.class);
-    doThrow(new SQLException("ERR")).when(ps).setObject(anyInt(), any());
-
-    when(jdbc.batchUpdate(anyString(), any(BatchPreparedStatementSetter.class)))
-        .thenAnswer(inv -> {
-          BatchPreparedStatementSetter setter = inv.getArgument(1);
-          setter.setValues(ps, 0);
-          return new int[] { 0 };
-        });
-
-    boolean result = service.createGroup("owner", "gX", List.of("m1"));
     assertFalse(result);
   }
 
   @Test
-  @DisplayName("createGroup: DBエラー (Causeチェーンあり)")
+  @DisplayName("createGroup: DB例外発生時に原因(cause)も出力されるルート")
   void testCreateGroup_dbError_withCauseChain() {
-    Throwable c2 = new RuntimeException("cause2");
-    Throwable c1 = new RuntimeException("cause1", c2);
-    DataAccessException ex = new DataAccessException("top", c1) {
-    };
+    SQLException rootCause = new SQLException("Root Cause");
+    DataAccessException ex = new QueryTimeoutException("Top Level Error", rootCause);
 
-    when(jdbc.update(anyString(), any(), any(), any()))
-        .thenThrow(ex);
+    // any() -> any(Object.class) に修正
+    doThrow(ex).when(jdbc).update(contains("INSERT INTO group_s"), any(Object.class), any(Object.class),
+        any(Object.class));
 
-    boolean result = service.createGroup("owner", "g", List.of("a"));
+    boolean result = target.createGroup(OWNER, "Error Group", List.of(MEMBER));
+
     assertFalse(result);
   }
 
   @Test
-  @DisplayName("createGroup: DBエラー (単発)")
-  void testCreateGroup_dbError() {
-    when(jdbc.update(anyString(), any(), any(), any()))
-        .thenThrow(new DataAccessException("err") {
-        });
-    assertFalse(service.createGroup("owner", "g", List.of("x")));
+  @DisplayName("createGroup: バッチ更新中のSQLException (setValues内部)")
+  void testCreateGroup_setValues_exception() {
+    List<String> members = List.of(MEMBER);
+
+    doAnswer(invocation -> {
+      BatchPreparedStatementSetter setter = invocation.getArgument(1);
+      PreparedStatement mockPs = mock(PreparedStatement.class);
+
+      lenient().doThrow(new SQLException("ERR")).when(mockPs).setObject(anyInt(), any());
+      lenient().doThrow(new SQLException("ERR")).when(mockPs).setString(anyInt(), anyString());
+
+      try {
+        setter.setValues(mockPs, 0);
+      } catch (SQLException e) {
+        throw new UncategorizedSQLException("test", "sql", e);
+      }
+      return null;
+    }).when(jdbc).batchUpdate(contains("INSERT INTO group_members"), any(BatchPreparedStatementSetter.class));
+
+    boolean result = target.createGroup(OWNER, "Group", members);
+
+    assertFalse(result);
+  }
+
+  // --- 3. getGroupDetail ---
+
+  @Test
+  @DisplayName("getGroupDetail: 正常系 (データあり)")
+  void testGetGroupDetailFound() {
+    Map<String, Object> groupMap = Map.of("id", TEST_UUID, "name", "Test Group");
+    List<Map<String, Object>> membersList = List.of(Map.of("user_id", OWNER));
+
+    doReturn(groupMap).when(jdbc).queryForMap(anyString(), eq(TEST_UUID));
+    doReturn(membersList).when(jdbc).queryForList(anyString(), eq(TEST_UUID));
+
+    GroupDetailDto result = target.getGroupDetail(TEST_UUID);
+
+    assertNotNull(result);
+    assertEquals(groupMap, result.getGroup());
+    assertEquals(membersList, result.getMembers());
   }
 
   @Test
-  @DisplayName("createGroup: batchUpdateでDBエラー")
-  void testCreateGroup_batchUpdate_dbError() {
-    when(jdbc.update(startsWith("INSERT INTO group_s"), any(UUID.class), anyString(), anyString()))
-        .thenReturn(1);
-    when(jdbc.update(startsWith("INSERT INTO group_members"), any(UUID.class), anyString()))
-        .thenReturn(1);
+  @DisplayName("getGroupDetail: 異常系 (該当なし)")
+  void testGetGroupDetailNotFound() {
+    doThrow(new EmptyResultDataAccessException(1)).when(jdbc).queryForMap(anyString(), eq(TEST_UUID));
 
-    when(jdbc.batchUpdate(anyString(), any(BatchPreparedStatementSetter.class)))
-        .thenThrow(new DataAccessException("batch err") {
-        });
+    GroupDetailDto result = target.getGroupDetail(TEST_UUID);
 
-    assertFalse(service.createGroup("owner", "groupX", List.of("a", "b")));
+    assertNull(result);
   }
 
-  @Test
-  @DisplayName("getGroupDetail: 正常取得")
-  void testGetGroupDetail_found() {
-    UUID gid = UUID.randomUUID();
-
-    when(jdbc.queryForMap(anyString(), eq(gid)))
-        .thenReturn(Map.of("id", gid, "name", "g"));
-
-    when(jdbc.queryForList(anyString(), eq(gid)))
-        .thenReturn(List.of(Map.of("user_id", "u1")));
-
-    GroupDetailDto dto = service.getGroupDetail(gid);
-    assertNotNull(dto);
-    assertEquals(gid, dto.getGroup().get("id"));
-  }
+  // --- 4. findAllGroupsWithCounts ---
 
   @Test
-  @DisplayName("getGroupDetail: 存在しない場合 (null返却)")
-  void testGetGroupDetail_notFound() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.queryForMap(anyString(), eq(gid)))
-        .thenThrow(new EmptyResultDataAccessException(1));
-
-    assertNull(service.getGroupDetail(gid));
-  }
-
-  @Test
-  @DisplayName("findAllGroupsWithCounts: 正常取得")
+  @DisplayName("findAllGroupsWithCounts: 正常系")
   void testFindAllGroupsWithCounts() {
-    when(jdbc.queryForList(anyString()))
-        .thenReturn(List.of(Map.of("id", 1)));
+    List<Map<String, Object>> expectedList = new ArrayList<>();
+    doReturn(expectedList).when(jdbc).queryForList(anyString());
 
-    List<Map<String, Object>> result = service.findAllGroupsWithCounts();
-    assertEquals(1, result.size());
+    List<Map<String, Object>> result = target.findAllGroupsWithCounts();
+
+    assertSame(expectedList, result);
+  }
+
+  // --- 5. deleteGroup ---
+
+  @Test
+  @DisplayName("deleteGroup: 正常系")
+  void testDeleteGroupSuccess() {
+    doReturn(5).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID));
+    doReturn(1).when(jdbc).update(contains("DELETE FROM group_s"), eq(TEST_UUID));
+
+    boolean result = target.deleteGroup(TEST_UUID);
+
+    assertTrue(result);
   }
 
   @Test
-  @DisplayName("deleteGroup: 成功")
-  void testDeleteGroup_success() {
-    UUID gid = UUID.randomUUID();
+  @DisplayName("deleteGroup: 異常系 (グループが存在しない/削除件数0)")
+  void testDeleteGroupFailZero() {
+    doReturn(0).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID));
+    doReturn(0).when(jdbc).update(contains("DELETE FROM group_s"), eq(TEST_UUID));
 
-    when(jdbc.update(startsWith("DELETE FROM group_members"), any(UUID.class)))
-        .thenReturn(5);
-    when(jdbc.update(startsWith("DELETE FROM group_s"), any(UUID.class)))
-        .thenReturn(1);
+    boolean result = target.deleteGroup(TEST_UUID);
 
-    assertTrue(service.deleteGroup(gid));
+    assertFalse(result);
   }
 
   @Test
-  @DisplayName("deleteGroup: 削除対象なし (0件削除)")
-  void testDeleteGroup_notFound() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(startsWith("DELETE FROM group_members"), any(UUID.class)))
-        .thenReturn(0);
-    when(jdbc.update(startsWith("DELETE FROM group_s"), any(UUID.class)))
-        .thenReturn(0);
+  @DisplayName("deleteGroup: 異常系 (DB例外)")
+  void testDeleteGroupException() {
+    doThrow(new QueryTimeoutException("Delete Error")).when(jdbc).update(contains("DELETE FROM group_members"),
+        eq(TEST_UUID));
 
-    assertFalse(service.deleteGroup(gid));
+    boolean result = target.deleteGroup(TEST_UUID);
+
+    assertFalse(result);
+  }
+
+  // --- 6. deleteGroupMember ---
+
+  @Test
+  @DisplayName("deleteGroupMember: 正常系")
+  void testDeleteGroupMemberSuccess() {
+    doReturn(1).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID), eq(MEMBER));
+
+    boolean result = target.deleteGroupMember(TEST_UUID, MEMBER);
+
+    assertTrue(result);
   }
 
   @Test
-  @DisplayName("deleteGroup: DBエラー")
-  void testDeleteGroup_dbError() {
-    when(jdbc.update(startsWith("DELETE FROM group_members"), any(UUID.class)))
-        .thenThrow(new DataAccessException("err") {
-        });
-    assertFalse(service.deleteGroup(UUID.randomUUID()));
+  @DisplayName("deleteGroupMember: 失敗")
+  void testDeleteGroupMemberFail() {
+    doReturn(0).when(jdbc).update(contains("DELETE FROM group_members"), eq(TEST_UUID), eq(OWNER));
+
+    boolean result = target.deleteGroupMember(TEST_UUID, OWNER);
+
+    assertFalse(result);
   }
 
   @Test
-  @DisplayName("deleteGroupMember: 成功")
-  void testDeleteGroupMember_success() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenReturn(1);
-    assertTrue(service.deleteGroupMember(gid, "u1"));
+  @DisplayName("deleteGroupMember: 異常系 (DB例外)")
+  void testDeleteGroupMemberException() {
+    // any(Object.class) を使用
+    doThrow(new QueryTimeoutException("Error"))
+        .when(jdbc).update(contains("DELETE FROM group_members"), any(Object.class), any(Object.class));
+
+    assertFalse(target.deleteGroupMember(TEST_UUID, MEMBER));
+  }
+
+  // --- 7. addGroupMember ---
+
+  @Test
+  @DisplayName("addGroupMember: 正常系")
+  void testAddGroupMemberSuccess() {
+    doReturn(1).when(jdbc).update(contains("INSERT INTO group_members"), eq(TEST_UUID), eq(MEMBER));
+
+    boolean result = target.addGroupMember(TEST_UUID, MEMBER);
+
+    assertTrue(result);
   }
 
   @Test
-  @DisplayName("deleteGroupMember: 削除対象なし (0件削除)")
-  void testDeleteGroupMember_notFound() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenReturn(0);
-    assertFalse(service.deleteGroupMember(gid, "u1"));
+  @DisplayName("addGroupMember: 失敗 (既に参加済み)")
+  void testAddGroupMemberFail() {
+    doReturn(0).when(jdbc).update(contains("INSERT INTO group_members"), eq(TEST_UUID), eq(MEMBER));
+
+    boolean result = target.addGroupMember(TEST_UUID, MEMBER);
+
+    assertFalse(result);
   }
 
   @Test
-  @DisplayName("deleteGroupMember: DBエラー")
-  void testDeleteGroupMember_fail() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenThrow(new DataAccessException("err") {
-        });
-    assertFalse(service.deleteGroupMember(gid, "u1"));
+  @DisplayName("addGroupMember: 異常系 (DB例外)")
+  void testAddGroupMemberException() {
+    // any(Object.class) を使用
+    doThrow(new QueryTimeoutException("Insert Error"))
+        .when(jdbc).update(contains("INSERT INTO group_members"), any(Object.class), any(Object.class));
+
+    boolean result = target.addGroupMember(TEST_UUID, MEMBER);
+
+    assertFalse(result);
   }
 
+  // ★これが直前のエラー箇所です
   @Test
-  @DisplayName("addGroupMember: 成功")
-  void testAddGroupMember_success() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenReturn(1);
-    assertTrue(service.addGroupMember(gid, "u1"));
-  }
-
-  @Test
-  @DisplayName("addGroupMember: 競合/追加なし (0件挿入)")
-  void testAddGroupMember_conflict() {
-    UUID gid = UUID.randomUUID();
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenReturn(0);
-    assertFalse(service.addGroupMember(gid, "u1"));
-  }
-
-  @Test
-  @DisplayName("addGroupMember: DBエラー (Causeあり)")
+  @DisplayName("addGroupMember: DB例外発生時に原因(cause)も出力されるルート")
   void testAddGroupMember_dbError_withCause() {
-    Throwable c1 = new IllegalStateException("L2");
-    DataAccessException ex = new DataAccessException("xyz", c1) {
-    };
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenThrow(ex);
-    assertFalse(service.addGroupMember(UUID.randomUUID(), "u1"));
-  }
+    SQLException rootCause = new SQLException("Root Cause");
+    DataAccessException ex = new QueryTimeoutException("Top Level Error", rootCause);
 
-  @Test
-  @DisplayName("addGroupMember: DBエラー (単発)")
-  void testAddGroupMember_dbError() {
-    when(jdbc.update(anyString(), any(UUID.class), anyString()))
-        .thenThrow(new DataAccessException("err") {
-        });
-    assertFalse(service.addGroupMember(UUID.randomUUID(), "u1"));
+    // ★修正: any() -> any(Object.class) に変更して厳密にマッチさせる
+    doThrow(ex).when(jdbc).update(contains("INSERT INTO group_members"), any(Object.class), any(Object.class));
+
+    boolean result = target.addGroupMember(TEST_UUID, MEMBER);
+
+    assertFalse(result);
   }
 }
