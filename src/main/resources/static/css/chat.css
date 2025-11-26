@@ -349,6 +349,20 @@ body {
   margin-left: 8px;
 }
 
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #e5e5e5; /* アイコン背景色 */
+  border-radius: 50%; /* 円形にする */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #333;
+  margin-right: 10px;
+  flex-shrink: 0; /* バブルに押しつぶされないように */
+}
+
 /* 左側 (相手) の配置 */
 .message.left .message-time {
   align-self: flex-start;
@@ -534,7 +548,7 @@ body {
 }
 
 /* ===============================
-   🔧 モーダルが表示されない問題の修正
+  モーダルが表示されない問題の修正
 ================================= */
 
 .modal {
@@ -583,4 +597,41 @@ body {
   100% {
     background-color: transparent;
   }
+}
+
+/* ================================
+   ★ メッセージを横並びにする修正
+================================ */
+
+/* デフォルト：左側（相手）メッセージは横並び */
+.message.left {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+/* 右側（自分）メッセージは左右反転 */
+.message.right {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+/* アバターの位置調整 */
+.message .avatar {
+  margin: 0 10px;
+}
+
+/* 吹き出しと関連要素をまとめるためのラッパー */
+.message .bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+}
+
+/* 既存の bubble は wrapper 内に収まる */
+.message .bubble {
+  margin: 0;
 }

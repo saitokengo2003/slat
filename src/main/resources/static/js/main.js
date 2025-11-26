@@ -229,32 +229,28 @@ function addMessage(
   messageId = null,
   initialReactions = [],
   createdAt = null,
-  expirationTime = null, // 期限情報を受け取る
+  expirationTime = null,
   nonReactingStudentNames = []
 ) {
   const message = document.createElement("div");
   message.classList.add("message");
   message.classList.add(isRight ? "right" : "left");
 
-  // ✅ NEW: 期限ラベルの追加と期限切れ判定ロジック
+  // --- 期限ラベル ---
   if (expirationTime) {
     const now = new Date();
     const expiryDate = new Date(expirationTime);
 
-    // 1. 期限切れ判定と本文の変更
     if (now >= expiryDate) {
       message.classList.add("expired");
-      // 既に [期限切れ] が付いていなければ追加
       if (!text.startsWith("[期限切れ] ")) {
         text = `[期限切れ] ${text}`;
       }
     }
 
-    // 2. 期限ラベル要素の作成
     const labelElement = document.createElement("div");
     labelElement.classList.add("expiration-label");
 
-    // 日付と時刻の整形 (toLocaleStringで簡潔に)
     const expiryString = expiryDate.toLocaleString("ja-JP", {
       year: "numeric",
       month: "2-digit",
@@ -263,14 +259,12 @@ function addMessage(
       minute: "2-digit",
     });
 
-    // 期限切れでない場合は「有効期限: YYYY/MM/DD HH:mm」と表示
     if (now < expiryDate) {
       labelElement.textContent = `有効期限: ${expiryString}まで`;
     } else {
       labelElement.textContent = `このメッセージは ${expiryString} に期限切れとなりました`;
     }
 
-    // message コンテナの先頭にラベルを挿入 (order: 0で最上位に)
     message.appendChild(labelElement);
   }
 
@@ -278,48 +272,46 @@ function addMessage(
     message.setAttribute("data-message-id", messageId);
   }
 
+  // --- アイコン ---
   const avatar = document.createElement("div");
   avatar.classList.add("avatar");
-
   const initial = displayName ? displayName.trim().charAt(0).toUpperCase() : "?";
-
   avatar.textContent = initial;
 
+  // --- バブルまわりのラッパ ---
+  const wrapper = document.createElement("div");
+  wrapper.classList.add("bubble-wrapper");
+
+  // --- 吹き出し ---
   const bubble = document.createElement("div");
   bubble.classList.add("bubble");
   bubble.textContent = text;
+  wrapper.appendChild(bubble);
 
-  // 時刻要素の生成とフォーマット（日付と時刻）
+  // --- 時刻 ---
   if (createdAt) {
     const timeElement = document.createElement("div");
     timeElement.classList.add("message-time");
 
     const date = new Date(createdAt);
 
-    // 日付 (YYYY/MM/DD) の整形
-    const dateString = date
-      .toLocaleDateString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
-      .replace(/\//g, "/");
+    const dateString = date.toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
 
-    // 時刻 (HH:mm) の整形
     const timeString = date.toLocaleTimeString("ja-JP", {
       hour: "2-digit",
       minute: "2-digit",
     });
 
-    // 日付と時刻を結合して表示
     timeElement.textContent = `${dateString} ${timeString}`;
-
-    message.appendChild(timeElement); // メッセージコンテナに時刻を追加
+    wrapper.appendChild(timeElement);
   }
 
-  // リアクションを機能リアクションに一本化
+  // --- リアクション ---
   if (messageId) {
-    // 1. グループチャット / DM (機能するリアクション)
     const reactionsContainer = document.createElement("div");
     reactionsContainer.classList.add("reactions-container");
 
@@ -342,6 +334,7 @@ function addMessage(
         const reaction = document.createElement("div");
         reaction.classList.add("reaction");
         reaction.setAttribute("data-emoji", emoji);
+
         if (data.isReacted) {
           reaction.classList.add("active");
         }
@@ -350,6 +343,7 @@ function addMessage(
         reaction.addEventListener("click", () => {
           handleReactionClick(messageId, reaction);
         });
+
         reactionsContainer.appendChild(reaction);
       });
 
@@ -366,23 +360,17 @@ function addMessage(
       }
     }
 
-    // グループチャット/DM履歴の初期リアクションをレンダリング
     renderReactions(initialReactions);
-    message.appendChild(reactionsContainer);
+    wrapper.appendChild(reactionsContainer);
   }
 
-  message.appendChild(avatar);
-  message.appendChild(bubble);
-
-  // 期限切れかつ未リアクション生徒名の表示ロジック
+  // --- 未リアクション生徒名 ---
   if (expirationTime) {
     const now = new Date();
     const expiryDate = new Date(expirationTime);
 
-    // 期限が切れ、かつ未リアクション生徒リストがある場合のみ表示
     if (now >= expiryDate && nonReactingStudentNames && nonReactingStudentNames.length > 0) {
       const nonReactingDiv = document.createElement("div");
-      // スタイルクラスは CSS ファイルに定義されている必要があります
       nonReactingDiv.classList.add(
         "non-reacting-students",
         "mt-1",
@@ -397,46 +385,27 @@ function addMessage(
       title.textContent = "⚠️ 期限内にリアクションしなかった生徒:";
       nonReactingDiv.appendChild(title);
 
-      // 生徒名をリスト形式で追加
       const nameList = nonReactingStudentNames
         .map((name) => `<small class="d-inline-block me-2">${name}</small>`)
         .join("");
 
       nonReactingDiv.innerHTML += nameList;
 
-      message.appendChild(nonReactingDiv);
+      wrapper.appendChild(nonReactingDiv);
     }
   }
 
-  //自分のメッセージの場合のみ、編集・削除ボタンを追加
-  if (isRight && messageId) {
-    const menuContainer = document.createElement("div");
-    menuContainer.classList.add("message-menu"); // 新しいCSSクラス
-    menuContainer.setAttribute("data-message-id", messageId);
-
-    // 編集ボタン
-    const editBtn = document.createElement("button");
-    editBtn.classList.add("btn", "btn-sm", "btn-light", "edit-btn");
-    editBtn.textContent = "✎"; // 編集アイコン
-    editBtn.title = "編集";
-    editBtn.onclick = () => openEditModal(messageId, text);
-
-    menuContainer.appendChild(editBtn);
-
-    // 削除ボタン
-    const deleteBtn = document.createElement("button");
-    deleteBtn.classList.add("btn", "btn-sm", "btn-light", "delete-btn");
-    deleteBtn.textContent = "53"; // 削除アイコン
-    deleteBtn.title = "削除";
-    deleteBtn.onclick = () => deleteMessageConfirm(messageId);
-
-    menuContainer.appendChild(deleteBtn);
-
-    message.appendChild(menuContainer);
+  if (isRight) {
+    // 自分のメッセージ → バブル → アイコン
+    message.appendChild(wrapper);
+    message.appendChild(avatar);
+  } else {
+    // 相手のメッセージ → アイコン → バブル
+    message.appendChild(avatar);
+    message.appendChild(wrapper);
   }
 
   chatArea.appendChild(message);
-
   scrollToBottom();
 }
 

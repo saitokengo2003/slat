@@ -6,12 +6,16 @@ import java.util.List;
 import com.sysdev.slat.reactions.ReactionEntity;
 
 /**
- * DBから取得したメッセージ履歴を格納するDTO (Data Transfer Object) です。
+ * DBから取得したメッセージ履歴を格納するDTOです。
  * JSONレスポンスとしてクライアントに送信されます。
  */
 public class MessageHistoryDto {
   private UUID messageId;
   private String senderId;
+
+  // ★ 追加：表示名（display_name）
+  private String senderName;
+
   private String body;
   private OffsetDateTime createdAt;
   private List<ReactionEntity> reactions;
@@ -20,6 +24,7 @@ public class MessageHistoryDto {
   private List<String> nonReactingStudentNames;
 
   // --- Getter/Setter ---
+
   public UUID getMessageId() {
     return messageId;
   }
@@ -42,6 +47,15 @@ public class MessageHistoryDto {
 
   public void setSenderId(String senderId) {
     this.senderId = senderId;
+  }
+
+  // ★ Getter/Setter 追加
+  public String getSenderName() {
+    return senderName;
+  }
+
+  public void setSenderName(String senderName) {
+    this.senderName = senderName;
   }
 
   public String getBody() {
