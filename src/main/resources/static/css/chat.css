@@ -261,12 +261,10 @@ body {
 }
 
 .message {
+  position: relative;
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
   max-width: fit-content;
-  position: relative;
-  margin-bottom: 15px;
 }
 
 .expiration-label {
@@ -336,7 +334,7 @@ body {
 }
 
 .message-time {
-  order: 4;
+  order: 2;
   flex-basis: auto;
   font-size: 11px;
   color: #777;
@@ -345,22 +343,21 @@ body {
 }
 
 .message .reactions-container {
-  order: 3;
+  order: 4;
   flex-basis: auto;
   display: flex;
-  margin-top: 4px;
   margin-left: 8px;
 }
 
 /* 左側 (相手) の配置 */
 .message.left .message-time {
   align-self: flex-start;
-  margin-left: 8px;
-  margin-right: 0;
+  margin-left: 15px;
+  margin-right: 0px;
 }
 .message.left .reactions-container {
-  align-self: flex-start;
-  margin-left: 50px;
+  align-self: flex-start !important;
+  margin-left: 1px !important;
 }
 .message.left .expiration-label {
   text-align: left;
@@ -370,14 +367,10 @@ body {
 .message.right .message-time {
   align-self: flex-end;
   text-align: right;
-  margin-right: 8px;
+  margin-right: 15px;
   margin-left: 0;
 }
-.message.right .reactions-container {
-  align-self: flex-end;
-  margin-right: 8px;
-  margin-left: 0;
-}
+
 .message.right .expiration-label {
   text-align: right;
 }
@@ -465,7 +458,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 6px;
+  margin-top: 3px;
   padding: 4px 8px;
   border-radius: 16px;
   cursor: pointer;
@@ -538,4 +531,56 @@ body {
   width: 50px;
   border-radius: 12px;
   transition: all 0.25s ease;
+}
+
+/* ===============================
+   🔧 モーダルが表示されない問題の修正
+================================= */
+
+.modal {
+  z-index: 9999 !important;
+}
+
+.modal-backdrop {
+  z-index: 9998 !important;
+}
+
+.modal-dialog {
+  z-index: 10000 !important;
+}
+
+.modal-content {
+  background: #ffffff !important;
+  color: #000 !important;
+  opacity: 1 !important;
+}
+
+.highlight-msg {
+  animation: flash 1.5s ease;
+}
+
+@keyframes flash {
+  0% {
+    background-color: yellow;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.highlight-message {
+  animation: highlightFade 1.5s ease-out;
+  border-radius: 10px;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: rgba(255, 235, 59, 0.9);
+  }
+  50% {
+    background-color: rgba(255, 235, 59, 0.4);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
