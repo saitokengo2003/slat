@@ -115,6 +115,8 @@ public class ChatService {
         .collect(Collectors.groupingBy(ReactionEntity::getMessageId));
 
     history.forEach(dto -> {
+      dto.setSenderName(userService.getDisplayName(dto.getSenderId()));
+
       List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
       dto.setReactions(reactions);
 
@@ -145,6 +147,8 @@ public class ChatService {
         .collect(Collectors.groupingBy(ReactionEntity::getMessageId));
 
     history.forEach(dto -> {
+      dto.setSenderName(userService.getDisplayName(dto.getSenderId()));
+
       List<ReactionEntity> reactions = reactionsMap.getOrDefault(dto.getMessageId(), List.of());
       dto.setReactions(reactions);
 
