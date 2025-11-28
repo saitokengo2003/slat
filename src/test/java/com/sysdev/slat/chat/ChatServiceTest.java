@@ -42,6 +42,10 @@ class ChatServiceTest {
   private final String RECIPIENT_ID = "student1";
   private final String GROUP_ID = "group-A";
 
+  // ===================================================================================
+  // 1. saveChatMessage (送信)
+  // ===================================================================================
+
   @Test
   @DisplayName("saveChatMessage: DM送信 (期限なし)")
   void testSaveChatMessageDm() {
@@ -179,18 +183,25 @@ class ChatServiceTest {
     req.setBody("Body");
     req.setGroupId("");
     req.setRecipientId(null);
+
     assertThrows(IllegalArgumentException.class, () -> target.saveChatMessage(req));
   }
+
+  // ===================================================================================
+  // 2. getDmHistory (DM履歴取得)
+  // ===================================================================================
 
   @Test
   @DisplayName("getDmHistory: リアクションあり (DmReactionEntity -> ReactionEntity 変換確認)")
   void testGetDmHistoryWithReactions() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setBody("Msg with Reaction");
     msg.setExpirationTime(null);
 
     doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
 
     DmReactionEntity dmReaction = new DmReactionEntity();
     dmReaction.setDmMessageId(MSG_ID);
@@ -216,10 +227,13 @@ class ChatServiceTest {
   void testGetDmHistoryExpired_LogicRun() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setBody("Expired Msg");
     msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getDmReactionsByMessageIds(anyList());
     doReturn(false).when(chatRepository).isGroupMessage(MSG_ID);
     doReturn(true).when(chatRepository).isDmMessage(MSG_ID);
@@ -241,10 +255,13 @@ class ChatServiceTest {
   void testGetDmHistory_Expired_MixedReaction() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setBody("Expired Msg");
     msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getDmReactionsByMessageIds(anyList());
 
     doReturn(false).when(chatRepository).isGroupMessage(MSG_ID);
@@ -260,7 +277,6 @@ class ChatServiceTest {
     doReturn("生徒B(未読)").when(userService).getDisplayName(studentNoReact);
 
     List<MessageHistoryDto> result = target.getDmHistory(SENDER_ID, RECIPIENT_ID);
-
     List<String> names = result.get(0).getNonReactingStudentNames();
     assertEquals(1, names.size());
     assertEquals("生徒B(未読)", names.get(0));
@@ -271,9 +287,12 @@ class ChatServiceTest {
   void testGetDmHistoryFuture_LogicSkip() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setExpirationTime(OffsetDateTime.now().plusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getDmReactionsByMessageIds(anyList());
 
     List<MessageHistoryDto> result = target.getDmHistory(SENDER_ID, RECIPIENT_ID);
@@ -284,34 +303,21 @@ class ChatServiceTest {
   }
 
   @Test
-  @DisplayName("getDmHistory: 期限あり/なし混在 (カバレッジ網羅)")
-  void testGetDmHistory_Mixed_Coverage() {
-    // 1. 期限あり
-    MessageHistoryDto msg1 = new MessageHistoryDto();
-    msg1.setMessageId(UUID.randomUUID());
-    msg1.setBody("Expired");
-    msg1.setExpirationTime(OffsetDateTime.now().minusDays(1));
+  @DisplayName("getDmHistory: 期限なし (未読ロジックはスキップ)")
+  void testGetDmHistoryNoExpiration() {
+    MessageHistoryDto msg = new MessageHistoryDto();
+    msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
+    msg.setExpirationTime(null);
 
-    // 2. 期限なし
-    MessageHistoryDto msg2 = new MessageHistoryDto();
-    msg2.setMessageId(UUID.randomUUID());
-    msg2.setBody("Normal");
-    msg2.setExpirationTime(null);
+    doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
 
-    doReturn(List.of(msg1, msg2)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
     doReturn(Collections.emptyList()).when(reactionService).getDmReactionsByMessageIds(anyList());
-    doReturn(true).when(chatRepository).isDmMessage(msg1.getMessageId());
-    doReturn(List.of(RECIPIENT_ID)).when(chatRepository).getDmParticipants(msg1.getMessageId());
-    doReturn(Collections.emptyList()).when(reactionService).getDmReactionsBefore(eq(msg1.getMessageId()), any());
-    doReturn(List.of(RECIPIENT_ID)).when(userService).getAllStudentIds();
-    doReturn("Student1").when(userService).getDisplayName(RECIPIENT_ID);
 
-    // 実行
     List<MessageHistoryDto> result = target.getDmHistory(SENDER_ID, RECIPIENT_ID);
 
-    assertEquals(2, result.size());
-    assertFalse(result.get(0).getNonReactingStudentNames().isEmpty());
-    assertTrue(result.get(1).getNonReactingStudentNames().isEmpty());
+    assertTrue(result.get(0).getNonReactingStudentNames().isEmpty());
   }
 
   @Test
@@ -327,9 +333,12 @@ class ChatServiceTest {
   void testGetDmHistoryUnknownType() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findDmHistory(SENDER_ID, RECIPIENT_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getDmReactionsByMessageIds(anyList());
 
     doReturn(false).when(chatRepository).isGroupMessage(MSG_ID);
@@ -339,14 +348,21 @@ class ChatServiceTest {
     assertTrue(result.get(0).getNonReactingStudentNames().isEmpty());
   }
 
+  // ===================================================================================
+  // 3. getGroupHistory (グループ履歴取得)
+  // ===================================================================================
+
   @Test
   @DisplayName("getGroupHistory: 期限切れメッセージ (未読ロジック実行)")
   void testGetGroupHistoryExpired_LogicRun() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findGroupHistory(GROUP_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getReactionsByMessageIds(anyList());
 
     doReturn(true).when(chatRepository).isGroupMessage(MSG_ID);
@@ -364,35 +380,55 @@ class ChatServiceTest {
   }
 
   @Test
-  @DisplayName("getGroupHistory: 期限あり/なし混在 (カバレッジ網羅)")
-  void testGetGroupHistory_Mixed_Coverage() {
-    // 1. 期限あり
-    MessageHistoryDto msg1 = new MessageHistoryDto();
-    msg1.setMessageId(UUID.randomUUID());
-    msg1.setBody("Expired");
-    msg1.setExpirationTime(OffsetDateTime.now().minusDays(1));
+  @DisplayName("getGroupHistory: 期限切れ & 一部リアクション済み (フィルター分岐の網羅)")
+  void testGetGroupHistory_Expired_MixedReaction() {
+    MessageHistoryDto msg = new MessageHistoryDto();
+    msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
+    msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
-    // 2. 期限なし
-    MessageHistoryDto msg2 = new MessageHistoryDto();
-    msg2.setMessageId(UUID.randomUUID());
-    msg2.setBody("Normal");
-    msg2.setExpirationTime(null);
+    doReturn(List.of(msg)).when(chatRepository).findGroupHistory(GROUP_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
 
-    doReturn(List.of(msg1, msg2)).when(chatRepository).findGroupHistory(GROUP_ID);
     doReturn(Collections.emptyList()).when(reactionService).getReactionsByMessageIds(anyList());
-    doReturn(true).when(chatRepository).isGroupMessage(msg1.getMessageId());
-    doReturn(Optional.of(UUID.randomUUID())).when(chatRepository).getGroupIdByMessageId(msg1.getMessageId());
-    doReturn(List.of("s1")).when(chatRepository).getGroupMembers(any());
-    doReturn(Collections.emptyList()).when(reactionService).getGroupReactionsBefore(any(), any());
-    doReturn(List.of("s1")).when(userService).getAllStudentIds();
-    doReturn("Student1").when(userService).getDisplayName("s1");
 
-    // 実行
+    doReturn(true).when(chatRepository).isGroupMessage(MSG_ID);
+    doReturn(Optional.of(UUID.randomUUID())).when(chatRepository).getGroupIdByMessageId(MSG_ID);
+
+    String studentReacted = "student_A";
+    String studentNoReact = "student_B";
+    doReturn(List.of(studentReacted, studentNoReact)).when(chatRepository).getGroupMembers(any(UUID.class));
+
+    ReactionEntity reaction = new ReactionEntity();
+    reaction.setUserId(studentReacted);
+    doReturn(List.of(reaction)).when(reactionService).getGroupReactionsBefore(eq(MSG_ID), any(OffsetDateTime.class));
+
+    doReturn(List.of(studentReacted, studentNoReact)).when(userService).getAllStudentIds();
+
+    doReturn("生徒B(未読)").when(userService).getDisplayName(studentNoReact);
+
     List<MessageHistoryDto> result = target.getGroupHistory(GROUP_ID);
 
-    assertEquals(2, result.size());
-    assertFalse(result.get(0).getNonReactingStudentNames().isEmpty());
-    assertTrue(result.get(1).getNonReactingStudentNames().isEmpty());
+    List<String> names = result.get(0).getNonReactingStudentNames();
+    assertEquals(1, names.size());
+    assertEquals("生徒B(未読)", names.get(0));
+  }
+
+  @Test
+  @DisplayName("getGroupHistory: 期限なし")
+  void testGetGroupHistoryNoExpiration() {
+    MessageHistoryDto msg = new MessageHistoryDto();
+    msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
+    msg.setExpirationTime(null);
+
+    doReturn(List.of(msg)).when(chatRepository).findGroupHistory(GROUP_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
+    doReturn(Collections.emptyList()).when(reactionService).getReactionsByMessageIds(anyList());
+
+    List<MessageHistoryDto> result = target.getGroupHistory(GROUP_ID);
+    assertTrue(result.get(0).getNonReactingStudentNames().isEmpty());
   }
 
   @Test
@@ -408,9 +444,12 @@ class ChatServiceTest {
   void testGetGroupHistoryGroupIdNotFound() {
     MessageHistoryDto msg = new MessageHistoryDto();
     msg.setMessageId(MSG_ID);
+    msg.setSenderId(SENDER_ID);
     msg.setExpirationTime(OffsetDateTime.now().minusDays(1));
 
     doReturn(List.of(msg)).when(chatRepository).findGroupHistory(GROUP_ID);
+    doReturn("先生").when(userService).getDisplayName(SENDER_ID);
+
     doReturn(Collections.emptyList()).when(reactionService).getReactionsByMessageIds(anyList());
 
     doReturn(true).when(chatRepository).isGroupMessage(MSG_ID);
@@ -418,6 +457,10 @@ class ChatServiceTest {
 
     assertThrows(IllegalArgumentException.class, () -> target.getGroupHistory(GROUP_ID));
   }
+
+  // ===================================================================================
+  // 4. deleteMessage (削除)
+  // ===================================================================================
 
   @Test
   @DisplayName("deleteMessage: 正常系 (自分のメッセージ)")
@@ -434,6 +477,10 @@ class ChatServiceTest {
     SecurityException e = assertThrows(SecurityException.class, () -> target.deleteMessage(MSG_ID, SENDER_ID));
     assertTrue(e.getMessage().contains("権限エラー"));
   }
+
+  // ===================================================================================
+  // 5. editMessage (編集)
+  // ===================================================================================
 
   @Test
   @DisplayName("editMessage: 正常系")
