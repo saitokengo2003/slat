@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,7 @@ import com.sysdev.slat.service.GroupService;
 import com.sysdev.slat.user.UserData;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class GroupControllerTest {
 
     @Autowired
@@ -93,10 +94,9 @@ public class GroupControllerTest {
                 .param("name", "New Group")
                 .param("owner", "owner-id")
                 .param("members", "mem1", "mem2"))
-                // ★修正: 302リダイレクトを期待する
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/groupinfo"))
-                .andExpect(model().attributeExists("message"));
+                .andExpect(flash().attributeExists("message"));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class GroupControllerTest {
                 .param("name", "")
                 .param("owner", "owner-id")
                 .param("members", "mem1"))
-                .andExpect(status().isOk()) // ここは画面戻りなのでOK
+                .andExpect(status().isOk())
                 .andExpect(view().name("groupcreate/index"))
                 .andExpect(model().attributeExists("errorMessage"));
     }
@@ -118,21 +118,13 @@ public class GroupControllerTest {
     @DisplayName("作成処理: DB登録失敗")
     void testCreateGroupServiceFail() throws Exception {
         doReturn(true).when(groupService).validateName(anyString());
-        // 作成失敗をシミュレート
         doReturn(false).when(groupService).createGroup(anyString(), anyString(), anyList());
-
-        // コントローラーの実装では、失敗時(ok=false)は groupcreate/index を返しているはずですが、
-        // もしリダイレクトされているなら、何かがおかしいか、実装が変わっている可能性があります。
-        // エラーログに合わせて一旦「リダイレクト」で通るか確認します。
-        // ※本来は isOk() になるべき箇所です。
 
         mockMvc.perform(post("/groupcreate")
                 .sessionAttr("userData", mockUser)
                 .param("name", "Valid Name")
                 .param("owner", "owner-id")
                 .param("members", "mem1"))
-                // ★修正: エラーログに合わせてリダイレクト期待に変更（本来の仕様と違う可能性あり）
-                // もしこれで通らない場合は、コントローラーの実装(ok=falseのルート)を再確認してください
                 .andExpect(status().isOk())
                 .andExpect(view().name("groupcreate/index"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -158,13 +150,13 @@ public class GroupControllerTest {
     @DisplayName("詳細表示: 正常系 (グループが存在する)")
     void testGroupinfoDetailFound() throws Exception {
         Map<String, Object> groupData = dummyGroupData();
-        Map<String, Object> member = new HashMap<>();
-        member.put("user_id", "u1");
-        member.put("display_name", "M1");
-        member.put("role_in_group", "member");
-        member.put("role_code", "STUDENT");
+        Map<String, Object> memberMap = new HashMap<>();
+        memberMap.put("user_id", "u1");
+        memberMap.put("display_name", "メンバー1");
+        memberMap.put("role_in_group", "member");
+        memberMap.put("role_code", "STUDENT");
 
-        List<Map<String, Object>> members = List.of(member);
+        List<Map<String, Object>> members = List.of(memberMap);
         GroupDetailDto dto = new GroupDetailDto(groupData, members);
 
         doReturn(dto).when(groupService).getGroupDetail(TEST_UUID);
